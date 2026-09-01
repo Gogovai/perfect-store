@@ -41,7 +41,7 @@ export type ProductFilterOptions = {
 
 const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), sellers!inner(id, store_name, logo_url), categories(id, name, slug, parent_id)`;
 
-async function baseQuery() {
+async function getProductsQuery() {
   const supabase = await createClient();
   return supabase
     .from('products')
@@ -60,7 +60,7 @@ function normalizeProducts(data: unknown): ProductWithRelations[] {
 export async function getProducts(
   filters: ProductFilterOptions = {}
 ): Promise<ProductListResult> {
-  let query = await baseQuery();
+  let query = await getProductsQuery();
   const {
     categorySlug,
     categoryId,
@@ -153,7 +153,8 @@ export async function getProducts(
 export async function getProductBySlug(
   slug: string
 ): Promise<ProductWithRelations | null> {
-  const { data, error } = await (await baseQuery()).eq('slug', slug).single();
+  const query = await getProductsQuery();
+  const { data, error } = await query.eq('slug', slug).single();
   if (error || !data) return null;
   return normalizeProducts([data])[0] ?? null;
 }
@@ -161,7 +162,8 @@ export async function getProductBySlug(
 export async function getFeaturedProducts(
   limit = 8
 ): Promise<ProductWithRelations[]> {
-  const { data, error } = await (await baseQuery())
+  const query = await getProductsQuery();
+  const { data, error } = await query
     .eq('is_featured', true)
     .order('rating_average', { ascending: false })
     .limit(limit);
@@ -171,7 +173,8 @@ export async function getFeaturedProducts(
 export async function getNewestProducts(
   limit = 8
 ): Promise<ProductWithRelations[]> {
-  const { data, error } = await (await baseQuery())
+  const query = await getProductsQuery();
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .limit(limit);
   return error || !data ? [] : normalizeProducts(data);
@@ -180,7 +183,8 @@ export async function getNewestProducts(
 export async function getTopRatedProducts(
   limit = 8
 ): Promise<ProductWithRelations[]> {
-  const { data, error } = await (await baseQuery())
+  const query = await getProductsQuery();
+  const { data, error } = await query
     .gt('review_count', 0)
     .order('rating_average', { ascending: false })
     .order('review_count', { ascending: false })
@@ -193,7 +197,8 @@ export async function getRelatedProducts(
   currentProductId: string,
   limit = 4
 ): Promise<ProductWithRelations[]> {
-  const { data, error } = await (await baseQuery())
+  const query = await getProductsQuery();
+  const { data, error } = await query
     .eq('category_id', categoryId)
     .neq('id', currentProductId)
     .order('rating_average', { ascending: false })
