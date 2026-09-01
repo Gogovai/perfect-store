@@ -8,7 +8,6 @@ export type SellerStatus = 'pending' | 'active' | 'suspended' | 'rejected';
 export type ShipmentStatus = 'pending' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'returned';
 
 type Table<Row = Record<string, unknown>, Insert = Row, Update = Partial<Row>> = { Row: Row; Insert: Insert; Update: Update; Relationships: Array<Record<string, unknown>> };
-
 type TablesMap = {
   profiles: Table<{ id: string; email: string | null; first_name: string | null; last_name: string | null; phone: string | null; avatar_url: string | null; role: UserRole; is_active: boolean; created_at: string; updated_at: string }>;
   sellers: Table<{ id: string; owner_id: string; store_name: string; slug: string; description: string | null; logo_url: string | null; banner_url: string | null; phone: string | null; email: string | null; status: SellerStatus; commission_rate: number; created_at: string; updated_at: string }>;
@@ -54,12 +53,32 @@ export type TablesInsert<T extends keyof PublicSchema['Tables']> = PublicSchema[
 export type TablesUpdate<T extends keyof PublicSchema['Tables']> = PublicSchema['Tables'][T]['Update'];
 export type Enums<T extends keyof PublicSchema['Enums']> = PublicSchema['Enums'][T];
 
+export type Profile = Tables<'profiles'>;
+export type SellerRecord = Tables<'sellers'> & { user_id: string; shop_name: string; rating: number; followers_count: number; products_count: number };
+export type Cart = Tables<'carts'>;
+export type CartItemRow = Tables<'cart_items'>;
+export type Wishlist = Tables<'wishlists'>;
+export type WishlistItemRow = Tables<'wishlist_items'>;
+export type Order = Tables<'orders'> & { user_id: string; shipping_cost: number; tax: number; total: number; shipping_address_id: string | null };
+export type OrderItem = Tables<'order_items'> & { variant_name: string | null; subtotal: number };
+export type Payment = Tables<'payments'> & { method: string; transaction_id: string | null };
+export type Address = Tables<'addresses'> & { full_name: string; address_line_1: string };
+export type Shipment = Tables<'shipments'>;
+export type Coupon = Tables<'coupons'>;
+export type OrderWithItems = Order & { items: OrderItem[] };
+export type CustomerOrder = OrderWithItems;
+export type SellerOrderItem = OrderItem;
+export type OrderCreationResult = { success: boolean; order_id?: string; order_number?: string; error?: string };
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Pending', confirmed: 'Confirmed', processing: 'Processing', shipped: 'Shipped',
+  out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded',
+};
+export const ORDER_STATUS_STEPS: OrderStatus[] = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
+
 export const Constants = { public: { Enums: {
-  user_role: ['customer', 'seller', 'admin'],
-  seller_status: ['pending', 'active', 'suspended', 'rejected'],
-  product_status: ['draft', 'pending_review', 'active', 'inactive', 'rejected'],
-  order_status: ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'],
-  payment_method: ['paystack', 'cash_on_delivery', 'bank_transfer'],
-  payment_status: ['pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded'],
+  user_role: ['customer', 'seller', 'admin'], seller_status: ['pending', 'active', 'suspended', 'rejected'],
+  product_status: ['draft', 'pending_review', 'active', 'inactive', 'rejected'], order_status: ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'],
+  payment_method: ['paystack', 'cash_on_delivery', 'bank_transfer'], payment_status: ['pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded'],
   shipment_status: ['pending', 'packed', 'shipped', 'in_transit', 'out_for_delivery', 'delivered', 'returned'],
 } } } as const;
