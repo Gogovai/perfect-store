@@ -1,17 +1,17 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { Database } from '@/types/database';
 
 /**
  * Server-side Supabase client.
  *
- * The checked-in database type file predates the production schema migration,
- * so server-side queries intentionally use the runtime Supabase schema until
- * generated types are refreshed from the connected project.
+ * Uses the checked-in database contract so server queries remain type-safe
+ * while the schema is maintained through Supabase migrations.
  */
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<any>(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
