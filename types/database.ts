@@ -7,7 +7,13 @@ export type ProductStatus = 'draft' | 'pending_review' | 'active' | 'inactive' |
 export type SellerStatus = 'pending' | 'active' | 'suspended' | 'rejected';
 export type ShipmentStatus = 'pending' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'returned';
 
-type Table<Row = Record<string, unknown>, Insert = Row, Update = Partial<Row>> = { Row: Row; Insert: Insert; Update: Update; Relationships: Array<Record<string, unknown>> };
+type Table<Row = Record<string, unknown>, Insert = Partial<Row>, Update = Partial<Row>> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Update;
+  Relationships: Array<Record<string, unknown>>;
+};
+
 type TablesMap = {
   profiles: Table<{ id: string; email: string | null; first_name: string | null; last_name: string | null; phone: string | null; avatar_url: string | null; role: UserRole; is_active: boolean; created_at: string; updated_at: string }>;
   sellers: Table<{ id: string; owner_id: string; store_name: string; slug: string; description: string | null; logo_url: string | null; banner_url: string | null; phone: string | null; email: string | null; status: SellerStatus; commission_rate: number; created_at: string; updated_at: string }>;
