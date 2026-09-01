@@ -7,21 +7,19 @@ export type ProductImageRow = Tables<'product_images'>;
 export type ProductVariantRow = Tables<'product_variants'>;
 export type SellerRow = Tables<'sellers'>;
 export type CategoryRow = Tables<'categories'>;
-
 export type ProductWithRelations = ProductRow & {
   product_images: ProductImageRow[];
   product_variants: ProductVariantRow[];
   sellers: (Pick<SellerRow, 'id' | 'store_name' | 'logo_url'> & { rating: number }) | null;
   categories: Pick<CategoryRow, 'id' | 'name' | 'slug' | 'parent_id'> | null;
 };
-
 export type ProductListResult = { products: ProductWithRelations[]; total: number; page: number; pageSize: number; hasMore: boolean };
 export type ProductSortOption = 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'most_reviewed' | 'popular';
 export type ProductFilterOptions = { categorySlug?: string; categoryId?: string; minPrice?: number; maxPrice?: number; rating?: number; search?: string; sort?: ProductSortOption; page?: number; pageSize?: number };
 
 const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), sellers!inner(id, store_name, logo_url), categories(id, name, slug, parent_id)`;
 
-async function baseQuery() {
+async function baseQuery(): Promise<any> {
   const supabase = await createClient();
   return supabase.from('products').select(PRODUCT_SELECT, { count: 'exact' }).eq('status', 'active').eq('sellers.status', 'active');
 }
@@ -35,12 +33,12 @@ export async function getProducts(filters: ProductFilterOptions = {}): Promise<P
   const { categorySlug, categoryId, minPrice, maxPrice, rating, search, sort = 'newest', page = 1, pageSize = 20 } = filters;
   if (categorySlug || categoryId) {
     const supabase = await createClient();
-    let catQuery = supabase.from('categories').select('id').eq('is_active', true);
+    let catQuery: any = supabase.from('categories').select('id').eq('is_active', true);
     catQuery = categorySlug ? catQuery.eq('slug', categorySlug) : catQuery.eq('id', categoryId!);
     const { data: cat } = await catQuery.single();
     if (cat) {
       const { data: subs } = await supabase.from('categories').select('id').eq('parent_id', cat.id).eq('is_active', true);
-      query = query.in('category_id', [cat.id, ...(subs ?? []).map((s) => s.id)]);
+      query = query.in('category_id', [cat.id, ...(subs ?? []).map((s: { id: string }) => s.id)]);
     }
   }
   if (minPrice !== undefined) query = query.gte('base_price', minPrice);
@@ -68,7 +66,6 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
   if (error || !data) return null;
   return normalizeProducts([data])[0] ?? null;
 }
-
 export async function getFeaturedProducts(limit = 8): Promise<ProductWithRelations[]> {
   const { data, error } = await (await baseQuery()).eq('is_featured', true).order('rating_average', { ascending: false }).limit(limit);
   return error || !data ? [] : normalizeProducts(data);
