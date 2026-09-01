@@ -5,6 +5,10 @@
 
 export type UserRole = 'customer' | 'seller' | 'admin';
 
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+
 export interface Database {
   public: {
     Tables: {
@@ -45,7 +49,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       sellers: {
         Row: {
           id: string;
@@ -89,7 +94,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: string;
@@ -124,7 +130,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
@@ -174,7 +181,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       product_images: {
         Row: {
           id: string;
@@ -203,7 +211,8 @@ export interface Database {
           is_primary?: boolean;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       product_variants: {
         Row: {
           id: string;
@@ -235,7 +244,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       inventory: {
         Row: {
           id: string;
@@ -261,7 +271,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       variant_inventory: {
         Row: {
           id: string;
@@ -287,7 +298,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       addresses: {
         Row: {
           id: string;
@@ -337,7 +349,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       carts: {
         Row: {
           id: string;
@@ -357,7 +370,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       cart_items: {
         Row: {
           id: string;
@@ -386,7 +400,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       wishlists: {
         Row: {
           id: string;
@@ -406,7 +421,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       wishlist_items: {
         Row: {
           id: string;
@@ -426,19 +442,30 @@ export interface Database {
           product_id?: string;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       orders: {
         Row: {
           id: string;
           user_id: string;
           order_number: string;
-          status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+          status: OrderStatus;
           subtotal: number;
           shipping_cost: number;
           tax: number;
           total: number;
           shipping_address_id: string | null;
           notes: string | null;
+          shipping_full_name: string | null;
+          shipping_phone: string | null;
+          shipping_address_line_1: string | null;
+          shipping_address_line_2: string | null;
+          shipping_city: string | null;
+          shipping_region: string | null;
+          shipping_postal_code: string | null;
+          shipping_country: string | null;
+          delivery_method: string;
+          delivery_method_name: string;
           created_at: string;
           updated_at: string;
         };
@@ -446,13 +473,23 @@ export interface Database {
           id?: string;
           user_id: string;
           order_number: string;
-          status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+          status?: OrderStatus;
           subtotal: number;
           shipping_cost?: number;
           tax?: number;
           total: number;
           shipping_address_id?: string | null;
           notes?: string | null;
+          shipping_full_name?: string | null;
+          shipping_phone?: string | null;
+          shipping_address_line_1?: string | null;
+          shipping_address_line_2?: string | null;
+          shipping_city?: string | null;
+          shipping_region?: string | null;
+          shipping_postal_code?: string | null;
+          shipping_country?: string | null;
+          delivery_method?: string;
+          delivery_method_name?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -460,17 +497,28 @@ export interface Database {
           id?: string;
           user_id?: string;
           order_number?: string;
-          status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+          status?: OrderStatus;
           subtotal?: number;
           shipping_cost?: number;
           tax?: number;
           total?: number;
           shipping_address_id?: string | null;
           notes?: string | null;
+          shipping_full_name?: string | null;
+          shipping_phone?: string | null;
+          shipping_address_line_1?: string | null;
+          shipping_address_line_2?: string | null;
+          shipping_city?: string | null;
+          shipping_region?: string | null;
+          shipping_postal_code?: string | null;
+          shipping_country?: string | null;
+          delivery_method?: string;
+          delivery_method_name?: string;
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       order_items: {
         Row: {
           id: string;
@@ -511,14 +559,15 @@ export interface Database {
           subtotal?: number;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       payments: {
         Row: {
           id: string;
           order_id: string;
           amount: number;
           method: string;
-          status: 'pending' | 'completed' | 'failed' | 'refunded';
+          status: PaymentStatus;
           transaction_id: string | null;
           metadata: Record<string, unknown> | null;
           created_at: string;
@@ -529,7 +578,7 @@ export interface Database {
           order_id: string;
           amount: number;
           method: string;
-          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          status?: PaymentStatus;
           transaction_id?: string | null;
           metadata?: Record<string, unknown> | null;
           created_at?: string;
@@ -540,13 +589,14 @@ export interface Database {
           order_id?: string;
           amount?: number;
           method?: string;
-          status?: 'pending' | 'completed' | 'failed' | 'refunded';
+          status?: PaymentStatus;
           transaction_id?: string | null;
           metadata?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       shipments: {
         Row: {
           id: string;
@@ -578,7 +628,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       reviews: {
         Row: {
           id: string;
@@ -613,7 +664,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       coupons: {
         Row: {
           id: string;
@@ -669,7 +721,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       order_coupons: {
         Row: {
           id: string;
@@ -692,7 +745,8 @@ export interface Database {
           discount_amount?: number;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       seller_payouts: {
         Row: {
           id: string;
@@ -721,7 +775,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -750,7 +805,8 @@ export interface Database {
           is_read?: boolean;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -782,7 +838,8 @@ export interface Database {
           new_data?: Record<string, unknown> | null;
           created_at?: string;
         };
-        Relationships: [];      };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -851,3 +908,62 @@ export type Shipment = Tables<'shipments'>;
  * Coupon types
  */
 export type Coupon = Tables<'coupons'>;
+
+/**
+ * Order with items - for order detail views
+ */
+export type OrderWithItems = Order & {
+  order_items: OrderItem[];
+};
+
+/**
+ * Customer order summary - for order history list
+ */
+export type CustomerOrder = Order & {
+  order_items: (OrderItem & {
+    products?: {
+      product_images?: Array<{ url: string; is_primary: boolean }>;
+    };
+  })[];
+};
+
+/**
+ * Seller order item - for seller order views
+ */
+export type SellerOrderItem = OrderItem & {
+  orders: Pick<Order, 'id' | 'order_number' | 'status' | 'created_at' | 'shipping_full_name'>;
+};
+
+/**
+ * Order creation result
+ */
+export type OrderCreationResult = {
+  success: boolean;
+  orderId?: string;
+  orderNumber?: string;
+  error?: string;
+};
+
+/**
+ * Order status display mapping
+ */
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  refunded: 'Refunded',
+};
+
+/**
+ * Order status step ordering for timeline display
+ */
+export const ORDER_STATUS_STEPS: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'processing',
+  'shipped',
+  'delivered',
+];

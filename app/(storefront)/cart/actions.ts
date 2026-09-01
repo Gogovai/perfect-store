@@ -4,6 +4,9 @@
  * Cart server actions.
  * Handles database cart operations for authenticated users.
  *
+ * SECURITY: All mutation operations verify ownership through the authenticated user.
+ * A malicious user cannot modify another user's cart items.
+ *
  * Note: Complex Supabase join queries use `as any` type assertions because
  * the query builder cannot fully infer types for deep joins. These types
  * should be verified against the actual database schema.
@@ -36,6 +39,35 @@ export type DatabaseCartItem = {
   isValid: boolean;
   validationError?: string;
 };
+
+/**
+ * Helper: verify that a cart item belongs to the authenticated user's cart.
+ * Returns the user's cart ID if valid, or null if not.
+ */
+async function verifyCartItemOwnership(cartItemId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: cart } = await supabase
+    .from('carts')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!cart) return null;
+
+  // Verify the cart item belongs to this user's cart
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: item } = await (supabase as any)
+    .from('cart_items')
+    .select('id')
+    .eq('id', cartItemId)
+    .eq('cart_id', cart.id)
+    .single();
+
+  return item ? cart.id : null;
+}
 
 /**
  * Get the authenticated user's full cart with validated product data.
@@ -316,20 +348,28 @@ export async function addToDatabaseCart(
 
 /**
  * Update a cart item quantity in the database.
+ * SECURITY: Verifies the cart item belongs to the authenticated user's cart.
  */
 export async function updateCartItemQuantity(
   cartItemId: string,
   quantity: number
 ): Promise<CartActionResult> {
+  // Verify ownership before modifying
+  const cartId = await verifyCartItemOwnership(cartItemId);
+  if (!cartId) {
+    return { success: false, error: 'Cart item not found or access denied' };
+  }
+
   const supabase = await createClient();
 
   if (quantity <= 0) {
-    await supabase.from('cart_items').delete().eq('id', cartItemId);
+    await supabase.from('cart_items').delete().eq('id', cartItemId).eq('cart_id', cartId);
   } else {
     await supabase
       .from('cart_items')
       .update({ quantity, updated_at: new Date().toISOString() } as TablesUpdate<'cart_items'>)
-      .eq('id', cartItemId);
+      .eq('id', cartItemId)
+      .eq('cart_id', cartId);
   }
 
   return { success: true };
@@ -337,10 +377,17 @@ export async function updateCartItemQuantity(
 
 /**
  * Remove an item from the database cart.
+ * SECURITY: Verifies the cart item belongs to the authenticated user's cart.
  */
 export async function removeFromDatabaseCart(cartItemId: string): Promise<CartActionResult> {
+  // Verify ownership before modifying
+  const cartId = await verifyCartItemOwnership(cartItemId);
+  if (!cartId) {
+    return { success: false, error: 'Cart item not found or access denied' };
+  }
+
   const supabase = await createClient();
-  await supabase.from('cart_items').delete().eq('id', cartItemId);
+  await supabase.from('cart_items').delete().eq('id', cartItemId).eq('cart_id', cartId);
   return { success: true };
 }
 

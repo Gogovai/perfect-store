@@ -21,4 +21,12 @@ export type {
   Tables,
   TablesInsert,
   TablesUpdate,
+  OrderStatus,
+  PaymentStatus,
+  OrderWithItems,
+  CustomerOrder,
+  SellerOrderItem,
+  OrderCreationResult,
 } from './database';
+
+export { ORDER_STATUS_LABELS, ORDER_STATUS_STEPS } from './database';

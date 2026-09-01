@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { DeliveryMethod } from '@/components/checkout/DeliveryMethod';
@@ -9,16 +10,19 @@ import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { PaymentPlaceholder } from '@/components/checkout/PaymentPlaceholder';
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
-import { validateCheckout, prepareOrder, type CheckoutSummary as CheckoutSummaryType } from './actions';
+import { validateCheckout, type CheckoutSummary as CheckoutSummaryType } from './actions';
+import { placeOrder } from '@/app/account/orders/actions';
 import { Truck, MapPin, Package } from 'lucide-react';
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('standard');
   const [checkoutData, setCheckoutData] = useState<CheckoutSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notes, setNotes] = useState('');
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   // Load checkout on mount
   useEffect(() => {
@@ -52,20 +56,36 @@ export default function CheckoutPage() {
 
   async function handlePlaceOrder() {
     if (!selectedAddressId) {
-      alert('Please select a delivery address');
+      setOrderError('Please select a delivery address');
       return;
     }
 
+    // Prevent double-submission
+    if (isProcessing) return;
+
     setIsProcessing(true);
+    setOrderError(null);
+
     try {
-      const result = await prepareOrder(selectedAddressId, selectedDeliveryMethod, notes);
-      if (result.success) {
-        alert('Order prepared successfully! Payment integration coming soon.');
+      const result = await placeOrder(selectedAddressId, selectedDeliveryMethod, notes || undefined);
+
+      if (result.success && result.orderId) {
+        // Clear the Zustand cart state on successful order
+        // The server-side cart was already cleared by the database function
+        try {
+          const { useCartStore } = await import('@/stores/cart');
+          useCartStore.getState().clearCart();
+        } catch {
+          // Cart store import failed, but order was created successfully
+        }
+
+        // Redirect to order confirmation page
+        router.push(`/account/orders/${result.orderId}/success`);
       } else {
-        alert(result.error || 'Failed to prepare order');
+        setOrderError(result.error || 'We couldn\'t create your order. Please try again.');
       }
     } catch {
-      alert('An error occurred. Please try again.');
+      setOrderError('An unexpected error occurred. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -115,6 +135,23 @@ export default function CheckoutPage() {
         </div>
 
         <CheckoutValidationAlert warnings={checkoutData.warnings} />
+
+        {/* Order Error Alert */}
+        {orderError && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="h-5 w-5 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-red-600 text-xs font-bold">!</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-red-800">{orderError}</p>
+                <p className="text-xs text-red-600 mt-1">
+                  If this keeps happening, please try again later.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           <div className="lg:col-span-2 space-y-6">
@@ -188,7 +225,7 @@ export default function CheckoutPage() {
                 total={checkoutData.total}
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={isProcessing}
-                isDisabled={!selectedAddressId || checkoutData.invalidItems.length > 0}
+                isDisabled={!selectedAddressId || checkoutData.invalidItems.length > 0 || isProcessing}
               />
             </div>
           </div>
