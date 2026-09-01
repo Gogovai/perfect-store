@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {
-  Menu, X, ShoppingCart, User, LogOut, ChevronDown, Search,
-  Store, HelpCircle, Truck, Headphones,
-} from 'lucide-react';
+import { Menu, X, ShoppingCart, User, LogOut, ChevronDown, Search, Store, HelpCircle, Truck, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { Logo } from '@/components/ui/Logo';
@@ -17,9 +14,7 @@ import { brand } from '@/config/brand';
 import { signOutAction } from '@/app/auth/actions';
 import type { Profile } from '@/types/database';
 
-interface HeaderProps {
-  profile: Profile | null;
-}
+interface HeaderProps { profile: Profile | null; }
 
 export function Header({ profile }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,287 +22,20 @@ export function Header({ profile }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSigningOut, setIsSigningOut] = useState(false);
   const router = useRouter();
-
   const isLoggedIn = !!profile;
-  const initials = profile
-    ? `${profile.first_name.charAt(0)}${profile.last_name.charAt(0)}`.toUpperCase()
-    : '';
+  const firstName = profile?.first_name?.trim() || 'Customer';
+  const lastName = profile?.last_name?.trim() || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0) || ''}`.toUpperCase();
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      setMobileMenuOpen(false);
-    }
-  }
+  function handleSearch(e: React.FormEvent) { e.preventDefault(); if (searchQuery.trim()) { router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); setSearchQuery(''); setMobileMenuOpen(false); } }
+  async function handleSignOut() { setIsSigningOut(true); try { await signOutAction(); } catch { setIsSigningOut(false); } }
 
-  async function handleSignOut() {
-    setIsSigningOut(true);
-    try {
-      await signOutAction();
-    } catch {
-      setIsSigningOut(false);
-    }
-  }
-
-  return (
-    <>
-      <header className="sticky top-0 z-40">
-        {/* Utility bar - Desktop only */}
-        <div className="hidden lg:block bg-[#0f2b5b] text-white/80 text-xs">
-          <Container>
-            <div className="flex items-center justify-between h-8">
-              <div className="flex items-center gap-5">
-                <Link href="/seller/apply" className="flex items-center gap-1 hover:text-white transition-colors">
-                  <Store size={12} />
-                  <span>Sell on {brand.shortName}</span>
-                </Link>
-                <span className="text-white/30">|</span>
-                <Link href="/help" className="flex items-center gap-1 hover:text-white transition-colors">
-                  <HelpCircle size={12} />
-                  <span>Help Center</span>
-                </Link>
-                <span className="text-white/30">|</span>
-                <Link href="/orders/track" className="flex items-center gap-1 hover:text-white transition-colors">
-                  <Truck size={12} />
-                  <span>Track Order</span>
-                </Link>
-              </div>
-              <div className="flex items-center gap-1 hover:text-white transition-colors">
-                <Headphones size={12} />
-                <span>Customer Support</span>
-              </div>
-            </div>
-          </Container>
-        </div>
-
-        {/* Main header */}
-        <div className="bg-white border-b border-gray-200 shadow-sm">
-          <Container>
-            <div className="flex items-center h-14 lg:h-16 gap-3 lg:gap-6">
-              {/* Logo */}
-              <Logo size="md" className="shrink-0" />
-
-              {/* Search Bar - Desktop */}
-              <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
-                <div className="relative w-full flex">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search for products, brands, and more..."
-                    className="flex-1 pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-[#0f2b5b] focus:ring-1 focus:ring-[#0f2b5b]/20 transition-all"
-                    aria-label="Search products"
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 bg-[#0f2b5b] text-white rounded-r-lg hover:bg-[#1a3d7c] transition-colors"
-                    aria-label="Search"
-                  >
-                    <Search size={18} />
-                  </button>
-                </div>
-              </form>
-
-              {/* Right Section */}
-              <div className="flex items-center gap-1 sm:gap-2 ml-auto">
-                {/* Cart Button with live count */}
-                <CartButton />
-
-                {/* Auth Section - Desktop */}
-                <div className="hidden md:flex items-center">
-                  {isLoggedIn ? (
-                    <div className="relative">
-                      <button
-                        onClick={() => setUserMenuOpen(!userMenuOpen)}
-                        className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                        aria-label="User menu"
-                        aria-expanded={userMenuOpen}
-                      >
-                        {profile.avatar_url ? (
-                          <Image
-                            src={profile.avatar_url}
-                            alt={profile.first_name}
-                            width={32}
-                            height={32}
-                            className="h-8 w-8 rounded-full object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div
-                            className="h-8 w-8 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: brand.colors.primaryLight + '20' }}
-                          >
-                            <span className="text-xs font-bold" style={{ color: brand.colors.primary }}>{initials}</span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
-                          {profile.first_name}
-                        </span>
-                        <ChevronDown size={14} className="text-gray-500" />
-                      </button>
-
-                      {userMenuOpen && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {profile.first_name} {profile.last_name}
-                              </p>
-                              <p className="text-xs text-gray-500 truncate">{profile.email}</p>
-                            </div>
-                            <Link href="/account" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                              <User size={16} />
-                              My Account
-                            </Link>
-                            <Link href="/wishlist" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                              <ShoppingCart size={16} />
-                              Wishlist
-                            </Link>
-                            <Link href="/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                              <Truck size={16} />
-                              My Orders
-                            </Link>
-                            {profile.role === 'seller' && (
-                              <Link href="/seller/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                                <Store size={16} />
-                                Seller Dashboard
-                              </Link>
-                            )}
-                            {profile.role === 'admin' && (
-                              <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                                <User size={16} />
-                                Admin Dashboard
-                              </Link>
-                            )}
-                            <div className="border-t border-gray-100 my-1" />
-                            <button
-                              type="button"
-                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                              onClick={() => { setUserMenuOpen(false); handleSignOut(); }}
-                              disabled={isSigningOut}
-                            >
-                              <LogOut size={16} />
-                              {isSigningOut ? 'Signing out...' : 'Sign out'}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 pl-2 border-l border-gray-200 ml-2">
-                      <Link href="/login">
-                        <Button variant="ghost" size="sm" className="text-gray-600">
-                          Sign in
-                        </Button>
-                      </Link>
-                      <Link href="/register">
-                        <Button size="sm" className="bg-[#0f2b5b] hover:bg-[#1a3d7c]">
-                          Sign up
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile Menu Button */}
-                <button
-                  className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  aria-label="Toggle menu"
-                >
-                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
-              </div>
-            </div>
-          </Container>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <nav className="lg:hidden bg-white border-b border-gray-200 shadow-lg">
-            <Container>
-              <div className="py-4 flex flex-col gap-3">
-                {/* Mobile Search */}
-                <form onSubmit={handleSearch}>
-                  <div className="relative flex">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search products..."
-                      className="flex-1 pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-[#0f2b5b]"
-                      aria-label="Search products"
-                    />
-                    <button type="submit" className="px-4 bg-[#0f2b5b] text-white rounded-r-lg" aria-label="Search">
-                      <Search size={18} />
-                    </button>
-                  </div>
-                </form>
-
-                <Link href="/seller/apply" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                  <Store size={16} className="text-gray-400" />
-                  Sell on {brand.shortName}
-                </Link>
-                <Link href="/orders/track" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                  <Truck size={16} className="text-gray-400" />
-                  Track Order
-                </Link>
-                <Link href="/help" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
-                  <HelpCircle size={16} className="text-gray-400" />
-                  Help Center
-                </Link>
-
-                {isLoggedIn ? (
-                  <>
-                    <div className="border-t border-gray-200 pt-3 mt-1">
-                      <div className="flex items-center gap-3 px-2 mb-2">
-                        {profile.avatar_url ? (
-                          <Image src={profile.avatar_url} alt={profile.first_name} width={40} height={40} className="h-10 w-10 rounded-full object-cover" unoptimized />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ backgroundColor: brand.colors.primaryLight + '20' }}>
-                            <span className="text-sm font-bold" style={{ color: brand.colors.primary }}>{initials}</span>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{profile.first_name} {profile.last_name}</p>
-                          <p className="text-xs text-gray-500">{profile.email}</p>
-                        </div>
-                      </div>
-                      <Link href="/account" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-                      <Link href="/wishlist" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
-                      <Link href="/orders" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>My Orders</Link>
-                    </div>
-                    <button
-                      type="button"
-                      className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg pt-2 border-t border-gray-200"
-                      onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
-                      disabled={isSigningOut}
-                    >
-                      <LogOut size={16} />
-                      {isSigningOut ? 'Signing out...' : 'Sign out'}
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
-                    <Link href="/login" className="flex-1">
-                      <Button variant="secondary" className="w-full" size="sm">Sign in</Button>
-                    </Link>
-                    <Link href="/register" className="flex-1">
-                      <Button className="w-full" size="sm">Sign up</Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </Container>
-          </nav>
-        )}
-      </header>
-
-      {/* Cart Drawer */}
-      <CartDrawer />
-    </>
-  );
+  return <>
+    <header className="sticky top-0 z-40">
+      <div className="hidden lg:block bg-[#0f2b5b] text-white/80 text-xs"><Container><div className="flex items-center justify-between h-8"><div className="flex items-center gap-5"><Link href="/seller/apply" className="flex items-center gap-1 hover:text-white transition-colors"><Store size={12} /><span>Sell on {brand.shortName}</span></Link><span className="text-white/30">|</span><Link href="/help" className="flex items-center gap-1 hover:text-white transition-colors"><HelpCircle size={12} /><span>Help Center</span></Link><span className="text-white/30">|</span><Link href="/orders/track" className="flex items-center gap-1 hover:text-white transition-colors"><Truck size={12} /><span>Track Order</span></Link></div><div className="flex items-center gap-1 hover:text-white transition-colors"><Headphones size={12} /><span>Customer Support</span></div></div></Container></div>
+      <div className="bg-white border-b border-gray-200 shadow-sm"><Container><div className="flex items-center h-14 lg:h-16 gap-3 lg:gap-6"><Logo size="md" className="shrink-0" /><form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl"><div className="relative w-full flex"><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search for products, brands, and more..." className="flex-1 pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-[#0f2b5b] focus:ring-1 focus:ring-[#0f2b5b]/20 transition-all" aria-label="Search products" /><button type="submit" className="px-5 bg-[#0f2b5b] text-white rounded-r-lg hover:bg-[#1a3d7c] transition-colors" aria-label="Search"><Search size={18} /></button></div></form>
+        <div className="flex items-center gap-1 sm:gap-2 ml-auto"><CartButton /><div className="hidden md:flex items-center">{isLoggedIn ? <div className="relative"><button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors" aria-label="User menu" aria-expanded={userMenuOpen}>{profile.avatar_url ? <Image src={profile.avatar_url} alt={fullName} width={32} height={32} className="h-8 w-8 rounded-full object-cover" unoptimized /> : <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: brand.colors.primaryLight + '20' }}><span className="text-xs font-bold" style={{ color: brand.colors.primary }}>{initials}</span></div>}<span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">{firstName}</span><ChevronDown size={14} className="text-gray-500" /></button>{userMenuOpen && <><div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} /><div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50"><div className="px-4 py-3 border-b border-gray-100"><p className="text-sm font-medium text-gray-900 truncate">{fullName}</p><p className="text-xs text-gray-500 truncate">{profile.email || 'No email provided'}</p></div><Link href="/account" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}><User size={16} />My Account</Link><Link href="/wishlist" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}><ShoppingCart size={16} />Wishlist</Link><Link href="/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}><Truck size={16} />My Orders</Link>{profile.role === 'seller' && <Link href="/seller/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}><Store size={16} />Seller Dashboard</Link>}{profile.role === 'admin' && <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}><User size={16} />Admin Dashboard</Link>}<div className="border-t border-gray-100 my-1" /><button type="button" className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50" onClick={() => { setUserMenuOpen(false); handleSignOut(); }} disabled={isSigningOut}><LogOut size={16} />{isSigningOut ? 'Signing out...' : 'Sign out'}</button></div></>}</div> : <div className="flex items-center gap-2 pl-2 border-l border-gray-200 ml-2"><Link href="/login"><Button variant="ghost" size="sm" className="text-gray-600">Sign in</Button></Link><Link href="/register"><Button size="sm" className="bg-[#0f2b5b] hover:bg-[#1a3d7c]">Sign up</Button></Link></div>}</div><button className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">{mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button></div></Container></div>
+      {mobileMenuOpen && <nav className="lg:hidden bg-white border-b border-gray-200 shadow-lg"><Container><div className="py-4 flex flex-col gap-3"><form onSubmit={handleSearch}><div className="relative flex"><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="flex-1 pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-l-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-[#0f2b5b]" aria-label="Search products" /><button type="submit" className="px-4 bg-[#0f2b5b] text-white rounded-r-lg" aria-label="Search"><Search size={18} /></button></div></form><Link href="/seller/apply" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}><Store size={16} className="text-gray-400" />Sell on {brand.shortName}</Link><Link href="/orders/track" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}><Truck size={16} className="text-gray-400" />Track Order</Link><Link href="/help" className="flex items-center gap-2 px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}><HelpCircle size={16} className="text-gray-400" />Help Center</Link>{isLoggedIn ? <><div className="border-t border-gray-200 pt-3 mt-1"><div className="flex items-center gap-3 px-2 mb-2">{profile.avatar_url ? <Image src={profile.avatar_url} alt={fullName} width={40} height={40} className="h-10 w-10 rounded-full object-cover" unoptimized /> : <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ backgroundColor: brand.colors.primaryLight + '20' }}><span className="text-sm font-bold" style={{ color: brand.colors.primary }}>{initials}</span></div>}<div><p className="text-sm font-medium text-gray-900">{fullName}</p><p className="text-xs text-gray-500">{profile.email || 'No email provided'}</p></div></div><Link href="/account" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>My Account</Link><Link href="/wishlist" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link><Link href="/orders" className="block text-sm text-gray-700 hover:bg-gray-50 px-2 py-2 rounded-lg" onClick={() => setMobileMenuOpen(false)}>My Orders</Link></div><button type="button" className="flex items-center gap-2.5 w-full px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg pt-2 border-t border-gray-200" onClick={() => { setMobileMenuOpen(false); handleSignOut(); }} disabled={isSigningOut}><LogOut size={16} />{isSigningOut ? 'Signing out...' : 'Sign out'}</button></> : <div className="flex gap-2 pt-2 border-t border-gray-200"><Link href="/login" className="flex-1"><Button variant="secondary" className="w-full" size="sm">Sign in</Button></Link><Link href="/register" className="flex-1"><Button className="w-full" size="sm">Sign up</Button></Link></div>}</div></Container></nav>}
+    </header><CartDrawer /></>;
 }
