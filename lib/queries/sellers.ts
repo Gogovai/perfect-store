@@ -12,6 +12,8 @@ export type PublicSeller = Pick<
   'id' | 'store_name' | 'slug' | 'description' | 'logo_url' | 'banner_url' | 'phone' | 'email'
 >;
 
+export type PublicSellerOption = Pick<Seller, 'id' | 'store_name' | 'slug'>;
+
 export async function getPublicSellerBySlug(slug: string): Promise<PublicSeller | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -22,6 +24,17 @@ export async function getPublicSellerBySlug(slug: string): Promise<PublicSeller 
     .single();
 
   return error || !data ? null : data;
+}
+
+export async function getPublicSellerOptions(): Promise<PublicSellerOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('sellers')
+    .select('id, store_name, slug')
+    .eq('status', 'active')
+    .order('store_name', { ascending: true });
+
+  return error || !data ? [] : data;
 }
 
 export async function getPublicSellerProducts(
