@@ -39,7 +39,7 @@ const images = {
   'office-school/school.jpg': 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1200&q=88',
   'appliances/kitchen.jpg': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=88',
   'appliances/washing-machine.jpg': 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=1200&q=88',
-  'appliances/home-appliance.jpg': 'https://images.unsplash.com/photo-1586208958839-06e9f5a1d8c3?auto=format&fit=crop&w=1200&q=88',
+  'appliances/home-appliance.jpg': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1200&q=88',
 };
 
 const root = join(process.cwd(), 'public', 'product-images');
@@ -48,13 +48,9 @@ for (const [relativePath, url] of Object.entries(images)) {
   const destination = join(root, relativePath);
   await mkdir(dirname(destination), { recursive: true });
   const response = await fetch(url, { headers: { 'User-Agent': 'perfect-store-product-assets/1.0' } });
-  if (!response.ok) {
-    throw new Error(`Failed to download ${url}: ${response.status} ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`Failed to download ${url}: ${response.status} ${response.statusText}`);
   const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.startsWith('image/')) {
-    throw new Error(`Expected an image from ${url}, received ${contentType || 'unknown content type'}`);
-  }
+  if (!contentType.startsWith('image/')) throw new Error(`Expected an image from ${url}, received ${contentType || 'unknown content type'}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   await writeFile(destination, bytes);
   console.log(`Downloaded ${relativePath} (${bytes.length} bytes)`);
