@@ -1,0 +1,3 @@
+'use server';
+import {createClient} from '@/lib/supabase/server';import {revalidatePath} from 'next/cache';
+export async function sellerSetOrderStatus(orderId:string,status:string){const s=await createClient();const{data:{user}}=await s.auth.getUser();if(!user)return{success:false,error:'Not authenticated'};const{data:p}=await s.from('profiles').select('role').eq('id',user.id).single();if(p?.role!=='seller')return{success:false,error:'Seller access required'};const{error}=await(s as any).rpc('seller_set_order_status',{p_order_id:orderId,p_status:status});if(error)return{success:false,error:error.message};revalidatePath('/seller/orders');revalidatePath('/account/orders');return{success:true};}
