@@ -1,199 +1,103 @@
 # Perfect Store — Ghana Multi-Vendor Marketplace
 
-A production-quality multi-vendor ecommerce marketplace for Ghana, built with Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase, and Zustand.
+Perfect Store is a production-oriented multi-vendor ecommerce marketplace for Ghana built with Next.js 16, React 19, TypeScript, Tailwind CSS 4, Supabase and Zustand.
 
-## Tech Stack
+## Implemented
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript 5
-- **Styling:** Tailwind CSS 4
-- **Database:** Supabase (PostgreSQL)
-- **Auth:** Supabase Auth with SSR
-- **State:** Zustand (client-side cart)
-- **Validation:** Zod
-- **Forms:** React Hook Form
+- Supabase SSR authentication with customer, seller and admin roles
+- Product catalogue, categories, search, filtering, variants and seller storefront data
+- Guest/local cart with authenticated database synchronization
+- Address CRUD and delivery selection
+- Atomic order creation with authoritative pricing and inventory reservation
+- Product-level and variant-level inventory protection
+- Order history, order detail, confirmation and cancellation
+- Seller application and administrator approval workflow
+- Seller product creation, inventory and variant management
+- Seller order lifecycle management
+- Administrator seller, customer, product, order and review moderation
+- Coupon administration
+- Verified customer reviews with product rating aggregation
+- Customer notifications inbox
+- Paystack initialization and transaction verification hooks
+- Cash on delivery and bank-transfer payment-method records
+- Shipping records and lifecycle updates
+- RLS and server-side authorization boundaries
+- GitHub Actions lint and production-build checks
 
-## Features
+## Payment configuration
 
-### Authentication
-- Email/password registration and login
-- Password reset flow
-- Role-based access (customer, seller, admin)
-- Server-side session management via Supabase SSR
+Paystack online checkout is implemented but requires a server-side secret. Configure these environment variables in the deployment environment when the merchant account is ready:
 
-### Storefront
-- Product catalog with categories
-- Product detail pages with variants
-- Product search and filtering
-- Seller storefronts
-- Responsive design (mobile-first)
-
-### Cart & Checkout
-- Guest cart (localStorage) with DB sync on login
-- Server-validated checkout
-- Authoritative server-side pricing
-- Address management (CRUD)
-- Delivery method selection
-- Atomic order creation via PostgreSQL RPC
-
-### Order Lifecycle (Phase 7)
-- **Real order creation** — atomic database function handles validation, pricing, order/ item creation, inventory reservation, and cart cleanup in a single transaction
-- **Inventory protection** — database-level atomic reservation prevents overselling; supports both product-level and variant-level inventory
-- **Shipping snapshots** — immutable address data stored on the order, unaffected by future address edits
-- **Multi-vendor orders** — one order can contain products from multiple sellers
-- **Order history** — customers can view all past orders with status, items, and totals
-- **Order detail** — full order view with status timeline, items, delivery info, and payment status
-- **Order confirmation** — post-checkout success page with complete order summary
-- **Order cancellation** — customers can cancel pending/confirmed orders with automatic inventory release
-- **Pending payment** — orders start as "pending" with no payment gateway; payment integration is planned for a future phase
-
-### Security
-- Row Level Security (RLS) on all tables
-- Cart item ownership verification
-- Order ownership enforcement
-- Seller isolation for order items
-- Server-side price and inventory validation
-- Service-role client restricted to server-side only
-
-## Order Flow
-
-```
-Cart → Checkout → Select Address → Select Delivery → Review → Place Order
-    → Order Created (atomic) → Cart Cleared → Inventory Reserved
-    → Order Confirmation → Order History → Order Detail/Tracking
+```text
+PAYSTACK_SECRET_KEY=your_server_side_paystack_secret
+NEXT_PUBLIC_SITE_URL=https://your-domain.example
 ```
 
-### Order Statuses
+Never expose `PAYSTACK_SECRET_KEY` to browser code.
 
-| Status | Meaning |
-|--------|---------|
-| `pending` | Order received, awaiting confirmation. Payment not yet processed. |
-| `confirmed` | Order confirmed by the system/seller. |
-| `processing` | Order is being prepared for shipment. |
-| `shipped` | Order has been shipped. |
-| `delivered` | Order has been delivered. |
-| `cancelled` | Order was cancelled by customer or admin. |
-| `refunded` | Order was refunded. |
+## Required Supabase variables
 
-### Payment Status
-
-Payment gateway integration is **not yet implemented**. All orders currently have a `pending` payment record. The architecture is ready for a payment provider (Paystack, Flutterwave, Mobile Money, etc.) to be plugged in during a future phase.
-
-## Database Schema
-
-### Tables
-
-- `profiles` — User profiles with roles
-- `sellers` — Seller shop information
-- `products` — Product catalog
-- `product_images` — Product images
-- `product_variants` — Product variants (size, color, etc.)
-- `inventory` — Product-level inventory tracking
-- `variant_inventory` — Variant-level inventory tracking
-- `addresses` — Customer shipping addresses
-- `carts` — Shopping carts
-- `cart_items` — Cart line items
-- `wishlists` — Customer wishlists
-- `wishlist_items` — Wishlist items
-- `orders` — Customer orders with shipping snapshots
-- `order_items` — Order line items with product/seller snapshots
-- `payments` — Payment records (pending until gateway integration)
-- `shipments` — Shipment tracking
-- `reviews` — Product reviews
-- `coupons` — Discount coupons
-- `order_coupons` — Applied coupons
-- `seller_payouts` — Seller payout records
-- `notifications` — User notifications
-- `audit_logs` — Audit trail
-
-### Key Database Functions
-
-- `create_order()` — Atomic order creation with validation, inventory reservation, and cart cleanup
-- `cancel_order()` — Atomic order cancellation with inventory release
-
-## Environment Variables
-
-Required in `.env.local`:
-
-```
+```text
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` must NEVER be exposed to the client and should only be used in server-side code.
+The service-role key is server-only and must never be committed.
 
-## Getting Started
+## Marketplace workflow
+
+```text
+Register/Login
+  → Browse categories/search
+  → Product detail
+  → Cart/Wishlist
+  → Checkout
+  → Address
+  → Delivery
+  → Payment method
+  → Place order
+  → Inventory reservation
+  → Order confirmation
+  → Order history/detail
+  → Seller/Admin lifecycle updates
+  → Delivery
+  → Verified review
+```
+
+## Seller workflow
+
+```text
+Customer account
+  → Seller application
+  → Admin review
+  → Seller activation
+  → Create product
+  → Product review/approval
+  → Inventory/variants
+  → Receive orders
+  → Process/ship/deliver
+```
+
+## Admin workflow
+
+The administrator dashboard provides seller approval/rejection/suspension, customer activation control, product publication/rejection, order status management, review moderation and navigation to coupon administration.
+
+## Security
+
+All sensitive mutations are validated server-side. Database RLS policies enforce customer ownership, seller isolation and administrator access. Order creation/cancellation and seller/admin status transitions are implemented as authorization-aware PostgreSQL functions. Payment verification is performed server-side against the provider response and the stored order amount.
+
+## Development
 
 ```bash
 npm install
 npm run dev
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+The repository CI runs `npm ci`, `npm run lint` and `npm run build` on pushes and pull requests to `main`.
 
-## Scripts
+## Data policy
 
-```bash
-npm run dev     # Development server
-npm run build   # Production build
-npm run start   # Production server
-npm run lint    # ESLint
-```
-
-## Project Structure
-
-```
-app/
-├── (auth)/              # Auth pages (login, register, reset)
-├── (storefront)/        # Storefront routes
-│   ├── cart/            # Cart page & actions
-│   ├── categories/      # Category pages
-│   ├── checkout/        # Checkout page & actions
-│   ├── products/        # Product pages
-│   └── search/          # Search page
-├── account/             # Account pages
-│   ├── addresses/       # Address management
-│   └── orders/          # Order history, detail, confirmation
-├── admin/               # Admin dashboard (future)
-├── seller/              # Seller dashboard (future)
-├── api/                 # API routes
-├── auth/                # Auth callback
-├── layout.tsx           # Root layout
-└── page.tsx             # Homepage
-components/
-├── admin/               # Admin components
-├── cart/                # Cart components
-├── categories/          # Category components
-├── checkout/            # Checkout components
-├── home/                # Homepage components
-├── layout/              # Layout components (Header, Footer)
-├── products/            # Product components
-├── search/              # Search components
-├── seller/              # Seller components
-├── ui/                  # Shared UI components
-└── wishlist/            # Wishlist components
-lib/
-├── config/              # Configuration (delivery methods)
-├── data/                # Data layer
-├── queries/             # Database queries
-├── supabase/            # Supabase clients (server, client, admin, proxy)
-├── utils/               # Utilities (formatting, order, cn)
-└── validations/         # Zod schemas
-stores/
-└── cart.ts              # Zustand cart store (localStorage)
-types/
-├── database.ts          # Supabase database types
-└── index.ts             # Type re-exports
-supabase/
-├── migrations/          # SQL migrations
-└── seed/                # Seed data
-```
-
-## Future Phases
-
-- **Phase 8:** Payment gateway integration (Paystack, Flutterwave, Mobile Money)
-- **Phase 9:** Seller dashboard with order management
-- **Phase 10:** Admin dashboard with order/product/user management
-- **Phase 11:** Reviews and ratings
-- **Phase 12:** Notifications and email
+The repository does not rely on random `picsum.photos` catalogue imagery or fake seller credentials. Product images should be supplied by legitimate sellers through approved product-image URLs/storage. The connected production database currently has no legitimate seller accounts or catalogue products, so no fake seller or customer account is created just to manufacture marketplace activity.
