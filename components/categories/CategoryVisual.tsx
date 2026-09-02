@@ -2,45 +2,153 @@
 
 import Link from 'next/link';
 
-const themes: Record<string, { bg: string; accent: string; items: string[] }> = {
-  electronics: { bg: '#eaf0f8', accent: '#0f2b5b', items: ['PHONE', 'LAPTOP', 'AUDIO'] },
-  'phones-tablets': { bg: '#edf3fb', accent: '#1d4d78', items: ['PHONE', 'TABLET', 'WATCH'] },
-  'computers-accessories': { bg: '#eef1f5', accent: '#334155', items: ['LAPTOP', 'MONITOR', 'KEYBOARD'] },
-  fashion: { bg: '#fff0eb', accent: '#e85d26', items: ['SHOES', 'BAG', 'WEAR'] },
-  'home-kitchen': { bg: '#edf4f7', accent: '#1d4d78', items: ['CHAIR', 'PAN', 'LAMP'] },
-  'beauty-personal-care': { bg: '#f9edf3', accent: '#9a315f', items: ['CARE', 'BEAUTY', 'BODY'] },
-  health: { bg: '#eaf7f1', accent: '#059669', items: ['CARE', 'FIT', 'WELLNESS'] },
-  'sports-fitness': { bg: '#eaf7f2', accent: '#047857', items: ['BALL', 'FIT', 'SPORT'] },
-  automotive: { bg: '#eef1f4', accent: '#475569', items: ['AUTO', 'PARTS', 'TOOLS'] },
-  'baby-products': { bg: '#fff5e8', accent: '#b45309', items: ['BABY', 'TOYS', 'CARE'] },
-  groceries: { bg: '#f2f7e8', accent: '#365314', items: ['FOOD', 'FRESH', 'HOME'] },
-  'office-school': { bg: '#edf2ff', accent: '#1e40af', items: ['PEN', 'BOOK', 'DESK'] },
-  appliances: { bg: '#f4edfa', accent: '#6b21a8', items: ['TV', 'COOK', 'HOME'] },
+const photos: Record<string, { images: string[]; labels: string[] }> = {
+  electronics: {
+    images: [
+      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Phones', 'Laptops', 'Audio'],
+  },
+  'phones-tablets': {
+    images: [
+      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Phones', 'Tablets', 'Watches'],
+  },
+  'computers-accessories': {
+    images: [
+      'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Laptops', 'Monitors', 'Keyboards'],
+  },
+  fashion: {
+    images: [
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Clothing', 'Shoes', 'Bags'],
+  },
+  'home-kitchen': {
+    images: [
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Kitchen', 'Cookware', 'Home'],
+  },
+  'beauty-personal-care': {
+    images: [
+      'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Skincare', 'Beauty', 'Personal Care'],
+  },
+  health: {
+    images: [
+      'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Wellness', 'Health', 'Care'],
+  },
+  'sports-fitness': {
+    images: [
+      'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Running', 'Fitness', 'Sports'],
+  },
+  automotive: {
+    images: [
+      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1486006920555-c77dcf18193c?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Vehicles', 'Parts', 'Accessories'],
+  },
+  'baby-products': {
+    images: [
+      'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Baby', 'Care', 'Toys'],
+  },
+  groceries: {
+    images: [
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1519996529931-28324d5a630e?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Fresh Food', 'Groceries', 'Pantry'],
+  },
+  'office-school': {
+    images: [
+      'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Office', 'Stationery', 'School'],
+  },
+  appliances: {
+    images: [
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1586208958839-06e9f5a1d8c3?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=900&q=85',
+    ],
+    labels: ['Kitchen', 'Appliances', 'Home'],
+  },
 };
 
-export function CategoryVisual({ slug, href, className = '' }: { slug: string; href?: string; className?: string }) {
-  const theme = themes[slug] || { bg: '#eef2f7', accent: '#0f2b5b', items: ['SHOP', 'MORE', 'TODAY'] };
-  const content = (
-    <div className={`relative overflow-hidden rounded-2xl border border-black/5 ${className}`} style={{ background: theme.bg }}>
-      <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full opacity-20" style={{ background: theme.accent }} />
-      <div className="relative grid min-h-44 grid-cols-3 items-end gap-2 p-5">
-        {theme.items.map((item, index) => (
-          <div key={item} className="flex flex-col items-center gap-2">
+const fallback = photos.electronics;
+
+export function CategoryVisual({
+  slug,
+  href,
+  className = '',
+}: {
+  slug: string;
+  href?: string;
+  className?: string;
+}) {
+  const content = photos[slug] || fallback;
+
+  const visual = (
+    <div className={`group relative overflow-hidden rounded-2xl border border-black/5 bg-gray-100 ${className}`}>
+      <div className="grid min-h-44 grid-cols-3 gap-1.5 p-1.5 sm:gap-2 sm:p-2">
+        {content.images.map((image, index) => (
+          <div key={`${image}-${index}`} className="relative min-h-36 overflow-hidden rounded-xl bg-gray-200 sm:min-h-44">
             <div
-              className="flex aspect-square w-full max-w-24 items-center justify-center rounded-2xl border border-black/5 bg-white shadow-sm"
-              style={{ transform: `translateY(${index === 1 ? -10 : 0}px) rotate(${index === 0 ? -4 : index === 2 ? 4 : 0}deg)` }}
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl text-[9px] font-black tracking-wider" style={{ background: `${theme.accent}18`, color: theme.accent }}>
-                {item.slice(0, 4)}
-              </div>
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+              style={{ backgroundImage: `url(${image})` }}
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent px-3 pb-3 pt-10">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white drop-shadow sm:text-xs">
+                {content.labels[index]}
+              </span>
             </div>
-            <span className="text-[9px] font-semibold tracking-wide opacity-60">{item}</span>
           </div>
         ))}
       </div>
     </div>
   );
-  return href ? <Link href={href} className="block group">{content}</Link> : content;
+
+  return href ? (
+    <Link href={href} className="block">
+      {visual}
+    </Link>
+  ) : (
+    visual
+  );
 }
 
-export const CATEGORY_VISUAL_SLUGS = Object.keys(themes);
+export const CATEGORY_VISUAL_SLUGS = Object.keys(photos);
