@@ -55,7 +55,7 @@ export async function getPublicSellerProducts(
 
   if (error || !data) return { products: [], total: 0, hasMore: false };
 
-  const products = (data as ProductWithRelations[]).map((product) => ({
+  const products = (data as unknown as ProductWithRelations[]).map((product) => ({
     ...product,
     sellers: product.sellers ? { ...product.sellers, rating: 0 } : null,
   }));
