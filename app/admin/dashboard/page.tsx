@@ -1,71 +1,18 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+'use client';
+import { useEffect,useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { setSellerStatus,setOrderStatus,setProductStatus,setReviewPublished } from './actions';
 
-export default async function AdminDashboardPage() {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = typeof claimsData?.claims?.sub === 'string' ? claimsData.claims.sub : null;
-
-  if (!userId) redirect('/login');
-
-  const { data: profile } = await supabase.from('profiles').select('role, first_name').eq('id', userId).single();
-  if (profile?.role !== 'admin') redirect('/');
-
-  const [{ count: products }, { count: orders }, { count: customers }, { count: sellers }] = await Promise.all([
-    supabase.from('products').select('id', { count: 'exact', head: true }),
-    supabase.from('orders').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
-    supabase.from('sellers').select('id', { count: 'exact', head: true }),
-  ]);
-
-  const cards = [
-    ['Products', products ?? 0, '/products'],
-    ['Orders', orders ?? 0, '/account/orders'],
-    ['Customers', customers ?? 0, '#'],
-    ['Sellers', sellers ?? 0, '#'],
-  ];
-
-  return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-blue-600">Administration</p>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-gray-600">Welcome{profile.first_name ? `, ${profile.first_name}` : ''}. Manage Perfect Store from one place.</p>
-          </div>
-          <Link href="/" className="text-sm font-medium text-blue-600 hover:text-blue-700">View storefront →</Link>
-        </div>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {cards.map(([label, value, href]) => (
-            <Link key={label} href={href as string} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <p className="text-sm text-gray-500">{label}</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
-            </Link>
-          ))}
-        </section>
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Marketplace management</h2>
-            <p className="mt-1 text-sm text-gray-600">Core areas are connected to the live Supabase data layer.</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/products" className="rounded-xl border border-gray-200 p-4 text-sm font-medium text-gray-800 hover:border-blue-300 hover:text-blue-700">Product catalogue</Link>
-              <Link href="/categories" className="rounded-xl border border-gray-200 p-4 text-sm font-medium text-gray-800 hover:border-blue-300 hover:text-blue-700">Categories</Link>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-gray-900">System status</h2>
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between"><span className="text-gray-600">Authentication</span><span className="font-medium text-green-700">Connected</span></div>
-              <div className="flex items-center justify-between"><span className="text-gray-600">Database</span><span className="font-medium text-green-700">Connected</span></div>
-              <div className="flex items-center justify-between"><span className="text-gray-600">Order lifecycle</span><span className="font-medium text-green-700">Enabled</span></div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+export default function AdminDashboardPage(){
+ const [data,setData]=useState<any>({sellers:[],orders:[],products:[],reviews:[],counts:{}}); const [loading,setLoading]=useState(true);
+ async function load(){setLoading(true);const s=createClient();const {data:p}=await s.auth.getUser();if(!p.user){location.href='/login';return;}const {data:profile}=await s.from('profiles').select('role,first_name').eq('id',p.user.id).single();if(profile?.role!=='admin'){location.href='/';return;}const [{data:sellers},{data:orders},{data:products},{data:reviews}]=await Promise.all([s.from('sellers').select('id,store_name,status,email,phone,owner_id,created_at').order('created_at',{ascending:false}),s.from('orders').select('id,order_number,status,total_amount,customer_id,created_at').order('created_at',{ascending:false}).limit(50),s.from('products').select('id,name,status,base_price,sku,seller_id').order('created_at',{ascending:false}).limit(100),s.from('reviews').select('id,product_id,rating,title,body,is_published,created_at').order('created_at',{ascending:false}).limit(100)]);setData({sellers:sellers||[],orders:orders||[],products:products||[],reviews:reviews||[],counts:{sellers:sellers?.length||0,orders:orders?.length||0,products:products?.length||0,reviews:reviews?.length||0}});setLoading(false)}
+ useEffect(()=>{load()},[]);
+ if(loading)return <main className="min-h-screen bg-gray-50 p-8"><div className="mx-auto max-w-7xl animate-pulse rounded-2xl bg-white p-8">Loading administration…</div></main>;
+ const status=(s:string)=>s.replace('_',' ');
+ return <main className="min-h-screen bg-gray-50 p-4 sm:p-8"><div className="mx-auto max-w-7xl space-y-8"><div><p className="text-sm font-medium text-blue-600">Administration</p><h1 className="text-3xl font-bold">Marketplace Control Center</h1></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Object.entries(data.counts).map(([k,v])=><div key={k} className="rounded-2xl border bg-white p-5"><p className="text-sm capitalize text-gray-500">{k}</p><p className="mt-2 text-3xl font-bold">{v as number}</p></div>)}</div>
+ <section className="rounded-2xl border bg-white p-6"><h2 className="text-xl font-semibold">Seller applications</h2><div className="mt-4 divide-y">{data.sellers.map((s:any)=><div key={s.id} className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"><div><p className="font-semibold">{s.store_name}</p><p className="text-sm text-gray-500">{s.email||'No email'} · <span className="capitalize">{status(s.status)}</span></p></div><div className="flex gap-2"><button onClick={async()=>{await setSellerStatus(s.id,'active');load()}} className="rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white">Approve</button><button onClick={async()=>{await setSellerStatus(s.id,'suspended');load()}} className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white">Suspend</button><button onClick={async()=>{await setSellerStatus(s.id,'rejected');load()}} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white">Reject</button></div></div>)}</div></section>
+ <section className="rounded-2xl border bg-white p-6"><h2 className="text-xl font-semibold">Products</h2><div className="mt-4 divide-y">{data.products.map((p:any)=><div key={p.id} className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"><div><p className="font-medium">{p.name}</p><p className="text-sm text-gray-500">GHS {Number(p.base_price).toFixed(2)} · <span className="capitalize">{status(p.status)}</span></p></div><div className="flex gap-2"><button onClick={async()=>{await setProductStatus(p.id,'active');load()}} className="rounded-lg bg-green-700 px-3 py-2 text-xs text-white">Publish</button><button onClick={async()=>{await setProductStatus(p.id,'rejected');load()}} className="rounded-lg bg-red-600 px-3 py-2 text-xs text-white">Reject</button></div></div>)}</div></section>
+ <section className="rounded-2xl border bg-white p-6"><h2 className="text-xl font-semibold">Orders</h2><div className="mt-4 divide-y">{data.orders.map((o:any)=><div key={o.id} className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"><div><p className="font-medium">{o.order_number}</p><p className="text-sm text-gray-500">GHS {Number(o.total_amount).toFixed(2)} · <span className="capitalize">{status(o.status)}</span></p></div><select value={o.status} onChange={async e=>{await setOrderStatus(o.id,e.target.value);load()}} className="rounded-lg border px-3 py-2 text-sm"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="out_for_delivery">Out for delivery</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option><option value="refunded">Refunded</option></select></div>)}</div></section>
+ <section className="rounded-2xl border bg-white p-6"><h2 className="text-xl font-semibold">Review moderation</h2><div className="mt-4 divide-y">{data.reviews.map((r:any)=><div key={r.id} className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"><div><p className="font-medium">{'★'.repeat(r.rating)} {r.title||'Customer review'}</p><p className="text-sm text-gray-500">{r.body||''}</p></div><button onClick={async()=>{await setReviewPublished(r.id,!r.is_published);load()}} className="rounded-lg border px-3 py-2 text-xs font-semibold">{r.is_published?'Unpublish':'Publish'}</button></div>)}</div></section>
+ </div></main>;
 }
