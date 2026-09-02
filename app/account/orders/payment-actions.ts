@@ -1,0 +1,6 @@
+'use server';
+import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+const schema=z.object({orderId:z.string().uuid(),method:z.enum(['cash_on_delivery','paystack','bank_transfer'])});
+export async function setPaymentMethod(input:unknown){const p=schema.safeParse(input);if(!p.success)return{success:false,error:p.error.issues[0]?.message};const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return{success:false,error:'Not authenticated'};const {data:order}=await s.from('orders').select('id,total_amount,currency').eq('id',p.data.orderId).eq('customer_id',user.id).maybeSingle();if(!order)return{success:false,error:'Order not found'};const {error}=await s.from('payments').upsert({order_id:order.id,provider:p.data.method,status:'pending',amount:order.total_amount,currency:order.currency,metadata:{}},{onConflict:'order_id'});if(error)return{success:false,error:'Unable to save payment method'};revalidatePath(`/account/orders/${order.id}`);return{success:true,amount:Number(order.total_amount)};}
