@@ -1,122 +1,38 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { Container } from '@/components/ui/Container';
-import { brand } from '@/config/brand';
-import { Store, CheckCircle, ArrowRight, TrendingUp, Shield, Users } from 'lucide-react';
+'use client';
 
-export const metadata: Metadata = {
-  title: `Sell on ${brand.name} — Seller Application`,
-  description: `Join ${brand.name} as a seller and reach thousands of customers across Ghana.`,
-};
+import { useEffect, useState } from 'react';
+import { submitSellerApplication, getSellerApplication } from './actions';
+import { Store, CheckCircle, TrendingUp, Shield, Users } from 'lucide-react';
+import { brand } from '@/config/brand';
 
 export default function SellerApplyPage() {
+  const [application, setApplication] = useState<any>(null);
+  const [form, setForm] = useState({ storeName: '', description: '', phone: '', email: '' });
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => { getSellerApplication().then(setApplication); }, []);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setMessage('');
+    const result = await submitSellerApplication(form);
+    if (result.success) { setMessage('Application submitted. Our team will review it before activation.'); setApplication({ ...form, status: 'pending' }); }
+    else setMessage(result.error || 'Unable to submit application.');
+    setBusy(false);
+  }
+
   const benefits = [
-    {
-      icon: Users,
-      title: 'Reach Thousands of Customers',
-      description: 'Access a growing marketplace of active shoppers across Ghana.',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Grow Your Business',
-      description: 'Powerful seller tools to manage inventory, orders, and analytics.',
-    },
-    {
-      icon: Shield,
-      title: 'Secure Payments',
-      description: 'Get paid reliably with our secure payment processing system.',
-    },
+    [Users, 'Reach Customers', 'Sell to shoppers across Ghana.'],
+    [TrendingUp, 'Grow Your Business', 'Manage products, stock, orders and sales.'],
+    [Shield, 'Protected Marketplace', 'Seller access is reviewed and controlled.'],
   ];
 
-  const steps = [
-    { step: 1, title: 'Apply', description: 'Submit your seller application with your business details.' },
-    { step: 2, title: 'Get Verified', description: 'Our team reviews your application within 48 hours.' },
-    { step: 3, title: 'Start Selling', description: 'List your products and start reaching customers.' },
-  ];
-
-  return (
-    <div className="py-12 sm:py-20 bg-gray-50 min-h-[calc(100vh-8rem)]">
-      <Container size="lg">
-        {/* Hero */}
-        <div className="text-center mb-16">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0f2b5b] mb-6">
-            <Store size={32} className="text-white" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Sell on {brand.name}
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Join thousands of successful sellers on Ghana&apos;s leading multi-vendor marketplace.
-            Start reaching customers across the country today.
-          </p>
-        </div>
-
-        {/* Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {benefits.map((benefit) => (
-            <div key={benefit.title} className="text-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 mb-4">
-                <benefit.icon size={24} className="text-[#0f2b5b]" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{benefit.title}</h3>
-              <p className="text-sm text-gray-600">{benefit.description}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* How it Works */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step) => (
-              <div key={step.step} className="relative">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-full bg-[#0f2b5b] text-white flex items-center justify-center text-sm font-bold">
-                    {step.step}
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-                </div>
-                <p className="text-sm text-gray-600 ml-13">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-10 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">What You Get</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              'Free seller dashboard',
-              'Inventory management tools',
-              'Order management system',
-              'Seller analytics & reports',
-              'Customer support assistance',
-              'Marketing & promotion tools',
-              'Secure payment processing',
-              'Multi-location delivery',
-            ].map((feature) => (
-              <div key={feature} className="flex items-center gap-3">
-                <CheckCircle size={18} className="text-green-500 shrink-0" />
-                <span className="text-sm text-gray-700">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">
-            Ready to start selling? Contact our seller support team to get started.
-          </p>
-          <a
-            href={`mailto:sellers@${brand.contact.email.split('@')[1]}`}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0f2b5b] text-white rounded-lg font-medium hover:bg-[#1a3d7c] transition-colors"
-          >
-            Contact Seller Support <ArrowRight size={18} />
-          </a>
-        </div>
-      </Container>
+  return <main className="min-h-screen bg-gray-50 py-10 sm:py-16">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="text-center mb-10"><div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0f2b5b] text-white"><Store size={28}/></div><h1 className="text-3xl font-bold text-gray-900">Sell on {brand.name}</h1><p className="mx-auto mt-3 max-w-2xl text-gray-600">Apply for a verified seller store. Applications are reviewed before seller access is activated.</p></div>
+      <div className="grid gap-5 md:grid-cols-3 mb-10">{benefits.map(([Icon,title,desc]) => <div key={title as string} className="rounded-2xl border bg-white p-6"><div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#0f2b5b]"><Icon size={20}/></div><h2 className="font-semibold text-gray-900">{title as string}</h2><p className="mt-2 text-sm text-gray-600">{desc as string}</p></div>)}</div>
+      {application ? <div className="rounded-2xl border bg-white p-8"><p className="text-sm text-gray-500">Application status</p><div className="mt-2 flex items-center gap-3"><h2 className="text-2xl font-bold text-gray-900">{application.store_name}</h2><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold capitalize text-blue-700">{application.status}</span></div><p className="mt-4 text-gray-600">Your application is recorded. {application.status === 'active' ? 'Seller access is active.' : 'An administrator must approve the application before you can sell.'}</p></div> : <form onSubmit={submit} className="rounded-2xl border bg-white p-6 sm:p-8 space-y-5"><h2 className="text-xl font-semibold text-gray-900">Seller application</h2><div className="grid gap-5 sm:grid-cols-2"><label className="text-sm font-medium text-gray-700">Store name<input required maxLength={80} value={form.storeName} onChange={e=>setForm({...form,storeName:e.target.value})} className="mt-2 w-full rounded-lg border px-4 py-3 font-normal outline-none focus:border-blue-500" /></label><label className="text-sm font-medium text-gray-700">Business email<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} className="mt-2 w-full rounded-lg border px-4 py-3 font-normal outline-none focus:border-blue-500" /></label><label className="text-sm font-medium text-gray-700">Phone<input required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-2 w-full rounded-lg border px-4 py-3 font-normal outline-none focus:border-blue-500" /></label><label className="text-sm font-medium text-gray-700">Business description<textarea maxLength={500} value={form.description} onChange={e=>setForm({...form,description:e.target.value})} className="mt-2 w-full rounded-lg border px-4 py-3 font-normal outline-none focus:border-blue-500" rows={3}/></label></div>{message && <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">{message}</p>}<button disabled={busy} className="rounded-lg bg-[#0f2b5b] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Submitting…' : 'Submit application'}</button></form>}
+      <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-500"><CheckCircle size={15}/> Seller accounts are subject to marketplace review.</div>
     </div>
-  );
+  </main>;
 }
