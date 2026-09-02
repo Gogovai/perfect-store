@@ -30,6 +30,7 @@ export type ProductSortOption =
 export type ProductFilterOptions = {
   categorySlug?: string;
   categoryId?: string;
+  sellerId?: string;
   minPrice?: number;
   maxPrice?: number;
   rating?: number;
@@ -62,6 +63,16 @@ function normalizeProducts(data: unknown): ProductWithRelations[] {
   }));
 }
 
+function sanitizeSearchTerm(value: string): string {
+  // PostgREST's .or() grammar uses commas and parentheses as syntax. Replace
+  // those characters so user input cannot alter the filter expression.
+  return value
+    .replace(/[,%()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+}
+
 export async function getProducts(
   filters: ProductFilterOptions = {}
 ): Promise<ProductListResult> {
@@ -70,6 +81,7 @@ export async function getProducts(
   const {
     categorySlug,
     categoryId,
+    sellerId,
     minPrice,
     maxPrice,
     rating,
@@ -109,12 +121,18 @@ export async function getProducts(
     }
   }
 
+  if (sellerId) query = query.eq('seller_id', sellerId);
   if (minPrice !== undefined) query = query.gte('base_price', minPrice);
   if (maxPrice !== undefined) query = query.lte('base_price', maxPrice);
   if (rating !== undefined) query = query.gte('rating_average', rating);
   if (search?.trim()) {
-    const term = search.trim();
-    query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
+    const term = sanitizeSearchTerm(search);
+    if (term) {
+      const pattern = `%${term}%`;
+      query = query.or(
+        `name.ilike.${pattern},brand.ilike.${pattern},sku.ilike.${pattern},description.ilike.${pattern}`
+      );
+    }
   }
 
   switch (sort) {
@@ -135,14 +153,15 @@ export async function getProducts(
       query = query.order('created_at', { ascending: false });
   }
 
-  const from = (page - 1) * pageSize;
+  const from = (Math.max(1, page) - 1) * Math.min(Math.max(1, pageSize), 100);
+  const effectivePageSize = Math.min(Math.max(1, pageSize), 100);
   const { data, error, count } = await query.range(
     from,
-    from + pageSize - 1
+    from + effectivePageSize - 1
   );
 
   if (error || !data) {
-    return { products: [], total: 0, page, pageSize, hasMore: false };
+    return { products: [], total: 0, page, pageSize: effectivePageSize, hasMore: false };
   }
 
   const products = normalizeProducts(data);
@@ -151,7 +170,7 @@ export async function getProducts(
     products,
     total,
     page,
-    pageSize,
+    pageSize: effectivePageSize,
     hasMore: from + products.length < total,
   };
 }
