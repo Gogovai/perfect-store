@@ -8,12 +8,20 @@ const eslintConfig = defineConfig([
   {
     files: [
       "app/account/reviews/**/*.{ts,tsx}",
+      "app/account/returns/**/*.{ts,tsx}",
+      "app/account/support/**/*.{ts,tsx}",
       "app/admin/dashboard/**/*.{ts,tsx}",
       "app/admin/coupons/**/*.{ts,tsx}",
       "app/admin/categories/**/*.{ts,tsx}",
+      "app/admin/products/**/*.{ts,tsx}",
+      "app/admin/returns/**/*.{ts,tsx}",
+      "app/admin/support/**/*.{ts,tsx}",
+      "app/admin/campaigns/**/*.{ts,tsx}",
+      "app/admin/logistics/**/*.{ts,tsx}",
       "app/seller/apply/**/*.{ts,tsx}",
       "app/seller/orders/**/*.{ts,tsx}",
       "app/seller/products/**/*.{ts,tsx}",
+      "app/seller/advertising/**/*.{ts,tsx}",
       "components/seller/**/*.{ts,tsx}",
     ],
     rules: {
