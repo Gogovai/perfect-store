@@ -27,7 +27,12 @@ async function verifyCartItemOwnership(cartItemId: string): Promise<string | nul
   if (!user) return null;
   const { data: cart } = await supabase.from('carts').select('id').eq('user_id', user.id).maybeSingle();
   if (!cart) return null;
-  const { data: item } = await supabase.from('cart_items').select('id').eq('id', cartItemId).eq('cart_id', cart.id).maybeSingle();
+  const { data: item } = await supabase
+    .from('cart_items')
+    .select('id')
+    .eq('id', cartItemId)
+    .eq('cart_id', cart.id)
+    .maybeSingle();
   return item ? cart.id : null;
 }
 
@@ -99,8 +104,11 @@ export async function getCartItemCount(): Promise<number> {
   if (!user) return 0;
   const { data: cart } = await supabase.from('carts').select('id').eq('user_id', user.id).maybeSingle();
   if (!cart) return 0;
-  const { data: items } = await supabase.from('cart_items').select('quantity').eq('cart_id', cart.id);
-  return items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const { data: items } = await supabase
+    .from('cart_items')
+    .select('quantity')
+    .eq('cart_id', cart.id);
+  return items?.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0) ?? 0;
 }
 
 async function getOrCreateUserCart() {
@@ -140,7 +148,13 @@ export async function syncCartToDatabase(
       unitPrice = variant.price ?? unitPrice;
     }
 
-    const { data: existing } = await supabase.from('cart_items').select('id, quantity').eq('cart_id', cart.id).eq('product_id', li.productId).eq('variant_id', li.variantId).maybeSingle();
+    const { data: existing } = await supabase
+      .from('cart_items')
+      .select('id, quantity')
+      .eq('cart_id', cart.id)
+      .eq('product_id', li.productId)
+      .eq('variant_id', li.variantId)
+      .maybeSingle();
     if (existing) {
       await supabase.from('cart_items').update({ quantity: Math.min(99, Math.max(existing.quantity, li.quantity)), unit_price: unitPrice, updated_at: new Date().toISOString() } as TablesUpdate<'cart_items'>).eq('id', existing.id);
     } else {
@@ -168,7 +182,13 @@ export async function addToDatabaseCart(productId: string, variantId: string | n
     unitPrice = variant.price ?? unitPrice;
   }
 
-  const { data: existing } = await supabase.from('cart_items').select('id, quantity').eq('cart_id', cart.id).eq('product_id', productId).eq('variant_id', variantId).maybeSingle();
+  const { data: existing } = await supabase
+    .from('cart_items')
+    .select('id, quantity')
+    .eq('cart_id', cart.id)
+    .eq('product_id', productId)
+    .eq('variant_id', variantId ?? null)
+    .maybeSingle();
   if (existing) {
     const nextQuantity = existing.quantity + quantity;
     if (nextQuantity > 99) return { success: false, error: 'Maximum quantity is 99' };
