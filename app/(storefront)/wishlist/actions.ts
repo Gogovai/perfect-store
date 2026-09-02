@@ -56,12 +56,11 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
         name,
         slug,
         base_price,
-        is_active,
         status,
-        average_rating,
+        rating_average,
         review_count,
         product_images(url, is_primary),
-        sellers!inner(shop_name)
+        sellers!inner(store_name)
       )
     `)
     .eq('wishlist_id', wl.id);
@@ -72,7 +71,7 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((item: any) => {
       const product = item.products;
-      return product.is_active && product.status === 'active';
+      return product.status === 'active';
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((item: any) => {
@@ -87,8 +86,8 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
         price: product.base_price,
         imageUrl: primaryImage?.url || '',
         slug: product.slug,
-        sellerName: product.sellers?.shop_name || '',
-        averageRating: product.average_rating || 0,
+        sellerName: product.sellers?.store_name || '',
+        averageRating: product.rating_average || 0,
         reviewCount: product.review_count || 0,
       };
     });

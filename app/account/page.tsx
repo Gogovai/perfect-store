@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
-import { User, Mail, Phone, Shield, ShoppingBag, Heart, MapPin, LogOut, ChevronRight, Camera } from 'lucide-react';
+import { User, Mail, Phone, ShoppingBag, Heart, MapPin, LogOut, ChevronRight, Camera } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,10 +19,9 @@ export default async function AccountPage() {
   const initials = `${firstName.charAt(0)}${lastName.charAt(0) || ''}`.toUpperCase();
 
   const navItems = [
-    { label: 'Orders', href: '/orders', icon: ShoppingBag, description: 'View and track your orders' },
+    { label: 'Orders', href: '/account/orders', icon: ShoppingBag, description: 'View and track your orders' },
     { label: 'Wishlist', href: '/wishlist', icon: Heart, description: 'Your saved products' },
-    { label: 'Addresses', href: '/addresses', icon: MapPin, description: 'Manage shipping addresses' },
-    { label: 'Security', href: '/account/security', icon: Shield, description: 'Password and security settings' },
+    { label: 'Addresses', href: '/account/addresses', icon: MapPin, description: 'Manage shipping addresses' },
   ];
 
   return (

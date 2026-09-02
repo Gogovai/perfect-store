@@ -93,7 +93,7 @@ export function Header({ profile }: HeaderProps) {
                 </Link>
                 <span className="text-white/30">|</span>
                 <Link
-                  href="/orders/track"
+                  href="/account/orders"
                   className="flex items-center gap-1 transition-colors hover:text-white"
                 >
                   <Truck size={12} />
@@ -208,7 +208,7 @@ export function Header({ profile }: HeaderProps) {
                               Wishlist
                             </Link>
                             <Link
-                              href="/orders"
+                              href="/account/orders"
                               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                               onClick={() => setUserMenuOpen(false)}
                             >
@@ -318,7 +318,7 @@ export function Header({ profile }: HeaderProps) {
                   Sell on {brand.shortName}
                 </Link>
                 <Link
-                  href="/orders/track"
+                  href="/account/orders"
                   className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   onClick={closeMenus}
                 >
@@ -383,7 +383,7 @@ export function Header({ profile }: HeaderProps) {
                         Wishlist
                       </Link>
                       <Link
-                        href="/orders"
+                        href="/account/orders"
                         className="block rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         onClick={closeMenus}
                       >

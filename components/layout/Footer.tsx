@@ -44,7 +44,7 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">Customer Service</h3>
             <ul className="space-y-2.5">
               <li><Link href="/help" className="text-sm text-white/60 hover:text-white transition-colors">Help Center</Link></li>
-              <li><Link href="/orders/track" className="text-sm text-white/60 hover:text-white transition-colors">Track Order</Link></li>
+              <li><Link href="/account/orders" className="text-sm text-white/60 hover:text-white transition-colors">Track Order</Link></li>
               <li><Link href="/returns" className="text-sm text-white/60 hover:text-white transition-colors">Returns & Refunds</Link></li>
               <li><Link href="/contact" className="text-sm text-white/60 hover:text-white transition-colors">Contact Us</Link></li>
               <li><Link href="/privacy" className="text-sm text-white/60 hover:text-white transition-colors">Privacy Policy</Link></li>
@@ -57,9 +57,9 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">About {brand.shortName}</h3>
             <ul className="space-y-2.5">
               <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/careers" className="text-sm text-white/60 hover:text-white transition-colors">Careers</Link></li>
-              <li><Link href="/blog" className="text-sm text-white/60 hover:text-white transition-colors">Blog</Link></li>
-              <li><Link href="/press" className="text-sm text-white/60 hover:text-white transition-colors">Press</Link></li>
+              <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">Careers</Link></li>
+              <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">Blog</Link></li>
+              <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">Press</Link></li>
             </ul>
           </div>
 
@@ -69,7 +69,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               <li><Link href="/products" className="text-sm text-white/60 hover:text-white transition-colors">Browse Products</Link></li>
               <li><Link href="/categories" className="text-sm text-white/60 hover:text-white transition-colors">Categories</Link></li>
-              <li><Link href="/search?sort=popular" className="text-sm text-white/60 hover:text-white transition-colors">Deals & Offers</Link></li>
+              <li><Link href="/products?sort=popular" className="text-sm text-white/60 hover:text-white transition-colors">Deals & Offers</Link></li>
               <li><Link href="/wishlist" className="text-sm text-white/60 hover:text-white transition-colors">Wishlist</Link></li>
             </ul>
           </div>
@@ -79,9 +79,9 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">Sell on {brand.shortName}</h3>
             <ul className="space-y-2.5">
               <li><Link href="/seller/apply" className="text-sm text-white/60 hover:text-white transition-colors">Start Selling</Link></li>
-              <li><Link href="/seller/guidelines" className="text-sm text-white/60 hover:text-white transition-colors">Seller Guidelines</Link></li>
-              <li><Link href="/seller/support" className="text-sm text-white/60 hover:text-white transition-colors">Seller Support</Link></li>
-              <li><Link href="/seller/faq" className="text-sm text-white/60 hover:text-white transition-colors">Seller FAQ</Link></li>
+              <li><Link href="/seller/apply" className="text-sm text-white/60 hover:text-white transition-colors">Seller Guidelines</Link></li>
+              <li><Link href="/seller/apply" className="text-sm text-white/60 hover:text-white transition-colors">Seller Support</Link></li>
+              <li><Link href="/seller/apply" className="text-sm text-white/60 hover:text-white transition-colors">Seller FAQ</Link></li>
             </ul>
           </div>
         </div>

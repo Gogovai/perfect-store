@@ -105,9 +105,8 @@ export async function validateCheckout(
         slug,
         base_price,
         status,
-        is_active,
         seller_id,
-        sellers!inner(id, shop_name, status),
+        sellers!inner(id, store_name, status),
         product_images(url, is_primary),
         product_variants(id, name, price, is_active)
       )
@@ -158,7 +157,7 @@ export async function validateCheckout(
     if (!product) {
       isValid = false;
       validationError = 'Product no longer exists';
-    } else if (!product.is_active || product.status !== 'active') {
+    } else if (product.status !== 'active') {
       isValid = false;
       validationError = 'This product is no longer available';
     }
@@ -196,11 +195,11 @@ export async function validateCheckout(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: varInv } = await (supabase as any)
           .from('variant_inventory')
-          .select('quantity, reserved')
+          .select('quantity, reserved_quantity')
           .eq('variant_id', item.variant_id)
           .single();
 
-        if (varInv && (varInv.quantity - varInv.reserved) < item.quantity) {
+        if (varInv && (varInv.quantity - varInv.reserved_quantity) < item.quantity) {
           isValid = false;
           validationError = 'Insufficient stock for requested quantity';
         }
@@ -208,11 +207,11 @@ export async function validateCheckout(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: prodInv } = await (supabase as any)
           .from('inventory')
-          .select('quantity, reserved')
+          .select('quantity, reserved_quantity')
           .eq('product_id', item.product_id)
           .single();
 
-        if (prodInv && (prodInv.quantity - prodInv.reserved) < item.quantity) {
+        if (prodInv && (prodInv.quantity - prodInv.reserved_quantity) < item.quantity) {
           isValid = false;
           validationError = 'Insufficient stock for requested quantity';
         }
@@ -226,7 +225,7 @@ export async function validateCheckout(
       productName: isValid ? product.name : product.name,
       variantName,
       sellerId: seller?.id || '',
-      sellerName: seller?.shop_name || '',
+      sellerName: seller?.store_name || '',
       imageUrl,
       unitPrice,
       quantity: item.quantity,

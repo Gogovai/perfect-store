@@ -26,18 +26,18 @@ type TablesMap = {
   addresses: Table<{ id: string; user_id: string; label: string; recipient_name: string; phone: string; address_line1: string; address_line2: string | null; city: string; region: string; country: string; postal_code: string | null; delivery_instructions: string | null; is_default: boolean; created_at: string; updated_at: string }>;
   carts: Table<{ id: string; user_id: string | null; session_id: string | null; currency: string; created_at: string; updated_at: string }>;
   cart_items: Table<{ id: string; cart_id: string; product_id: string; variant_id: string | null; quantity: number; unit_price: number; created_at: string; updated_at: string }>;
-  wishlists: Table;
-  wishlist_items: Table;
+  wishlists: Table<{ id: string; user_id: string; created_at: string; updated_at: string }>;
+  wishlist_items: Table<{ id: string; wishlist_id: string; product_id: string; created_at: string }>;
   orders: Table<{ id: string; order_number: string; customer_id: string; status: OrderStatus; currency: string; subtotal: number; shipping_fee: number; discount_amount: number; total_amount: number; shipping_address: Json; delivery_method: string; delivery_method_name: string; notes: string | null; placed_at: string; created_at: string; updated_at: string }>;
   order_items: Table<{ id: string; order_id: string; seller_id: string; product_id: string; variant_id: string | null; product_name: string; sku: string | null; quantity: number; unit_price: number; total_price: number; created_at: string }>;
   payments: Table<{ id: string; order_id: string; provider: PaymentMethod; provider_reference: string | null; status: PaymentStatus; amount: number; currency: string; paid_at: string | null; metadata: Json; created_at: string; updated_at: string }>;
-  shipments: Table;
-  reviews: Table;
-  coupons: Table;
-  order_coupons: Table;
-  seller_payouts: Table;
-  notifications: Table;
-  audit_logs: Table;
+  shipments: Table<{ id: string; order_id: string; status: ShipmentStatus; tracking_number: string | null; carrier: string | null; shipped_at: string | null; delivered_at: string | null; created_at: string; updated_at: string }>;
+  reviews: Table<{ id: string; product_id: string; user_id: string; rating: number; title: string; comment: string | null; helpful_count: number; created_at: string; updated_at: string }>;
+  coupons: Table<{ id: string; code: string; description: string | null; discount_type: string; discount_value: number; max_uses: number | null; current_uses: number; valid_from: string; valid_until: string; is_active: boolean; created_at: string; updated_at: string }>;
+  order_coupons: Table<{ id: string; order_id: string; coupon_id: string; discount_amount: number; created_at: string }>;
+  seller_payouts: Table<{ id: string; seller_id: string; amount: number; status: string; transaction_id: string | null; payout_date: string | null; created_at: string; updated_at: string }>;
+  notifications: Table<{ id: string; user_id: string; type: string; title: string; message: string; data: Json; is_read: boolean; created_at: string }>;
+  audit_logs: Table<{ id: string; user_id: string; action: string; entity_type: string; entity_id: string; changes: Json; ip_address: string | null; user_agent: string | null; created_at: string }>;
 };
 
 export type Database = {
@@ -60,14 +60,15 @@ export type TablesUpdate<T extends keyof PublicSchema['Tables']> = PublicSchema[
 export type Enums<T extends keyof PublicSchema['Enums']> = PublicSchema['Enums'][T];
 
 export type Profile = Tables<'profiles'>;
-export type SellerRecord = Tables<'sellers'> & { user_id: string; shop_name: string; rating: number; followers_count: number; products_count: number };
+export type SellerRecord = Tables<'sellers'>;
 export type Cart = Tables<'carts'>;
 export type CartItemRow = Tables<'cart_items'>;
 export type Wishlist = Tables<'wishlists'>;
 export type WishlistItemRow = Tables<'wishlist_items'>;
-export type Order = Tables<'orders'> & { user_id: string; shipping_cost: number; tax: number; total: number; shipping_address_id: string | null };
-export type OrderItem = Tables<'order_items'> & { variant_name: string | null; subtotal: number };
-export type Payment = Tables<'payments'> & { method: string; transaction_id: string | null };
+export type Order = Tables<'orders'>;
+export type OrderItem = Tables<'order_items'>;
+export type Payment = Tables<'payments'>;
+/** Address type with computed alias fields populated by server actions. */
 export type Address = Tables<'addresses'> & { full_name: string; address_line_1: string };
 export type Shipment = Tables<'shipments'>;
 export type Coupon = Tables<'coupons'>;
