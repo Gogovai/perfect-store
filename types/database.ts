@@ -32,8 +32,8 @@ type TablesMap = {
   order_items: Table<{ id: string; order_id: string; seller_id: string; product_id: string; variant_id: string | null; product_name: string; sku: string | null; quantity: number; unit_price: number; total_price: number; created_at: string }>;
   payments: Table<{ id: string; order_id: string; provider: PaymentMethod; provider_reference: string | null; status: PaymentStatus; amount: number; currency: string; paid_at: string | null; metadata: Json; created_at: string; updated_at: string }>;
   shipments: Table<{ id: string; order_id: string; status: ShipmentStatus; tracking_number: string | null; carrier: string | null; shipped_at: string | null; delivered_at: string | null; created_at: string; updated_at: string }>;
-  reviews: Table<{ id: string; product_id: string; user_id: string; rating: number; title: string; comment: string | null; helpful_count: number; created_at: string; updated_at: string }>;
-  coupons: Table<{ id: string; code: string; description: string | null; discount_type: string; discount_value: number; max_uses: number | null; current_uses: number; valid_from: string; valid_until: string; is_active: boolean; created_at: string; updated_at: string }>;
+  reviews: Table<{ id: string; product_id: string; customer_id: string; rating: number; title: string; body: string | null; order_item_id: string | null; is_verified_purchase: boolean; is_published: boolean; created_at: string; updated_at: string }>;
+  coupons: Table<{ id: string; code: string; description: string | null; discount_type: string; discount_value: number; max_uses: number | null; current_uses: number; valid_from: string; valid_until: string | null; is_active: boolean; created_at: string; updated_at: string }>;
   order_coupons: Table<{ id: string; order_id: string; coupon_id: string; discount_amount: number; created_at: string }>;
   seller_payouts: Table<{ id: string; seller_id: string; amount: number; status: string; transaction_id: string | null; payout_date: string | null; created_at: string; updated_at: string }>;
   notifications: Table<{ id: string; user_id: string; type: string; title: string; message: string; data: Json; is_read: boolean; created_at: string }>;
@@ -59,6 +59,7 @@ export type TablesInsert<T extends keyof PublicSchema['Tables']> = PublicSchema[
 export type TablesUpdate<T extends keyof PublicSchema['Tables']> = PublicSchema['Tables'][T]['Update'];
 export type Enums<T extends keyof PublicSchema['Enums']> = PublicSchema['Enums'][T];
 
+export type Review = Tables<'reviews'>;
 export type Profile = Tables<'profiles'>;
 export type SellerRecord = Tables<'sellers'>;
 export type Cart = Tables<'carts'>;
