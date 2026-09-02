@@ -1,0 +1,38 @@
+name: Sync Product Photos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/download-product-images.mjs'
+      - 'components/categories/CategoryVisual.tsx'
+      - 'lib/data/campaigns.ts'
+      - 'components/search/SearchEmptyState.tsx'
+      - '.github/workflows/sync-product-images.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download real product photographs
+        run: node scripts/download-product-images.mjs
+
+      - name: Commit downloaded photographs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/product-images
+          if git diff --cached --quiet; then
+            echo 'No new product photographs to commit.'
+            exit 0
+          fi
+          git commit -m 'chore: add local real product photographs [skip ci]'
+          git push
