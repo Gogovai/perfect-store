@@ -1,11 +1,11 @@
 export type HeroSlide={id:string;headline:string;subtext:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string;textColor:string};export type FlashSaleItem={id:string;name:string;originalPrice:number;salePrice:number;imageUrl:string;discountPercent:number;slug:string};export type PromoBanner={id:string;title:string;description:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string};export type FeaturedStore={id:string;name:string;logoUrl:string;bannerUrl:string;productCount:number;rating:number;slug:string};
 
 const PHOTO={
-  electronics:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&q=88',
-  fashion:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=88',
-  home:'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1400&q=88',
-  beauty:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1400&q=88',
-  sell:'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1400&q=88',
+  electronics:'/product-images/electronics/phones.jpg',
+  fashion:'/product-images/fashion/clothing.jpg',
+  home:'/product-images/home-kitchen/kitchen.jpg',
+  beauty:'/product-images/beauty-personal-care/skincare.jpg',
+  sell:'/product-images/electronics/laptop.jpg',
 };
 
 export const HERO_SLIDES:HeroSlide[]=[
@@ -26,18 +26,18 @@ export const FEATURED_STORES:FeaturedStore[]=[];
 
 export const CATEGORY_IMAGES:Record<string,string>={
   electronics:PHOTO.electronics,
-  'phones-tablets':'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=85',
-  'computers-accessories':'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=85',
+  'phones-tablets':'/product-images/phones-tablets/phone.jpg',
+  'computers-accessories':'/product-images/computers-accessories/laptop.jpg',
   fashion:PHOTO.fashion,
   'home-kitchen':PHOTO.home,
   'beauty-personal-care':PHOTO.beauty,
-  health:'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=600&q=85',
-  'sports-fitness':'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=85',
-  automotive:'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=85',
-  'baby-products':'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=600&q=85',
-  groceries:'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=85',
-  'office-school':'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=600&q=85',
-  appliances:PHOTO.home,
+  health:'/product-images/health/wellness.jpg',
+  'sports-fitness':'/product-images/sports-fitness/running.jpg',
+  automotive:'/product-images/automotive/vehicle.jpg',
+  'baby-products':'/product-images/baby-products/baby.jpg',
+  groceries:'/product-images/groceries/fresh.jpg',
+  'office-school':'/product-images/office-school/office.jpg',
+  appliances:'/product-images/appliances/washing-machine.jpg',
 };
 
 export function getCategoryImage(slug:string,icon:string|null){return icon&&icon.startsWith('http')?icon:(CATEGORY_IMAGES[slug]||'');}
