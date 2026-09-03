@@ -12,15 +12,18 @@ Perfect Store is a production-oriented multi-vendor ecommerce marketplace for Gh
 - Product-level and variant-level inventory protection
 - Order history, order detail, order confirmation and cancellation
 - Seller application and administrator approval workflow
-- Seller product creation, inventory and variant management
+- Seller business verification, product creation, inventory and variant management
 - Seller order lifecycle management
 - Administrator seller, customer, product, order and review moderation
-- Coupon administration
+- Coupon administration and validation
 - Verified customer reviews with product rating aggregation
 - Customer notifications inbox
-- Paystack initialization and server-side transaction verification hooks
+- Paystack initialization with server-side transaction verification callback
 - Cash on delivery and Paystack payment-method records
-- Shipping records and lifecycle updates
+- Shipping records, shipment events and lifecycle updates
+- Returns, refunds, seller finance/ledger and seller performance primitives
+- Campaigns, seller advertising, logistics configuration and support workflows
+- Warehouse and pickup-station data primitives with RLS
 - RLS and server-side authorization boundaries
 - GitHub Actions lint and production-build checks
 - Production security/performance hardening for privileged RPCs, foreign keys and auth RLS expressions
@@ -32,9 +35,10 @@ Paystack online checkout is implemented but requires a merchant account and serv
 ```text
 PAYSTACK_SECRET_KEY=your_server_side_paystack_secret
 NEXT_PUBLIC_SITE_URL=https://your-domain.example
+SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
 ```
 
-Never expose `PAYSTACK_SECRET_KEY` to browser code. Cash on delivery does not require Paystack.
+Never expose `PAYSTACK_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to browser code or commit either secret. The Paystack callback uses the service-role client only on the trusted server to record verified payment results. Cash on delivery does not require Paystack.
 
 ## Required Supabase variables
 
@@ -59,10 +63,12 @@ Register/Login
   → Payment method
   → Place order
   → Inventory reservation
+  → Payment confirmation
   → Order confirmation
   → Order history/detail
   → Seller/Admin lifecycle updates
   → Delivery
+  → Return/refund when eligible
   → Verified review
 ```
 
@@ -71,6 +77,7 @@ Register/Login
 ```text
 Customer account
   → Seller application
+  → Business verification
   → Admin review
   → Seller activation
   → Create product
@@ -78,17 +85,18 @@ Customer account
   → Inventory/variants
   → Receive orders
   → Process/ship/deliver
+  → Finance/performance
 ```
 
 ## Admin workflow
 
-The administrator dashboard provides seller approval/rejection/suspension, customer activation control, product publication/rejection, order status management, review moderation, category management and coupon administration.
+The administrator dashboard provides seller approval/rejection/suspension, customer activation control, product publication/rejection, order status management, review moderation, category management, coupons, returns/refunds, campaigns, logistics and support operations.
 
 ## Commercial data policy
 
 The application does not manufacture fake seller/customer accounts, fake reviews, fake orders, or random catalogue imagery. Products require a legitimate approved seller because `products.seller_id` is mandatory and seller ownership is enforced by the database.
 
-The connected Supabase production database currently contains 13 active categories but **0 approved sellers and 0 catalogue products**. This is intentional: populating the live marketplace with invented seller identities or fake inventory would make the catalogue unsuitable for commercial use. Once a real seller is approved, products can be entered through the seller dashboard and published by an administrator.
+The connected Supabase production database currently contains 13 categories, 9 active sellers and **0 catalogue products**. This is intentional: products have not yet been entered by the active sellers. No fake production inventory, orders or payments are inserted. Once a legitimate seller adds products through the seller dashboard, an administrator can review and publish them.
 
 ## Development
 
@@ -109,7 +117,8 @@ Before opening the store to customers:
 2. Provision at least one legitimate administrator account securely through Supabase Auth.
 3. Have real sellers apply through `/seller/apply` and approve them from the admin dashboard.
 4. Add real products, prices, stock, variants and seller-supplied product images.
-5. Configure `PAYSTACK_SECRET_KEY` and `NEXT_PUBLIC_SITE_URL` before enabling online payment.
+5. Configure `PAYSTACK_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `NEXT_PUBLIC_SITE_URL` before enabling online payment.
 6. Configure the production domain and hosting environment.
-7. Test registration, seller approval, catalogue browsing, cart, checkout, COD, Paystack, order lifecycle, cancellation and reviews with real test accounts before launch.
+7. Test registration, seller approval, catalogue browsing, cart, checkout, COD, Paystack verification, order lifecycle, cancellation, returns/refunds and reviews with real test accounts before launch.
 8. Enable leaked-password protection in Supabase Auth before production launch.
+9. Verify production secrets are configured in Vercel and are not present in Git history or client bundles.

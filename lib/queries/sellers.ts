@@ -34,7 +34,6 @@ export async function getSellerBySlug(slug: string): Promise<SellerWithProducts 
 
   if (error || !seller) return null;
 
-  // Fetch seller's products with images
   const { data: products } = await supabase
     .from('products')
     .select(PRODUCT_SELECT)
@@ -42,10 +41,13 @@ export async function getSellerBySlug(slug: string): Promise<SellerWithProducts 
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 
-  const normalized = (products || []).map((p: any) => ({
-    ...p,
-    sellers: p.sellers ? { ...p.sellers, rating: 0 } : null,
-  })) as ProductWithRelations[];
+  const normalized = (products || []).map((p) => {
+    const product = p as unknown as ProductWithRelations;
+    return {
+      ...product,
+      sellers: product.sellers ? { ...product.sellers, rating: 0 } : null,
+    };
+  }) as ProductWithRelations[];
 
   return {
     ...seller,
@@ -95,7 +97,7 @@ export async function getPublicSellerProducts(
 
   if (error || !data) return { products: [], total: 0, hasMore: false };
 
-  const products = (data as ProductWithRelations[]).map((product) => ({
+  const products = (data as unknown as ProductWithRelations[]).map((product) => ({
     ...product,
     sellers: product.sellers ? { ...product.sellers, rating: 0 } : null,
   }));
