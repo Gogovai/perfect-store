@@ -30,6 +30,8 @@ DECLARE
   v_cat_grocery uuid;
   v_cat_baby uuid;
   v_cat_auto uuid;
+  v_cat_appliances uuid;
+  v_cat_office uuid;
   v_prod uuid;
 BEGIN
   -- Get first user
@@ -50,6 +52,8 @@ BEGIN
   SELECT id INTO v_cat_grocery FROM categories WHERE slug = 'groceries';
   SELECT id INTO v_cat_baby FROM categories WHERE slug = 'baby-products';
   SELECT id INTO v_cat_auto FROM categories WHERE slug = 'automotive';
+  SELECT id INTO v_cat_appliances FROM categories WHERE slug = 'appliances';
+  SELECT id INTO v_cat_office FROM categories WHERE slug = 'office-school';
 
   -- Create subcategories if they don't exist
   INSERT INTO categories (name, slug, description, parent_id, sort_order, is_active)
@@ -484,6 +488,192 @@ BEGIN
     VALUES (gen_random_uuid(), 'Car Phone Holder Mount', 'car-phone-mount', 'Universal, one-hand operation, 360 rotation, strong suction.', 'Universal, 360 degree, strong suction', 'AutoMount', 59, 89, v_cat_auto, v_seller_gadget, 'active', 'GHS', false, 4.1, 7) RETURNING id INTO v_prod;
     INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1486006920555-c77dcf18193c?w=800&h=800&fit=crop&q=80', 'Car Phone Mount', 0, true);
     INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 150, 0, 15);
+  END IF;
+
+  -- ========== APPLIANCES ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'air-fryer-5l') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Air Fryer 5L Digital', 'air-fryer-5l', '5L digital air fryer with 8 preset modes, 1700W rapid hot air circulation for crispy food with little oil.', '5L, 8 presets, 1700W, low oil', 'HomeChef', 799, 999, v_cat_appliances, v_seller_home, 'active', 'GHS', true, 4.3, 9) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=800&h=800&fit=crop&q=80', 'Air Fryer', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 40, 0, 5);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'washing-machine-7kg') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Washing Machine 7kg Front Load', 'washing-machine-7kg', '7kg front-load washing machine, 15 wash programs, energy efficient, 1200rpm spin.', '7kg, 15 programs, 1200rpm', 'Haier', 3499, 3899, v_cat_appliances, v_seller_home, 'active', 'GHS', false, 4.2, 4) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=800&h=800&fit=crop&q=80', 'Washing Machine', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 12, 0, 3);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'microwave-oven-20l') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Microwave Oven 20L', 'microwave-oven-20l', '20L microwave with 5 power levels, defrost function, digital timer.', '20L, 5 power levels, defrost', 'Sharp', 999, 1299, v_cat_appliances, v_seller_home, 'active', 'GHS', false, 4.1, 6) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=800&h=800&fit=crop&q=80', 'Microwave Oven', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 25, 0, 4);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'standing-fan-16') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), '16-inch Standing Fan', 'standing-fan-16', '16 inch pedestal fan with 3 speeds, 75 degree oscillation, height adjustable.', '16 inch, 3 speeds, oscillating', 'BreezAir', 399, 499, v_cat_appliances, v_seller_home, 'active', 'GHS', false, 3.9, 7) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&h=800&fit=crop&q=80', 'Standing Fan', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 60, 0, 8);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'chest-freezer-100l') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), '100L Chest Freezer', 'chest-freezer-100l', '100L chest freezer with manual defrost, adjustable thermostat and lockable lid.', '100L, adjustable thermostat', 'ColdKing', 2899, 3299, v_cat_appliances, v_seller_home, 'active', 'GHS', false, 4.0, 3) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=800&h=800&fit=crop&q=80', 'Chest Freezer', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 10, 0, 2);
+  END IF;
+
+  -- ========== OFFICE & SCHOOL ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'office-desk-120x60') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Office Desk 120x60cm', 'office-desk-120x60', '120x60cm study desk with metal legs, scratch-resistant top, easy assembly.', '120x60cm, metal legs, sturdy', 'WorkFit', 899, 1099, v_cat_office, v_seller_home, 'active', 'GHS', true, 4.4, 5) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=800&fit=crop&q=80', 'Office Desk', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 30, 0, 4);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'led-desk-lamp') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'LED Desk Lamp with USB Port', 'led-desk-lamp', 'Touch control LED desk lamp with 3 colour modes, dimmable, USB charging port.', 'Touch control, 3 modes, USB', 'LumiDesk', 129, 179, v_cat_office, v_seller_gadget, 'active', 'GHS', false, 4.2, 8) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1534073828943-f801091bb18c?w=800&h=800&fit=crop&q=80', 'LED Desk Lamp', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 90, 0, 10);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'school-backpack-30l') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'School Backpack 30L', 'school-backpack-30l', '30L school backpack with padded laptop sleeve, multiple compartments and water-resistant fabric.', '30L, laptop sleeve, water resistant', 'BackPackPro', 149, 199, v_cat_office, v_seller_fashion, 'active', 'GHS', false, 4.3, 12) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=800&h=800&fit=crop&q=80', 'School Backpack', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 120, 0, 12);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'printer-paper-a4') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'A4 Printer Paper 5-Ream Box', 'printer-paper-a4', '5 reams of premium A4 paper, 500 sheets per ream, 80gsm bright white.', '5 reams, 80gsm, A4', 'PaperPlus', 149, 179, v_cat_office, v_seller_market, 'active', 'GHS', false, 4.1, 6) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&h=800&fit=crop&q=80', 'A4 Printer Paper', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 200, 0, 20);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'magnetic-whiteboard') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Magnetic Whiteboard 90x60cm', 'magnetic-whiteboard', '90x60cm magnetic whiteboard with aluminium frame, marker tray and fixing kit.', '90x60cm, magnetic, aluminium frame', 'BoardWorks', 249, 329, v_cat_office, v_seller_home, 'active', 'GHS', false, 4.0, 4) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=800&fit=crop&q=80', 'Magnetic Whiteboard', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 50, 0, 6);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'three-drawer-filing-cabinet') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), '3-Drawer Filing Cabinet', 'three-drawer-filing-cabinet', '3-drawer metal filing cabinet with lock, A4 suspension files, smooth ball-bearing runners.', '3 drawers, lockable, A4', 'OfficePro', 849, 999, v_cat_office, v_seller_home, 'active', 'GHS', false, 4.2, 2) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=800&fit=crop&q=80', 'Filing Cabinet', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 20, 0, 3);
+  END IF;
+
+  -- ========== ELECTRONICS EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'power-bank-20000mah') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Power Bank 20000mAh 22.5W', 'power-bank-20000mah', '20000mAh fast-charge power bank with 22.5W USB-C output, dual ports, LED display.', '20000mAh, 22.5W fast charge', 'PowerCore', 249, 329, v_cat_phones, v_seller_gadget, 'active', 'GHS', true, 4.5, 18) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=800&h=800&fit=crop&q=80', 'Power Bank', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 130, 0, 12);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'laptop-stand-aluminium') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Aluminium Laptop Stand', 'laptop-stand-aluminium', 'Adjustable aluminium laptop stand with 7 height levels, foldable, fits 10-16 inch laptops.', 'Adjustable, aluminium, foldable', 'DeskLift', 149, 199, v_cat_computers, v_seller_gadget, 'active', 'GHS', false, 4.3, 10) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=800&fit=crop&q=80', 'Laptop Stand', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 80, 0, 8);
+  END IF;
+
+  -- ========== FASHION EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'kente-scarf') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Handwoven Kente Scarf', 'kente-scarf', 'Authentic handwoven kente scarf in traditional Ghanaian patterns. Perfect gift.', 'Handwoven, traditional kente', 'Kumasi Weaves', 199, 249, v_cat_accessories, v_seller_kumasi, 'active', 'GHS', true, 4.8, 9) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=800&h=800&fit=crop&q=80', 'Kente Scarf', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 70, 0, 8);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'womens-block-heels') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Womens Block Heels', 'womens-block-heels', 'Elegant block heels with cushioned insole, ankle strap, available in multiple colours.', 'Block heel, cushioned, ankle strap', 'Stride', 229, 299, v_cat_womens, v_seller_fashion, 'active', 'GHS', false, 3.8, 5) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&h=800&fit=crop&q=80', 'Womens Heels', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 65, 0, 6);
+  END IF;
+
+  -- ========== BEAUTY EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'ghana-black-soap') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Organic Ghana Black Soap 250g', 'ghana-black-soap', 'Traditional plantain-skin black soap with shea butter, pure and chemical free. 250g bar.', 'Traditional, plantain skin, 250g', 'NaturalGlow', 49, 69, v_cat_beauty, v_seller_beauty, 'active', 'GHS', true, 4.6, 21) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1585232004423-244e0e6904e3?w=800&h=800&fit=crop&q=80', 'Black Soap', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 220, 0, 20);
+  END IF;
+
+  -- ========== GROCERY EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'red-palm-oil-2l') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Red Palm Oil 2L', 'red-palm-oil-2l', 'Unrefined red palm oil, rich in vitamins, ideal for traditional Ghanaian cooking. 2L bottle.', '2L, unrefined, rich in vitamins', 'NatureGold', 89, 109, v_cat_grocery, v_seller_market, 'active', 'GHS', false, 4.0, 13) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=800&h=800&fit=crop&q=80', 'Red Palm Oil', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 180, 0, 18);
+  END IF;
+
+  -- ========== BABY EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'baby-diapers-mega') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Baby Diapers Mega Pack 48', 'baby-diapers-mega', 'Mega pack of 48 super-absorbent baby diapers, sizes 3-6, wetness indicator.', '48 pack, sizes 3-6, absorbent', 'BabySoft', 129, 169, v_cat_baby, v_seller_market, 'active', 'GHS', false, 4.2, 16) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=800&fit=crop&q=80', 'Baby Diapers', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 300, 0, 30);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'baby-monitor-digital') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Digital Video Baby Monitor', 'baby-monitor-digital', '2.4 inch video baby monitor with night vision, two-way audio and room temperature sensor.', 'Video, night vision, two-way audio', 'ParentCare', 399, 499, v_cat_baby, v_seller_gadget, 'active', 'GHS', false, 4.3, 6) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800&h=800&fit=crop&q=80', 'Baby Monitor', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 35, 0, 4);
+  END IF;
+
+  -- ========== SPORTS EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'adjustable-skipping-rope') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Adjustable Skipping Rope', 'adjustable-skipping-rope', 'Speed skipping rope with ball bearings, adjustable length and anti-slip grips.', 'Speed rope, adjustable, ball bearings', 'FitPro', 49, 79, v_cat_sports, v_seller_fitzone, 'active', 'GHS', false, 4.1, 9) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=800&h=800&fit=crop&q=80', 'Skipping Rope', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 160, 0, 16);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'gym-gloves') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Gym Gloves with Wrist Support', 'gym-gloves', 'Breathable gym gloves with padded palms and adjustable wrist straps.', 'Breathable, padded palms, wrist straps', 'IronPower', 99, 139, v_cat_sports, v_seller_fitzone, 'active', 'GHS', false, 4.0, 7) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&h=800&fit=crop&q=80', 'Gym Gloves', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 140, 0, 14);
+  END IF;
+
+  -- ========== AUTOMOTIVE EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'jump-starter-12v') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), '12V Jump Starter Power Bank', 'jump-starter-12v', '12000mAh jump starter for petrol and diesel cars, with USB outputs and LED flashlight.', '12000mAh, jump start, flashlight', 'AutoStart', 499, 649, v_cat_auto, v_seller_gadget, 'active', 'GHS', false, 4.2, 5) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&h=800&fit=crop&q=80', 'Jump Starter', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 45, 0, 5);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'car-floor-mats') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Car Floor Mats Full Set', 'car-floor-mats', 'Universal car floor mat set, waterproof, easy to clean, fits most saloon cars.', 'Waterproof, universal fit', 'AutoComfort', 149, 199, v_cat_auto, v_seller_gadget, 'active', 'GHS', false, 3.9, 4) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=800&fit=crop&q=80', 'Car Floor Mats', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 90, 0, 9);
+  END IF;
+
+  -- ========== HEALTH EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'digital-thermometer') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Digital Thermometer', 'digital-thermometer', 'Fast 10-second digital thermometer with fever alarm and flexible tip. Home essential.', '10-second reading, fever alarm', 'HealthTrack', 49, 69, v_cat_health, v_seller_market, 'active', 'GHS', false, 4.3, 11) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1584362917165-526a968579e8?w=800&h=800&fit=crop&q=80', 'Digital Thermometer', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 250, 0, 25);
+  END IF;
+
+  -- ========== HOME EXTRAS ==========
+  IF NOT EXISTS (SELECT 1 FROM products WHERE slug = 'memory-foam-pillow') THEN
+    INSERT INTO products (id, name, slug, description, short_description, brand, base_price, compare_at_price, category_id, seller_id, status, currency, is_featured, rating_average, review_count)
+    VALUES (gen_random_uuid(), 'Memory Foam Pillow 2-Pack', 'memory-foam-pillow', 'Ergonomic memory foam pillows with breathable covers. Set of 2.', 'Ergonomic, memory foam, set of 2', 'SleepWell', 179, 239, v_cat_furniture, v_seller_home, 'active', 'GHS', false, 4.4, 8) RETURNING id INTO v_prod;
+    INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary) VALUES (v_prod, 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=800&h=800&fit=crop&q=80', 'Memory Foam Pillow', 0, true);
+    INSERT INTO inventory (product_id, quantity, reserved_quantity, low_stock_threshold) VALUES (v_prod, 110, 0, 11);
   END IF;
 
 END $$;
