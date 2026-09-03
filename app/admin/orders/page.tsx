@@ -2,12 +2,11 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { updateOrderStatus } from './actions';
-
 type Order = { id: string; order_number: string; status: string; subtotal: number; shipping_fee: number; total_amount: number; currency: string; created_at: string; customer_id: string };
 const statuses = ['pending','confirmed','processing','shipped','out_for_delivery','delivered','cancelled','refunded'] as const;
 export default function AdminOrdersPage() {
  const [rows,setRows]=useState<Order[]>([]); const [message,setMessage]=useState(''); const [loading,setLoading]=useState(true);
- async function load(){const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const{data:p}=await s.from('profiles').select('role').eq('id',user.id).single();if(p?.role!=='admin'){location.href='/';return}const{data}=await s.from('orders').select('id,order_number,status,subtotal,shipping_fee,total_amount,currency,created_at,customer_id').order('created_at',{ascending:false});setRows((data||[]) as Order[]);setLoading(false)}
+ async function load(){const s=createClient() as any;const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const{data:p}=await s.from('profiles').select('role').eq('id',user.id).single();if(p?.role!=='admin'){location.href='/';return}const{data}=await s.from('orders').select('id,order_number,status,subtotal,shipping_fee,total_amount,currency,created_at,customer_id').order('created_at',{ascending:false});setRows((data||[]) as Order[]);setLoading(false)}
  useEffect(()=>{load()},[]);
  async function change(id:string,status:typeof statuses[number]){const r=await updateOrderStatus({orderId:id,status});setMessage(r.success?`Order updated to ${status.replaceAll('_',' ')}.`:r.error||'Unable to update order.');await load()}
  if(loading)return <main className="min-h-screen bg-gray-50 p-8">Loading orders…</main>;
