@@ -57,10 +57,16 @@ export default function RegisterPage() {
                       Account created successfully!
                     </p>
                     <p className="mt-1 text-sm text-green-700">
-                      Please check your email to verify your account before signing in.
+                      Your account is ready to use — you can sign in right away. No email verification needed.
                     </p>
                   </div>
                 </div>
+                <Link
+                  href="/login"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-base font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  Go to sign in <ArrowRight size={18} />
+                </Link>
               </div>
             )}
 
