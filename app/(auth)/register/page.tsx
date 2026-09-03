@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useActionState } from 'react';
+import React, { useState, useActionState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -14,9 +15,27 @@ const initialState: AuthFormState = {
 };
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [redirectIn, setRedirectIn] = useState<number | null>(null);
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
+
+  // After a successful signup, count down and auto-redirect to the sign-in page
+  useEffect(() => {
+    if (!state.success) return;
+    setRedirectIn(3);
+    const interval = setInterval(() => {
+      setRedirectIn((s) => (s === null ? null : s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [state.success]);
+
+  useEffect(() => {
+    if (redirectIn === 0) {
+      router.push('/login');
+    }
+  }, [redirectIn, router]);
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
@@ -58,6 +77,9 @@ export default function RegisterPage() {
                     </p>
                     <p className="mt-1 text-sm text-green-700">
                       Your account is ready to use — you can sign in right away. No email verification needed.
+                    </p>
+                    <p className="mt-1 text-xs text-green-600">
+                      Redirecting you to sign in in {redirectIn ?? 3} second{redirectIn === 1 ? '' : 's'}…
                     </p>
                   </div>
                 </div>
