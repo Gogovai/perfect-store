@@ -34,15 +34,15 @@ const probes = [
   ['products', ['id','seller_id','category_id','name','slug','status','base_price','rating_average','review_count']],
   ['orders', ['id','order_number','customer_id','status','total_amount','subtotal','shipping_fee','discount_amount','delivery_method','delivery_method_name','notes','shipping_address','placed_at']],
   ['payments', ['id','order_id','provider','provider_reference','status','amount','currency','paid_at','metadata']],
-  ['coupons', ['id','code','description','discount_type','discount_value','minimum_order_amount','maximum_discount_amount','usage_limit','used_count','valid_from','valid_until','expires_at','starts_at','is_active','max_uses','current_uses']],
-  ['audit_logs', ['id','actor_id','action','entity_type','entity_id','old_data','new_data','user_id','changes','ip_address','user_agent']],
+  ['coupons', ['id','code','description','discount_type','discount_value','minimum_order_amount','maximum_discount_amount','usage_limit','used_count','starts_at','expires_at','is_active']],
+  ['audit_logs', ['id','actor_id','action','entity_type','entity_id','old_data','new_data']],
   ['support_tickets', ['id','customer_id','seller_id','subject','category','priority','status','order_id','assigned_to']],
   ['support_messages', ['id','ticket_id','sender_id','message','internal_note']],
   ['returns', ['id','order_id','customer_id','status','reason_code','reason','customer_notes']],
   ['return_items', ['id','return_id','order_item_id','quantity','condition','resolution']],
   ['inventory', ['product_id','quantity','reserved_quantity','low_stock_threshold']],
   ['variant_inventory', ['variant_id','quantity','reserved_quantity']],
-  ['notifications', ['id','user_id','type','title','message','data','is_read']],
+  ['notifications', ['id','user_id','type','title','message','data','read_at']],
   ['reviews', ['id','product_id','customer_id','order_item_id','rating','title','body','is_published','is_verified_purchase']],
 ];
 for (const [table, cols] of probes) {
@@ -51,6 +51,22 @@ for (const [table, cols] of probes) {
     out(`columns(${table})`, `ERROR: ${error.message.slice(0, 120)}`);
   } else {
     out(`columns(${table})`, `ok (${data.length ? 'row present' : 'empty table'})`);
+  }
+}
+
+console.log('\n=== 1b. LEGACY COLUMN GUARDS (old names must NOT exist) ===');
+// Regression guards: repo code used to target these columns; a live DB that
+// still has them (or code that reintroduces them) should fail loudly.
+const legacyCols = {
+  coupons: ['valid_from', 'valid_until', 'max_uses', 'current_uses'],
+  audit_logs: ['user_id', 'changes'],
+  notifications: ['is_read'],
+};
+for (const [table, cols] of Object.entries(legacyCols)) {
+  for (const col of cols) {
+    const { error } = await svc.from(table).select(col).limit(1);
+    const gone = !!error && /does not exist/.test(error.message);
+    out(`legacy ${table}.${col}`, gone ? 'absent (good)' : `PRESENT — repo must not use it`);
   }
 }
 
