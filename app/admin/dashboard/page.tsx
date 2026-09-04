@@ -7,7 +7,6 @@ import { setOrderStatus, setReviewPublished } from './actions';
 type Row = Record<string, any>;
 type PanelKey = 'sellers' | 'customers' | 'products' | 'orders' | 'reviews';
 
-const SELLER_STATUSES = ['pending', 'active', 'suspended', 'rejected'] as const;
 const ORDER_STATUSES = [
   'pending',
   'confirmed',

@@ -49,22 +49,16 @@ export async function setSellerStatus(
   if (!SELLER_STATUSES.includes(status)) {
     return { success: false, error: 'Invalid seller status' };
   }
-  const { error: authError } = await requireAdmin();
-  if (authError) {
-    return { success: false, error: authError };
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError || !supabase) {
+    return { success: false, error: authError ?? 'Admin access required' };
   }
-  // Direct updates are restricted by RLS for session clients, so seller
-  // moderation runs through the service-role client.
-  let adminClient;
-  try {
-    adminClient = getSupabaseAdmin();
-  } catch (e) {
-    return { success: false, error: (e as Error).message };
-  }
-  const { error } = await adminClient
-    .from('sellers')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  // The RPC flips the owner's profile role, notifies the seller and writes an
+  // audit log — a plain sellers.update would silently skip those.
+  const { error } = await supabase.rpc('admin_set_seller_status', {
+    p_seller_id: id,
+    p_status: status,
+  });
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/dashboard');
   revalidatePath('/seller/dashboard');
@@ -78,20 +72,15 @@ export async function setOrderStatus(
   if (!ORDER_STATUSES.includes(status)) {
     return { success: false, error: 'Invalid order status' };
   }
-  const { error: authError } = await requireAdmin();
-  if (authError) {
-    return { success: false, error: authError };
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError || !supabase) {
+    return { success: false, error: authError ?? 'Admin access required' };
   }
-  let adminClient;
-  try {
-    adminClient = getSupabaseAdmin();
-  } catch (e) {
-    return { success: false, error: (e as Error).message };
-  }
-  const { error } = await adminClient
-    .from('orders')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  // The RPC keeps shipments + notifications + audit logs in sync.
+  const { error } = await supabase.rpc('admin_set_order_status', {
+    p_order_id: id,
+    p_status: status,
+  });
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/dashboard');
   revalidatePath('/account/orders');

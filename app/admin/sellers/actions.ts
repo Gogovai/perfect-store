@@ -1,6 +1,5 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
-import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -25,18 +24,12 @@ export async function updateSellerStatus(input: unknown) {
     .single();
   if (profile?.role !== 'admin') return { success: false, error: 'Admin access required' };
 
-  // Direct updates are restricted by RLS for session clients, so seller
-  // moderation runs through the service-role client.
-  let adminClient;
-  try {
-    adminClient = getSupabaseAdmin();
-  } catch (e) {
-    return { success: false, error: (e as Error).message };
-  }
-  const { error } = await adminClient
-    .from('sellers')
-    .update({ status: p.data.status, updated_at: new Date().toISOString() })
-    .eq('id', p.data.sellerId);
+  // The RPC flips the owner's profile role, notifies the seller and writes an
+  // audit log — a plain sellers.update would silently skip those.
+  const { error } = await s.rpc('admin_set_seller_status', {
+    p_seller_id: p.data.sellerId,
+    p_status: p.data.status,
+  });
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/admin/sellers');

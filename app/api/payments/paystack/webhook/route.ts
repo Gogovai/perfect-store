@@ -39,11 +39,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payment amount mismatch' }, { status: 400 });
     }
 
+    // The initialize route sets the payment to 'processing' (not 'pending'), so
+    // guard on either pre-paid state. The early return above already skipped
+    // already-paid payments, and this filter prevents double-processing races.
     await supabase.from('payments').update({
       status: 'paid',
       paid_at: new Date().toISOString(),
       metadata: { paystack_webhook: event.data },
-    }).eq('id', payment.id).eq('status', 'pending');
+    }).eq('id', payment.id).in('status', ['pending', 'processing']);
 
     await supabase.from('orders').update({ status: 'confirmed' })
       .eq('id', payment.order_id).eq('status', 'pending');

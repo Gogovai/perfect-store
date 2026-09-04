@@ -48,11 +48,12 @@ export async function moderateProduct(input: unknown) {
   if (error) return { success: false, error: error.message };
 
   await s.from('audit_logs').insert({
-    user_id: user.id,
+    actor_id: user.id,
     action: 'product_moderated',
     entity_type: 'product',
     entity_id: p.data.productId,
-    changes: { status: p.data.status, reason: p.data.reason || null },
+    old_data: { status: product.status },
+    new_data: { status: p.data.status, reason: p.data.reason || null },
   });
 
   if (p.data.status === 'active') {

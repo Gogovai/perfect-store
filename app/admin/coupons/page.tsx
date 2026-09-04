@@ -68,8 +68,8 @@ export default function CouponsPage() {
                 <p className="text-sm text-gray-500">
                   {c.discount_type === 'percentage' ? `${c.discount_value}%` : `GHS ${c.discount_value}`}
                   {' · used '}
-                  {c.current_uses}{c.max_uses ? `/${c.max_uses}` : ''}
-                  {c.valid_until ? ` · expires ${new Date(c.valid_until).toLocaleDateString()}` : ''}
+                  {c.used_count}{c.usage_limit ? `/${c.usage_limit}` : ''}
+                  {c.expires_at ? ` · expires ${new Date(c.expires_at).toLocaleDateString()}` : ''}
                 </p>
               </div>
               <div className="flex gap-2">

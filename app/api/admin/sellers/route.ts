@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdminApi } from '@/lib/supabase/admin-auth';
-import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { SellerStatus } from '@/types/database';
 
 const SELLER_STATUSES: SellerStatus[] = ['pending', 'active', 'suspended', 'rejected'];
@@ -9,12 +8,13 @@ const SELLER_STATUSES: SellerStatus[] = ['pending', 'active', 'suspended', 'reje
 export async function PATCH(request: Request) {
   // 1. Authenticate the caller as an admin.
   const session = await requireAdminApi();
-  if (session.error) {
+  if (session.error || !session.supabase) {
     return NextResponse.json(
-      { success: false, error: session.error },
+      { success: false, error: session.error ?? 'Admin access required' },
       { status: session.status }
     );
   }
+  const supabase = session.supabase;
 
   // 2. Parse + validate the payload.
   let body: unknown;
@@ -40,21 +40,12 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // 3. Update the record via the service-role client (bypasses RLS, no RPC dependency).
-  let adminClient;
-  try {
-    adminClient = getSupabaseAdmin();
-  } catch (e) {
-    return NextResponse.json(
-      { success: false, error: (e as Error).message },
-      { status: 500 }
-    );
-  }
-
-  const { error } = await adminClient
-    .from('sellers')
-    .update({ status: status as SellerStatus, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  // 3. Update through the admin RPC, which also flips the owner's profile
+  //    role (seller/customer), notifies the seller and writes an audit log.
+  const { error } = await supabase.rpc('admin_set_seller_status', {
+    p_seller_id: id,
+    p_status: status as SellerStatus,
+  });
 
   if (error) {
     return NextResponse.json(

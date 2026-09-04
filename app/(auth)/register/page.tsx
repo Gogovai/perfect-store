@@ -18,15 +18,15 @@ export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [redirectIn, setRedirectIn] = useState<number | null>(null);
+  // Countdown is only rendered after a successful signup.
+  const [redirectIn, setRedirectIn] = useState(3);
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
 
   // After a successful signup, count down and auto-redirect to the sign-in page
   useEffect(() => {
     if (!state.success) return;
-    setRedirectIn(3);
     const interval = setInterval(() => {
-      setRedirectIn((s) => (s === null ? null : s - 1));
+      setRedirectIn((s) => Math.max(0, s - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [state.success]);

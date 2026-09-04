@@ -82,6 +82,30 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Role-based route protection: being logged in is not enough to open the
+  // seller/admin consoles. The profile lookup uses the session client, so
+  // RLS restricts it to the caller's own row. On a DB error we fail open and
+  // let the page/server-action-level checks enforce the boundary.
+  if (user && (isProtectedAdminRoute || isProtectedSellerRoute)) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_active')
+      .eq('id', user.sub)
+      .maybeSingle();
+
+    if (profile) {
+      const roleOk =
+        (isProtectedAdminRoute && profile.role === 'admin') ||
+        (isProtectedSellerRoute && profile.role === 'seller');
+      if (!roleOk || profile.is_active === false) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/';
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next(),
   // make sure to copy over the cookies.

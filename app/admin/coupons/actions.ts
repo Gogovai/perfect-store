@@ -32,10 +32,10 @@ export async function createCoupon(input: unknown) {
     description: d.description || null,
     discount_type: d.discountType,
     discount_value: d.discountValue,
-    max_uses: d.maxUses ?? null,
-    current_uses: 0,
-    valid_from: new Date().toISOString(),
-    valid_until: d.validUntil || null,
+    usage_limit: d.maxUses ?? null,
+    used_count: 0,
+    starts_at: new Date().toISOString(),
+    expires_at: d.validUntil ? new Date(d.validUntil).toISOString() : null,
     is_active: true,
   });
   if (error) return {success: false, error: error.message};
