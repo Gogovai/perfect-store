@@ -60,11 +60,13 @@ export async function GET(request: NextRequest) {
       });
       redirectPath = error ? '/login' : '/reset-password';
     } else if (type === 'signup') {
+      // Verification links are not part of the product (accounts are
+      // auto-confirmed), but honouring an old link remains harmless.
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: 'signup',
       });
-      redirectPath = error ? '/login' : '/login?verified=true';
+      redirectPath = error ? '/login' : '/login';
     } else {
       redirectPath = '/login';
     }

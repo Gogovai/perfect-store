@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [state, formAction, isPending] = useActionState(loginAction, initialState);
   const searchParams = useSearchParams();
-  const verified = searchParams.get('verified') === 'true';
   const redirect = searchParams.get('redirect');
 
   return (
@@ -50,15 +49,6 @@ export default function LoginPage() {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-6 shadow-sm border border-gray-200 sm:rounded-lg">
-            {/* Success: Email verified */}
-            {verified && (
-              <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">
-                  Your email has been verified. You can now sign in.
-                </p>
-              </div>
-            )}
-
             {/* Success: Password reset */}
             {searchParams.get('reset') === 'success' && (
               <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">

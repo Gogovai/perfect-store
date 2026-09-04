@@ -55,10 +55,16 @@ export async function loginAction(
   });
 
   if (error) {
+    // New accounts are auto-confirmed (MAILER_AUTOCONFIRM + the
+    // trg_autoconfirm_new_user trigger), so this app never requires email
+    // verification and sends no confirmation links. If GoTrue still reports
+    // "Email not confirmed" it means the project auth config has regressed;
+    // point to support rather than an inbox that will never contain a link,
+    // and avoid leaking whether the account exists.
     if (error.message.includes('Email not confirmed')) {
       return {
         success: false,
-        error: 'Please verify your email address before signing in. Check your inbox for the verification link.',
+        error: 'Unable to sign in. Please try again or contact support.',
       };
     }
     return {
