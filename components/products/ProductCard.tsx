@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, Truck, Heart } from 'lucide-react';
+import { Package, Truck } from 'lucide-react';
 import { ProductPrice } from './ProductPrice';
 import { ProductRating } from './ProductRating';
 import { ProductBadge } from './ProductBadge';
@@ -22,9 +22,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     ? Math.min(product.base_price, ...variantPrices)
     : product.base_price;
   const hasDiscount = lowestVariantPrice < product.base_price;
-  const discountPercent = hasDiscount
-    ? Math.round(((product.base_price - lowestVariantPrice) / product.base_price) * 100)
-    : 0;
   const seller = product.sellers;
   const primaryImage =
     product.product_images.find((img) => img.is_primary) ||

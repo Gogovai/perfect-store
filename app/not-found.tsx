@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
-import { SearchX, Home, ArrowLeft } from 'lucide-react';
+import { SearchX, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (

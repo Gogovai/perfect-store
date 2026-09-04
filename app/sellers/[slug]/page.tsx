@@ -8,7 +8,7 @@ import { ProductGrid } from '@/components/products/ProductGrid';
 import { getSellerBySlug } from '@/lib/queries/sellers';
 import { createClient } from '@/lib/supabase/server';
 import { APP_NAME } from '@/config/constants';
-import { Star, Package, MapPin, Mail, Phone, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Star, Package, Mail, Phone, ChevronRight, ShieldCheck } from 'lucide-react';
 
 interface SellerPageProps {
   params: Promise<{ slug: string }>;
