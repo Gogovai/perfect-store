@@ -24,6 +24,18 @@ export async function loginAction(
     password: formData.get('password') as string,
   };
 
+  // Intended destination (e.g. /login?redirect=/checkout). Only allow
+  // internal paths so this can never be abused as an open redirect.
+  const rawRedirect = formData.get('redirect');
+  const safeRedirect =
+    typeof rawRedirect === 'string' &&
+    rawRedirect.startsWith('/') &&
+    !rawRedirect.startsWith('//') &&
+    !rawRedirect.includes('\\') &&
+    !rawRedirect.includes(':')
+      ? rawRedirect
+      : null;
+
   // Validate input
   const result = loginSchema.safeParse(rawData);
   if (!result.success) {
@@ -79,7 +91,7 @@ export async function loginAction(
   }
 
   revalidatePath('/', 'layout');
-  redirect('/');
+  redirect(safeRedirect ?? '/');
 }
 
 /**

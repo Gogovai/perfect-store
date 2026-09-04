@@ -10,24 +10,49 @@ import { CategoryBar } from '@/components/home/CategoryBar';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { FeaturedStores } from '@/components/home/FeaturedStores';
 import { CategoryVisual } from '@/components/categories/CategoryVisual';
-import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts } from '@/lib/queries/products';
+import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts, getActiveProductSellerCounts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
-import { HERO_SLIDES, PROMO_BANNERS, FEATURED_STORES } from '@/lib/data/campaigns';
-import { getCurrentFlashSale } from '@/lib/data/flash-sale';
+import { getAllSellers } from '@/lib/queries/sellers';
+import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/campaigns';
+import { getFlashSaleWindow } from '@/lib/data/flash-sale';
 import { brand } from '@/config/brand';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
 export const metadata: Metadata = { title: `${brand.name} — Online Marketplace`, description: brand.description };
 
 export default async function Home() {
-  const flashSale = getCurrentFlashSale();
-  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts] = await Promise.all([
+  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts, sellers, sellerCounts, flashProducts] = await Promise.all([
     getFeaturedProducts(8),
     getNewestProducts(8),
     getTopRatedProducts(8),
     getCategories(),
     getProducts({ sort: 'popular', page: 1, pageSize: 8 }),
+    getAllSellers(),
+    getActiveProductSellerCounts(),
+    getProducts({ pageSize: 100 }),
   ]);
+
+  // Flash sale built from real catalogue products so every card links to a
+  // live product page. Renders nothing when the catalogue is empty.
+  const flashSale = getFlashSaleWindow(
+    flashProducts.products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      imageUrl: p.product_images.find((img) => img.is_primary)?.url ?? p.product_images[0]?.url ?? '',
+      price: p.base_price,
+    }))
+  );
+
+  const featuredStores = sellers.map((s) => ({
+    id: s.id,
+    name: s.store_name,
+    slug: s.slug,
+    logoUrl: s.logo_url,
+    bannerUrl: s.banner_url,
+    productCount: sellerCounts[s.id] ?? 0,
+    rating: null,
+  }));
 
   const catSections = await Promise.all(
     categories.slice(0, 4).map(async (cat) => {
@@ -39,7 +64,11 @@ export default async function Home() {
   return <>
     <CategoryBar categories={categories.slice(0, 12)} />
     <HeroCarousel slides={HERO_SLIDES} />
-    <FlashSale items={flashSale.items} endsAt={flashSale.endsAt} />
+    <FlashSale
+      items={flashSale.items}
+      endsAt={flashSale.endsAt}
+      initialSecondsLeft={flashSale.secondsLeft}
+    />
 
     {/* Trust badges */}
     <section className="border-b border-gray-100 bg-white">
@@ -104,7 +133,7 @@ export default async function Home() {
 
     {/* Featured Stores */}
     <section className="border-y border-gray-100 bg-white py-8 sm:py-10">
-      <FeaturedStores stores={FEATURED_STORES} />
+      <FeaturedStores stores={featuredStores} />
     </section>
 
     {/* New Arrivals */}

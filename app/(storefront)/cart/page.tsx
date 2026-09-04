@@ -6,8 +6,9 @@ import { Container } from '@/components/ui/Container';
 import { CartItem } from '@/components/cart/CartItem';
 import { CartSummary } from '@/components/cart/CartSummary';
 import { CartEmptyState } from '@/components/cart/CartEmptyState';
+import { createClient } from '@/lib/supabase/client';
 import { useCartStore, type CartItem as CartItemType } from '@/stores/cart';
-import { getUserCartWithItems, updateCartItemQuantity, removeFromDatabaseCart, type DatabaseCartItem } from './actions';
+import { getUserCartWithItems, syncCartToDatabase, updateCartItemQuantity, removeFromDatabaseCart, type DatabaseCartItem } from './actions';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
 
 export default function CartPage() {
@@ -24,14 +25,30 @@ export default function CartPage() {
     let cancelled = false;
     async function load() {
       try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          if (!cancelled) setIsAuthenticated(false);
+          return;
+        }
+        // Signed in: mirror the local cart into the database cart (no-op when
+        // local is empty, so a DB cart from another device is preserved), then
+        // show the authoritative server-validated cart.
+        const { items: localItems } = useCartStore.getState();
+        if (localItems.length > 0) {
+          await syncCartToDatabase(
+            localItems.map((i) => ({
+              productId: i.productId,
+              variantId: i.variantId,
+              quantity: i.quantity,
+            }))
+          );
+          useCartStore.getState().setHasSyncedToDb(true);
+        }
         const items = await getUserCartWithItems();
         if (cancelled) return;
-        if (items.length > 0) {
-          setIsAuthenticated(true);
-          setDbItems(items);
-        } else {
-          setIsAuthenticated(false);
-        }
+        setIsAuthenticated(true);
+        setDbItems(items);
       } catch {
         if (!cancelled) setIsAuthenticated(false);
       } finally {

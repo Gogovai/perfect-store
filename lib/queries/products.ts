@@ -10,7 +10,9 @@ export type CategoryRow = Tables<'categories'>;
 export type ProductWithRelations = ProductRow & {
   product_images: ProductImageRow[];
   product_variants: ProductVariantRow[];
-  sellers: (Pick<SellerRow, 'id' | 'store_name' | 'logo_url'> & { rating: number }) | null;
+  /** Live stock snapshot for out-of-stock UI. Empty when the product has no inventory row. */
+  inventory: Array<{ quantity: number; reserved_quantity: number }>;
+  sellers: (Pick<SellerRow, 'id' | 'store_name' | 'logo_url' | 'slug'> & { rating: number }) | null;
   categories: Pick<CategoryRow, 'id' | 'name' | 'slug' | 'parent_id'> | null;
 };
 export type ProductListResult = {
@@ -40,7 +42,7 @@ export type ProductFilterOptions = {
   pageSize?: number;
 };
 
-const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), sellers!inner(id, store_name, logo_url), categories(id, name, slug, parent_id)`;
+const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), sellers!inner(id, store_name, logo_url, slug), categories(id, name, slug, parent_id)`;
 
 async function getProductsQuery() {
   const supabase = await createClient();
@@ -59,6 +61,7 @@ async function getProductsQuery() {
 function normalizeProducts(data: unknown): ProductWithRelations[] {
   return (data as ProductWithRelations[]).map((p) => ({
     ...p,
+    inventory: Array.isArray(p.inventory) ? p.inventory : [],
     sellers: p.sellers ? { ...p.sellers, rating: 0 } : null,
   }));
 }
@@ -215,6 +218,23 @@ export async function getTopRatedProducts(
     .order('review_count', { ascending: false })
     .limit(limit);
   return error || !data ? [] : normalizeProducts(data);
+}
+
+/**
+ * Count active products per seller (for storefront store cards).
+ */
+export async function getActiveProductSellerCounts(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select('seller_id')
+    .eq('status', 'active');
+  if (error || !data) return {};
+  const counts: Record<string, number> = {};
+  for (const row of data) {
+    counts[row.seller_id] = (counts[row.seller_id] ?? 0) + 1;
+  }
+  return counts;
 }
 
 export async function getRelatedProducts(

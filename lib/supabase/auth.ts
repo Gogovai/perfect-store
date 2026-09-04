@@ -58,6 +58,12 @@ export async function requireUser(): Promise<string> {
     redirect('/login');
   }
 
+  // Deactivated accounts are not allowed into account-only areas.
+  const profile = await getCurrentProfile();
+  if (profile && !profile.is_active) {
+    redirect('/');
+  }
+
   return user.id;
 }
 

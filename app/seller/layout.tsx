@@ -2,7 +2,13 @@ import Link from 'next/link';
 
 const NAV = [
   {href: '/seller/dashboard', label: 'Dashboard'},
+  {href: '/seller/products', label: 'Products'},
   {href: '/seller/orders', label: 'Orders'},
+  {href: '/seller/returns', label: 'Returns'},
+  {href: '/seller/warehouses', label: 'Warehouses'},
+  {href: '/seller/finance', label: 'Finance'},
+  {href: '/seller/performance', label: 'Performance'},
+  {href: '/seller/advertising', label: 'Advertising'},
   {href: '/seller/apply', label: 'Store Profile'},
 ];
 

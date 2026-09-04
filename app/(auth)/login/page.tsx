@@ -85,6 +85,7 @@ export default function LoginPage() {
             )}
 
             <form action={formAction} className="space-y-5">
+              {redirect && <input type="hidden" name="redirect" value={redirect} />}
               <Input
                 label="Email address"
                 name="email"

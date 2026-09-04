@@ -1,11 +1,12 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { Container } from '@/components/ui/Container';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { getSellerBySlug } from '@/lib/queries/sellers';
+import { createClient } from '@/lib/supabase/server';
 import { APP_NAME } from '@/config/constants';
 import { Star, Package, MapPin, Mail, Phone, ChevronRight, ShieldCheck } from 'lucide-react';
 
@@ -24,8 +25,24 @@ export async function generateMetadata({ params }: SellerPageProps): Promise<Met
   };
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default async function SellerDetailPage({ params }: SellerPageProps) {
   const { slug } = await params;
+
+  // Old call sites linked stores by UUID. Resolve those to the canonical
+  // slug URL; anything else that does not match a store 404s.
+  if (UUID_PATTERN.test(slug)) {
+    const supabase = await createClient();
+    const { data: byId } = await supabase
+      .from('sellers')
+      .select('slug')
+      .eq('id', slug)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (byId?.slug && byId.slug !== slug) redirect(`/sellers/${byId.slug}`);
+  }
+
   const seller = await getSellerBySlug(slug);
   if (!seller) notFound();
 

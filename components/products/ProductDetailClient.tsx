@@ -28,6 +28,11 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const category = product.categories;
   const selectedVariantData = selectedVariant ? activeVariants.find((v) => v.id === selectedVariant) : null;
   const currentPrice = selectedVariantData?.price ?? product.base_price;
+  // Live stock for out-of-stock UI. Order placement is still enforced
+  // server-side at checkout regardless of this display value.
+  const availableStock = (product.inventory?.[0]?.quantity ?? 0) - (product.inventory?.[0]?.reserved_quantity ?? 0);
+  const isOutOfStock = availableStock <= 0;
+  const maxOrderable = Math.min(99, availableStock);
 
   function handleAddToCart() {
     const primaryImage = product.product_images.find((img) => img.is_primary) || product.product_images[0];
@@ -47,7 +52,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         <ProductGallery images={product.product_images.slice().sort((a, b) => a.sort_order - b.sort_order)} productName={product.name} />
         <div className="space-y-5">
           <div className="flex items-start justify-between">
-            {seller && <Link href={`/sellers/${seller.id}`} className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+            {seller && <Link href={`/sellers/${seller.slug}`} className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
               {seller.logo_url && <Image src={seller.logo_url} alt={seller.store_name} width={20} height={20} className="rounded-full" unoptimized />}
               <span>{seller.store_name}</span>{seller.rating > 0 && <span className="text-xs text-gray-400">({seller.rating.toFixed(1)}★)</span>}
             </Link>}
@@ -59,10 +64,16 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
           {hasVariants && <div><h3 className="text-sm font-semibold text-gray-900 mb-2">Options</h3><div className="flex flex-wrap gap-2">
             {activeVariants.map((variant) => <button key={variant.id} onClick={() => setSelectedVariant(variant.id === selectedVariant ? null : variant.id)} className={`px-3 py-2 border rounded-lg text-sm transition-colors ${selectedVariant === variant.id ? 'border-[#0f2b5b] bg-blue-50 text-[#0f2b5b] font-medium' : 'border-gray-300 hover:border-gray-400'}`}><span className="font-medium">{variant.name}</span><span className="text-gray-500 ml-2">{formatPrice(variant.price!)}</span></button>)}
           </div></div>}
-          <div className="flex flex-col sm:flex-row gap-3"><div className="flex items-center border border-gray-300 rounded-lg"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3 py-2.5 text-gray-600 hover:text-gray-900" aria-label="Decrease quantity">−</button><span className="px-4 py-2.5 text-sm font-medium min-w-[3rem] text-center">{quantity}</span><button onClick={() => setQuantity(quantity + 1)} className="px-3 py-2.5 text-gray-600 hover:text-gray-900" aria-label="Increase quantity">+</button></div>
-            <Button size="lg" className="flex-1" onClick={handleAddToCart} disabled={product.status !== 'active' || addedToCart}>{addedToCart ? <><Check size={20} />Added to Cart</> : <><ShoppingCart size={20} />Add to Cart</>}</Button>
+          <div className="flex flex-col sm:flex-row gap-3"><div className="flex items-center border border-gray-300 rounded-lg"><button onClick={() => setQuantity((q) => Math.max(1, Math.min(q - 1, maxOrderable || 99)))} disabled={isOutOfStock} className="px-3 py-2.5 text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Decrease quantity">−</button><span className="px-4 py-2.5 text-sm font-medium min-w-[3rem] text-center">{quantity}</span><button onClick={() => setQuantity((q) => Math.min(isOutOfStock ? q : Math.max(1, maxOrderable), q + 1))} disabled={isOutOfStock || quantity >= maxOrderable} className="px-3 py-2.5 text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Increase quantity">+</button></div>
+            <Button size="lg" className="flex-1" onClick={handleAddToCart} disabled={product.status !== 'active' || addedToCart || isOutOfStock}>{addedToCart ? <><Check size={20} />Added to Cart</> : isOutOfStock ? 'Out of Stock' : <><ShoppingCart size={20} />Add to Cart</>}</Button>
           </div>
-          <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500" /><span className="text-sm font-medium text-green-700">Available</span></div>
+          {isOutOfStock ? (
+            <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500" /><span className="text-sm font-medium text-red-700">Out of stock</span></div>
+          ) : availableStock <= 10 ? (
+            <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-amber-500" /><span className="text-sm font-medium text-amber-700">Only {availableStock} left in stock</span></div>
+          ) : (
+            <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500" /><span className="text-sm font-medium text-green-700">Available</span></div>
+          )}
           <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-100"><div className="flex items-center gap-3 text-sm"><Truck size={18} className="text-gray-500 shrink-0" /><span className="text-gray-600">Free delivery on orders over ₵200</span></div><div className="flex items-center gap-3 text-sm"><Shield size={18} className="text-gray-500 shrink-0" /><span className="text-gray-600">Buyer protection guarantee</span></div><div className="flex items-center gap-3 text-sm"><RotateCcw size={18} className="text-gray-500 shrink-0" /><span className="text-gray-600">7-day return policy</span></div></div>
         </div>
       </div></div>

@@ -16,9 +16,9 @@ const categories = [
     title: 'Shopping',
     description: 'How to browse, search, and purchase products',
     links: [
-      { label: 'How to place an order', href: '#' },
-      { label: 'Payment methods', href: '#' },
-      { label: 'Promo codes & discounts', href: '#' },
+      { label: 'How to place an order', comingSoon: true },
+      { label: 'Payment methods', comingSoon: true },
+      { label: 'Promo codes & discounts', comingSoon: true },
     ],
   },
   {
@@ -27,8 +27,8 @@ const categories = [
     description: 'Track orders, delivery times, and shipping info',
     links: [
       { label: 'Track your order', href: '/account/orders' },
-      { label: 'Delivery times', href: '#' },
-      { label: 'Shipping policies', href: '#' },
+      { label: 'Delivery times', comingSoon: true },
+      { label: 'Shipping policies', comingSoon: true },
     ],
   },
   {
@@ -36,9 +36,9 @@ const categories = [
     title: 'Payments',
     description: 'Payment options, refunds, and billing',
     links: [
-      { label: 'Payment methods accepted', href: '#' },
-      { label: 'How to get a refund', href: '#' },
-      { label: 'Payment security', href: '#' },
+      { label: 'Payment methods accepted', comingSoon: true },
+      { label: 'How to get a refund', href: '/returns' },
+      { label: 'Payment security', comingSoon: true },
     ],
   },
   {
@@ -102,9 +102,15 @@ export default function HelpPage() {
               <ul className="space-y-2 mt-4">
                 {category.links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="text-sm text-gray-600 hover:text-[#0f2b5b] transition-colors">
-                      {link.label}
-                    </Link>
+                    {'href' in link && link.href ? (
+                      <Link href={link.href} className="text-sm text-gray-600 hover:text-[#0f2b5b] transition-colors">
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        {link.label} <span className="text-[10px] uppercase tracking-wide">· Soon</span>
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -11,8 +11,10 @@ import { PaymentPlaceholder, type PaymentMethod } from '@/components/checkout/Pa
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
 import { validateCheckout, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
+import { syncCartToDatabase } from '@/app/(storefront)/cart/actions';
 import { placeOrder } from '@/app/account/orders/actions';
 import { setPaymentMethod } from '@/app/account/orders/payment-actions';
+import { useCartStore } from '@/stores/cart';
 import { Truck, MapPin, Package } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -26,10 +28,34 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  // Mirror the local (localStorage) cart into the database cart so the
+  // server-side checkout reads the exact items/quantities the shopper built.
+  // No-op when the local cart is empty (so a DB cart from another device
+  // is preserved).
+  async function syncLocalCart() {
+    try {
+      const { items } = useCartStore.getState();
+      if (items.length === 0) return;
+      const result = await syncCartToDatabase(
+        items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        }))
+      );
+      if (result.success) {
+        useCartStore.getState().setHasSyncedToDb(true);
+      }
+    } catch {
+      // Fall through; validateCheckout surfaces the failure state.
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
+        await syncLocalCart();
         const data = await validateCheckout(selectedDeliveryMethod);
         if (!cancelled) setCheckoutData(data);
       } catch {
@@ -48,6 +74,7 @@ export default function CheckoutPage() {
     let cancelled = false;
     async function reload() {
       try {
+        await syncLocalCart();
         const data = await validateCheckout(selectedDeliveryMethod);
         if (!cancelled) setCheckoutData(data);
       } catch {

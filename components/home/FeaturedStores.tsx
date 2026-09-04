@@ -3,10 +3,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { Star, ChevronRight } from 'lucide-react';
-import type { FeaturedStore } from '@/lib/data/campaigns';
+
+export interface FeaturedStoreCard {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  productCount: number;
+  rating: number | null;
+}
 
 interface FeaturedStoresProps {
-  stores: FeaturedStore[];
+  stores: FeaturedStoreCard[];
 }
 
 export function FeaturedStores({ stores }: FeaturedStoresProps) {
@@ -36,28 +45,38 @@ export function FeaturedStores({ stores }: FeaturedStoresProps) {
               className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Banner */}
-              <div className="relative h-24 sm:h-28 overflow-hidden bg-gray-100">
-                <Image
-                  src={store.bannerUrl}
-                  alt={`${store.name} banner`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="200px"
-                />
+              <div className="relative h-24 sm:h-28 overflow-hidden bg-gradient-to-r from-[#0f2b5b] to-[#1d4d78]">
+                {store.bannerUrl ? (
+                  <Image
+                    src={store.bannerUrl}
+                    alt={`${store.name} banner`}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="200px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 opacity-20" style={{ background: 'radial-gradient(circle at 75% 35%, white 0, transparent 35%)' }} />
+                )}
               </div>
 
               {/* Logo + Info */}
               <div className="relative px-3 pb-3">
                 <div className="relative -mt-5 mb-2">
                   <div className="h-10 w-10 rounded-lg bg-white border-2 border-white shadow-sm overflow-hidden">
-                    <Image
-                      src={store.logoUrl}
-                      alt={store.name}
-                      width={40}
-                      height={40}
-                      className="object-cover"
-                      unoptimized
-                    />
+                    {store.logoUrl ? (
+                      <Image
+                        src={store.logoUrl}
+                        alt={store.name}
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-[#0f2b5b] text-white text-sm font-bold">
+                        {store.name.charAt(0)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -66,12 +85,16 @@ export function FeaturedStores({ stores }: FeaturedStoresProps) {
                 </h3>
 
                 <div className="flex items-center gap-2 mt-1">
-                  <div className="flex items-center gap-0.5">
-                    <Star size={12} className="text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-medium text-gray-700">{store.rating}</span>
-                  </div>
-                  <span className="text-xs text-gray-400">·</span>
-                  <span className="text-xs text-gray-500">{store.productCount} items</span>
+                  {store.rating !== null && store.rating !== undefined && (
+                    <>
+                      <div className="flex items-center gap-0.5">
+                        <Star size={12} className="text-amber-400 fill-amber-400" />
+                        <span className="text-xs font-medium text-gray-700">{store.rating}</span>
+                      </div>
+                      <span className="text-xs text-gray-400">·</span>
+                    </>
+                  )}
+                  <span className="text-xs text-gray-500">{store.productCount} {store.productCount === 1 ? 'item' : 'items'}</span>
                 </div>
               </div>
             </Link>

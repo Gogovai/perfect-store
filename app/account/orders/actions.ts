@@ -101,6 +101,15 @@ export async function placeOrder(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Please log in to continue checkout.' };
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_active')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (profile && profile.is_active === false) {
+    return { success: false, error: 'Your account has been deactivated. Please contact support.' };
+  }
+
   const { data, error } = await supabase.rpc('create_order', {
     p_address_id: validation.data.addressId,
     p_delivery_method: validation.data.deliveryMethod,

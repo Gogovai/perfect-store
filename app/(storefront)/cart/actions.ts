@@ -127,12 +127,28 @@ async function getOrCreateUserCart() {
   return { supabase, user, cart };
 }
 
+/**
+ * Replace the user's database cart with the validated contents of the local
+ * (zustand/localStorage) cart. The local cart is the source of truth while
+ * browsing; this mirror makes the exact quantities/prices available to the
+ * server-side checkout flow (create_order reads cart_items).
+ *
+ * Items that no longer exist, are inactive, or belong to inactive sellers are
+ * skipped so they cannot be carried into an order.
+ */
 export async function syncCartToDatabase(
   localItems: Array<{ productId: string; variantId: string | null; quantity: number }>
 ): Promise<CartActionResult> {
   const { supabase, user, cart } = await getOrCreateUserCart();
   if (!user) return { success: false, error: 'Not authenticated' };
   if (!cart) return { success: false, error: 'Failed to create cart' };
+
+  const validated: Array<{
+    productId: string;
+    variantId: string | null;
+    quantity: number;
+    unitPrice: number;
+  }> = [];
 
   for (const li of localItems) {
     if (li.quantity < 1 || li.quantity > 99) continue;
@@ -148,18 +164,21 @@ export async function syncCartToDatabase(
       unitPrice = variant.price ?? unitPrice;
     }
 
-    const { data: existing } = await supabase
-      .from('cart_items')
-      .select('id, quantity')
-      .eq('cart_id', cart.id)
-      .eq('product_id', li.productId)
-      .eq('variant_id', li.variantId)
-      .maybeSingle();
-    if (existing) {
-      await supabase.from('cart_items').update({ quantity: Math.min(99, Math.max(existing.quantity, li.quantity)), unit_price: unitPrice, updated_at: new Date().toISOString() } as TablesUpdate<'cart_items'>).eq('id', existing.id);
-    } else {
-      await supabase.from('cart_items').insert({ cart_id: cart.id, product_id: li.productId, variant_id: li.variantId, quantity: li.quantity, unit_price: unitPrice } as TablesInsert<'cart_items'>);
-    }
+    validated.push({ productId: li.productId, variantId: li.variantId, quantity: li.quantity, unitPrice });
+  }
+
+  await supabase.from('cart_items').delete().eq('cart_id', cart.id);
+  if (validated.length > 0) {
+    const { error } = await supabase.from('cart_items').insert(
+      validated.map((v) => ({
+        cart_id: cart.id,
+        product_id: v.productId,
+        variant_id: v.variantId,
+        quantity: v.quantity,
+        unit_price: v.unitPrice,
+      } as TablesInsert<'cart_items'>))
+    );
+    if (error) return { success: false, error: 'Unable to save your cart. Please try again.' };
   }
   return { success: true };
 }

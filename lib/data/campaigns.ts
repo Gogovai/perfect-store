@@ -1,4 +1,4 @@
-export type HeroSlide={id:string;headline:string;subtext:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string;textColor:string};export type FlashSaleItem={id:string;name:string;originalPrice:number;salePrice:number;imageUrl:string;discountPercent:number;slug:string};export type PromoBanner={id:string;title:string;description:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string};export type FeaturedStore={id:string;name:string;logoUrl:string;bannerUrl:string;productCount:number;rating:number;slug:string};
+export type HeroSlide={id:string;headline:string;subtext:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string;textColor:string};export type FlashSaleItem={id:string;name:string;originalPrice:number;salePrice:number;imageUrl:string;discountPercent:number;slug:string};export type PromoBanner={id:string;title:string;description:string;ctaText:string;ctaLink:string;imageUrl:string;bgColor:string};
 
 const PHOTO={
   electronics:'/product-images/electronics/phones.jpg',
@@ -48,14 +48,6 @@ export const PROMO_BANNERS:PromoBanner[]=[
   {id:'promo-4',title:'Beauty & Skincare',description:'Premium beauty products and skincare essentials.',ctaText:'Shop beauty',ctaLink:'/categories/beauty-personal-care',imageUrl:PHOTO.makeup,bgColor:'#9a315f'},
   {id:'promo-5',title:'Sports & Fitness',description:'Get moving with gear, activewear and outdoor essentials.',ctaText:'Shop sports',ctaLink:'/categories/sports-fitness',imageUrl:PHOTO.running,bgColor:'#047857'},
   {id:'promo-6',title:'Health & Wellness',description:'Vitamins, supplements and health essentials for your family.',ctaText:'Shop health',ctaLink:'/categories/health',imageUrl:PHOTO.health,bgColor:'#059669'},
-];
-
-export const FEATURED_STORES:FeaturedStore[]=[
-  {id:'store-1',name:'TechHub Ghana',logoUrl:'/product-images/electronics/phones.jpg',bannerUrl:'/product-images/computers-accessories/monitor.jpg',productCount:12,rating:4.5,slug:'techhub-ghana'},
-  {id:'store-2',name:'Fashion Avenue',logoUrl:'/product-images/fashion/clothing.jpg',bannerUrl:'/product-images/fashion/shoes.jpg',productCount:8,rating:4.3,slug:'fashion-avenue'},
-  {id:'store-3',name:'Home Essentials',logoUrl:'/product-images/home-kitchen/kitchen.jpg',bannerUrl:'/product-images/home-kitchen/cookware.jpg',productCount:6,rating:4.1,slug:'home-essentials'},
-  {id:'store-4',name:'Beauty Palace',logoUrl:'/product-images/beauty-personal-care/skincare.jpg',bannerUrl:'/product-images/beauty-personal-care/beauty.jpg',productCount:5,rating:4.4,slug:'beauty-palace'},
-  {id:'store-5',name:'Gadget World',logoUrl:'/product-images/electronics/headphones.jpg',bannerUrl:'/product-images/phones-tablets/tablet.jpg',productCount:10,rating:4.2,slug:'gadget-world'},
 ];
 
 export const CATEGORY_IMAGES:Record<string,string>={

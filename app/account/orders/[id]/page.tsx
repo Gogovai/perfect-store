@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { getOrderDetail, cancelOrder } from '@/app/account/orders/actions';
+import { CancelOrderButton } from '@/components/account/CancelOrderButton';
+import { getOrderDetail } from '@/app/account/orders/actions';
 import { formatPrice, formatDate } from '@/lib/utils/formatting';
 import { getStatusStepIndex, getStatusMessage } from '@/lib/utils/order';
 import type { OrderStatus } from '@/types/database';
@@ -189,10 +189,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             {(order.status === 'pending' || order.status === 'confirmed') && (
               <Card>
                 <CardContent className="p-5">
-                  <form action={async () => { 'use server'; await cancelOrder(order.id); }}>
-                    <Button type="submit" variant="danger" fullWidth>Cancel Order</Button>
-                    <p className="text-xs text-gray-500 text-center mt-2">You can cancel this order while it is pending or confirmed.</p>
-                  </form>
+                  <CancelOrderButton orderId={order.id} />
                 </CardContent>
               </Card>
             )}

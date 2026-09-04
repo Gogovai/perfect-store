@@ -51,17 +51,25 @@ export async function updateSession(request: NextRequest) {
   // Define protected route patterns
   const pathname = request.nextUrl.pathname;
 
-  const isProtectedCustomerRoute =
-    pathname.startsWith('/account') ||
-    pathname.startsWith('/orders') ||
-    pathname.startsWith('/checkout') ||
-    pathname.startsWith('/wishlist') ||
-    pathname.startsWith('/addresses');
+  // Match whole path segments only: '/sellers' (the public storefronts page)
+  // must NOT be treated as part of the '/seller' console, and '/account' must
+  // not swallow sibling routes such as '/accounting'. Prefix matching without
+  // a trailing slash used to send every public '/sellers*' visitor to /login.
+  const isSegment = (segment: string) =>
+    pathname === segment || pathname.startsWith(`${segment}/`);
+
+  const isProtectedCustomerRoute = [
+    '/account',
+    '/orders',
+    '/checkout',
+    '/wishlist',
+    '/addresses',
+  ].some(isSegment);
 
   const isProtectedSellerRoute =
-    pathname.startsWith('/seller') && !pathname.startsWith('/seller/apply');
+    isSegment('/seller') && !isSegment('/seller/apply');
 
-  const isProtectedAdminRoute = pathname.startsWith('/admin');
+  const isProtectedAdminRoute = isSegment('/admin');
 
   const isProtectedRoute =
     isProtectedCustomerRoute || isProtectedSellerRoute || isProtectedAdminRoute;

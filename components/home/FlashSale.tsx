@@ -12,20 +12,30 @@ import type { FlashSaleItem } from '@/lib/data/campaigns';
 interface FlashSaleProps {
   items: FlashSaleItem[];
   endsAt?: Date;
+  /** Server-rendered seconds remaining so the initial HTML (and no-JS views) show a real countdown instead of 00:00:00. */
+  initialSecondsLeft?: number;
 }
 
-function CountdownTimer({ endsAt }: { endsAt: Date }) {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+function secondsToTime(totalSeconds: number) {
+  return {
+    hours: Math.floor(totalSeconds / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: Math.floor(totalSeconds % 60),
+  };
+}
+
+function CountdownTimer({ endsAt, initialSecondsLeft }: { endsAt: Date; initialSecondsLeft?: number }) {
+  const [timeLeft, setTimeLeft] = useState(() =>
+    initialSecondsLeft !== undefined && initialSecondsLeft > 0
+      ? secondsToTime(initialSecondsLeft)
+      : { hours: 0, minutes: 0, seconds: 0 }
+  );
 
   useEffect(() => {
     function update() {
-      const diff = Math.max(0, endsAt.getTime() - Date.now());
-      setTimeLeft({
-        hours: Math.floor(diff / (1000 * 60 * 60)),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
+      setTimeLeft(secondsToTime(Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 1000))));
     }
+    // Correct the server-rendered estimate immediately on mount, then tick.
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
@@ -53,7 +63,7 @@ function CountdownTimer({ endsAt }: { endsAt: Date }) {
   );
 }
 
-export function FlashSale({ items, endsAt }: FlashSaleProps) {
+export function FlashSale({ items, endsAt, initialSecondsLeft }: FlashSaleProps) {
   // Default: ends at midnight tonight
   const endDate = endsAt || new Date(new Date().setHours(23, 59, 59, 999));
 
@@ -69,7 +79,7 @@ export function FlashSale({ items, endsAt }: FlashSaleProps) {
               <Flame size={24} className="text-white" />
               <h2 className="text-xl sm:text-2xl font-bold text-white">Flash Sale</h2>
             </div>
-            <CountdownTimer endsAt={endDate} />
+            <CountdownTimer endsAt={endDate} initialSecondsLeft={initialSecondsLeft} />
           </div>
           <Link
             href="/search?sort=popular"
