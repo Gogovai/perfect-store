@@ -1,6 +1,78 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-const schema=z.object({productId:z.string().uuid(),status:z.enum(['active','rejected','inactive']),reason:z.string().trim().max(500).optional()});
-export async function moderateProduct(input:unknown){const p=schema.safeParse(input);if(!p.success)return{success:false,error:'Invalid moderation request'};const s=await createClient();const{data:{user}}=await s.auth.getUser();if(!user)return{success:false,error:'Not authenticated'};const{data:profile}=await s.from('profiles').select('role').eq('id',user.id).single();if(profile?.role!=='admin')return{success:false,error:'Admin access required'};const{data:product}=await s.from('products').select('id,seller_id,name,status').eq('id',p.data.productId).maybeSingle();if(!product)return{success:false,error:'Product not found'};const{error}=await s.from('products').update({status:p.data.status}).eq('id',p.data.productId);if(error)return{success:false,error:error.message};await s.from('audit_logs').insert({actor_id:user.id,action:'product_moderated',entity_type:'product',entity_id:p.data.productId,new_data:{status:p.data.status,reason:p.data.reason||null}});if(p.data.status==='active')await s.from('notifications').insert({user_id:(await s.from('sellers').select('owner_id').eq('id',product.seller_id).single()).data?.owner_id,title:'Product approved',message:`${product.name} is now live in the marketplace.`,type:'product_status',data:{product_id:product.id,status:'active'}});revalidatePath('/admin/products');revalidatePath('/products');return{success:true};}
+
+const schema = z.object({
+  productId: z.string().uuid(),
+  status: z.enum(['active', 'rejected', 'inactive']),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export async function moderateProduct(input: unknown) {
+  const p = schema.safeParse(input);
+  if (!p.success) return { success: false, error: 'Invalid moderation request' };
+
+  const s = await createClient();
+  const {
+    data: { user },
+  } = await s.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+  const { data: profile } = await s
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  if (profile?.role !== 'admin') return { success: false, error: 'Admin access required' };
+
+  const { data: product } = await s
+    .from('products')
+    .select('id,seller_id,name,status')
+    .eq('id', p.data.productId)
+    .maybeSingle();
+  if (!product) return { success: false, error: 'Product not found' };
+
+  // Direct updates are restricted by RLS for session clients, so moderation
+  // runs through the service-role client.
+  let adminClient;
+  try {
+    adminClient = getSupabaseAdmin();
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+  const { error } = await adminClient
+    .from('products')
+    .update({ status: p.data.status, updated_at: new Date().toISOString() })
+    .eq('id', p.data.productId);
+  if (error) return { success: false, error: error.message };
+
+  await s.from('audit_logs').insert({
+    user_id: user.id,
+    action: 'product_moderated',
+    entity_type: 'product',
+    entity_id: p.data.productId,
+    changes: { status: p.data.status, reason: p.data.reason || null },
+  });
+
+  if (p.data.status === 'active') {
+    const { data: seller } = await s
+      .from('sellers')
+      .select('owner_id')
+      .eq('id', product.seller_id)
+      .single();
+    if (seller?.owner_id) {
+      await s.from('notifications').insert({
+        user_id: seller.owner_id,
+        title: 'Product approved',
+        message: `${product.name} is now live in the marketplace.`,
+        type: 'product_status',
+        data: { product_id: product.id, status: 'active' },
+      });
+    }
+  }
+
+  revalidatePath('/admin/products');
+  revalidatePath('/products');
+  return { success: true };
+}

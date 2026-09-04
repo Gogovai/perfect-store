@@ -49,14 +49,22 @@ export async function setSellerStatus(
   if (!SELLER_STATUSES.includes(status)) {
     return { success: false, error: 'Invalid seller status' };
   }
-  const { supabase, error: authError } = await requireAdmin();
-  if (authError || !supabase) {
-    return { success: false, error: authError ?? 'Admin access required' };
+  const { error: authError } = await requireAdmin();
+  if (authError) {
+    return { success: false, error: authError };
   }
-  const { error } = await supabase.rpc('admin_set_seller_status', {
-    p_seller_id: id,
-    p_status: status,
-  });
+  // Direct updates are restricted by RLS for session clients, so seller
+  // moderation runs through the service-role client.
+  let adminClient;
+  try {
+    adminClient = getSupabaseAdmin();
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+  const { error } = await adminClient
+    .from('sellers')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/dashboard');
   revalidatePath('/seller/dashboard');
@@ -70,14 +78,20 @@ export async function setOrderStatus(
   if (!ORDER_STATUSES.includes(status)) {
     return { success: false, error: 'Invalid order status' };
   }
-  const { supabase, error: authError } = await requireAdmin();
-  if (authError || !supabase) {
-    return { success: false, error: authError ?? 'Admin access required' };
+  const { error: authError } = await requireAdmin();
+  if (authError) {
+    return { success: false, error: authError };
   }
-  const { error } = await supabase.rpc('admin_set_order_status', {
-    p_order_id: id,
-    p_status: status,
-  });
+  let adminClient;
+  try {
+    adminClient = getSupabaseAdmin();
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+  const { error } = await adminClient
+    .from('orders')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/dashboard');
   revalidatePath('/account/orders');
@@ -134,11 +148,17 @@ export async function setReviewPublished(id: string, published: boolean) {
 }
 
 export async function setCustomerActive(id: string, active: boolean) {
-  const { supabase, error: authError } = await requireAdmin();
-  if (authError || !supabase) {
-    return { success: false, error: authError ?? 'Admin access required' };
+  const { error: authError } = await requireAdmin();
+  if (authError) {
+    return { success: false, error: authError };
   }
-  const { error } = await supabase
+  let adminClient;
+  try {
+    adminClient = getSupabaseAdmin();
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+  const { error } = await adminClient
     .from('profiles')
     .update({ is_active: active, updated_at: new Date().toISOString() })
     .eq('id', id)
