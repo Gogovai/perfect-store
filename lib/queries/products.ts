@@ -61,7 +61,7 @@ async function getProductsQuery() {
 function normalizeProducts(data: unknown): ProductWithRelations[] {
   return (data as ProductWithRelations[]).map((p) => ({
     ...p,
-    inventory: Array.isArray(p.inventory) ? p.inventory : [],
+    inventory: Array.isArray(p.inventory) ? p.inventory : p.inventory ? [p.inventory] : [],
     sellers: p.sellers ? { ...p.sellers, rating: 0 } : null,
   }));
 }

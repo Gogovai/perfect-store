@@ -40,7 +40,7 @@ export async function getSellerBySlug(slug: string): Promise<SellerWithProducts 
     const product = p as unknown as ProductWithRelations;
     return {
       ...product,
-      inventory: Array.isArray(product.inventory) ? product.inventory : [],
+      inventory: Array.isArray(product.inventory) ? product.inventory : product.inventory ? [product.inventory] : [],
       sellers: product.sellers ? { ...product.sellers, rating: 0 } : null,
     };
   }) as ProductWithRelations[];
