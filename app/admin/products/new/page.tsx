@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { adminCreateProduct } from './actions';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 
 type Category = { id: string; name: string; slug: string; parent_id: string | null };
 
@@ -216,18 +217,12 @@ export default function AdminCreateProductPage() {
 
           <section className="rounded-2xl border bg-white p-6 space-y-4">
             <h2 className="text-lg font-semibold">Media</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Product Image URL</label>
-              <input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com/image.jpg" />
-              {imageUrl && (
-                <div className="mt-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageUrl} alt="Preview" className="h-32 w-32 rounded-lg object-cover" />
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              value={imageUrl}
+              onChange={setImageUrl}
+              folder="admin-products"
+              label="Product Image"
+            />
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />

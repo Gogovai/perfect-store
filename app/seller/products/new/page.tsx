@@ -1,7 +1,203 @@
 'use client';
-import { useEffect,useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { createProduct } from '@/app/seller/dashboard/actions';
-export default function NewProductPage(){const router=useRouter();const[categories,setCategories]=useState<any[]>([]);const[form,setForm]=useState({name:'',slug:'',sku:'',brand:'',categoryId:'',description:'',shortDescription:'',price:'',compareAtPrice:'',quantity:'0',imageUrl:''});const[msg,setMsg]=useState('');useEffect(()=>{createClient().from('categories').select('id,name').eq('is_active',true).order('sort_order').then(({data})=>setCategories(data||[]))},[]);const set=(k:string,v:string)=>setForm(f=>({...f,[k]:v}));async function submit(e:React.FormEvent){e.preventDefault();setMsg('Saving…');const r=await createProduct(form);if(!r.success){setMsg(r.error||'Unable to create product');return}router.push(`/seller/products/${r.id}`)}return <main className="min-h-screen bg-gray-50 py-8"><div className="mx-auto max-w-3xl px-4"><Link href="/seller/products" className="text-sm text-[#0f2b5b]">← Products</Link><div className="mt-3 rounded-2xl border bg-white p-6 sm:p-8"><h1 className="text-2xl font-bold text-gray-900">Add product</h1><p className="mt-1 text-sm text-gray-500">Products are submitted for review before they become visible to customers.</p><form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2"><label className="sm:col-span-2 text-sm font-medium">Product name<input required value={form.name} onChange={e=>set('name',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">Slug<input required value={form.slug} onChange={e=>set('slug',e.target.value)} placeholder="product-name" className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">SKU<input value={form.sku} onChange={e=>set('sku',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">Brand<input value={form.brand} onChange={e=>set('brand',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">Category<select required value={form.categoryId} onChange={e=>set('categoryId',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"><option value="">Select category</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="text-sm font-medium">Price (GHS)<input required type="number" min="0" step="0.01" value={form.price} onChange={e=>set('price',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">Compare-at price<input type="number" min="0" step="0.01" value={form.compareAtPrice} onChange={e=>set('compareAtPrice',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="text-sm font-medium">Initial stock<input required type="number" min="0" step="1" value={form.quantity} onChange={e=>set('quantity',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="sm:col-span-2 text-sm font-medium">Image URL<input type="url" value={form.imageUrl} onChange={e=>set('imageUrl',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="sm:col-span-2 text-sm font-medium">Short description<textarea maxLength={300} rows={2} value={form.shortDescription} onChange={e=>set('shortDescription',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label><label className="sm:col-span-2 text-sm font-medium">Description<textarea maxLength={5000} rows={6} value={form.description} onChange={e=>set('description',e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3"/></label>{msg&&<p className="sm:col-span-2 text-sm text-gray-600">{msg}</p>}<button disabled={form.price===''||form.name===''||form.slug===''} className="sm:col-span-2 rounded-xl bg-[#0f2b5b] px-5 py-3 font-semibold text-white disabled:opacity-50">Submit product</button></form></div></div></main>}
+import { ImageUploader } from '@/components/ui/ImageUploader';
+
+type Category = { id: string; name: string };
+
+export default function NewProductPage() {
+  const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [form, setForm] = useState({
+    name: '',
+    slug: '',
+    sku: '',
+    brand: '',
+    categoryId: '',
+    description: '',
+    shortDescription: '',
+    price: '',
+    compareAtPrice: '',
+    quantity: '0',
+    imageUrl: '',
+  });
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    createClient()
+      .from('categories')
+      .select('id,name')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => setCategories(data || []));
+  }, []);
+
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg('Saving...');
+    const r = await createProduct(form);
+    if (!r.success) {
+      setMsg(r.error || 'Unable to create product');
+      return;
+    }
+    router.push(`/seller/products/${r.id}`);
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-8">
+      <div className="mx-auto max-w-3xl px-4">
+        <Link href="/seller/products" className="text-sm text-[#0f2b5b]">
+          &larr; Products
+        </Link>
+        <div className="mt-3 rounded-2xl border bg-white p-6 sm:p-8">
+          <h1 className="text-2xl font-bold text-gray-900">Add product</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Products are submitted for review before they become visible to customers.
+          </p>
+
+          <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="sm:col-span-2 text-sm font-medium">
+              Product name *
+              <input
+                required
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              Slug *
+              <input
+                required
+                value={form.slug}
+                onChange={(e) => set('slug', e.target.value)}
+                placeholder="product-name"
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              SKU
+              <input
+                value={form.sku}
+                onChange={(e) => set('sku', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              Brand
+              <input
+                value={form.brand}
+                onChange={(e) => set('brand', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              Category *
+              <select
+                required
+                value={form.categoryId}
+                onChange={(e) => set('categoryId', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              >
+                <option value="">Select category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-sm font-medium">
+              Price (GHS) *
+              <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => set('price', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              Compare-at price
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.compareAtPrice}
+                onChange={(e) => set('compareAtPrice', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="text-sm font-medium">
+              Initial stock *
+              <input
+                required
+                type="number"
+                min="0"
+                step="1"
+                value={form.quantity}
+                onChange={(e) => set('quantity', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <div className="sm:col-span-2">
+              <ImageUploader
+                value={form.imageUrl}
+                onChange={(url) => set('imageUrl', url)}
+                folder="seller-products"
+                label="Product Image"
+              />
+            </div>
+
+            <label className="sm:col-span-2 text-sm font-medium">
+              Short description
+              <textarea
+                maxLength={300}
+                rows={2}
+                value={form.shortDescription}
+                onChange={(e) => set('shortDescription', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            <label className="sm:col-span-2 text-sm font-medium">
+              Description
+              <textarea
+                maxLength={5000}
+                rows={6}
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                className="mt-1 w-full rounded-xl border px-3 py-3"
+              />
+            </label>
+
+            {msg && <p className="sm:col-span-2 text-sm text-gray-600">{msg}</p>}
+
+            <button
+              disabled={form.price === '' || form.name === '' || form.slug === ''}
+              className="sm:col-span-2 rounded-xl bg-[#0f2b5b] px-5 py-3 font-semibold text-white disabled:opacity-50"
+            >
+              Submit product
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  );
+}

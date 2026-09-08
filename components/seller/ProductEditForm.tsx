@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProduct } from '@/app/seller/dashboard/actions';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 
 export type EditableProduct = {
   id: string;
@@ -112,10 +113,14 @@ export function ProductEditForm({
         Stock
         <input required type="number" min="0" step="1" value={form.quantity} onChange={(e) => set('quantity', e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3" />
       </label>
-      <label className="sm:col-span-2 text-sm font-medium">
-        Image URL
-        <input type="url" value={form.imageUrl} onChange={(e) => set('imageUrl', e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3" />
-      </label>
+      <div className="sm:col-span-2">
+        <ImageUploader
+          value={form.imageUrl}
+          onChange={(url) => set('imageUrl', url)}
+          folder="seller-products"
+          label="Product Image"
+        />
+      </div>
       <label className="sm:col-span-2 text-sm font-medium">
         Short description
         <textarea maxLength={300} rows={2} value={form.shortDescription} onChange={(e) => set('shortDescription', e.target.value)} className="mt-1 w-full rounded-xl border px-3 py-3" />
