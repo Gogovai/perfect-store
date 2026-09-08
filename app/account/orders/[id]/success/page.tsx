@@ -56,13 +56,28 @@ export default async function OrderSuccessPage({ params }: OrderSuccessPageProps
               </div>
 
               {/* Status Badge */}
-              <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm font-medium text-amber-800">
-                  Status: Pending Confirmation
+              <div className={`mb-6 p-3 rounded-lg border ${
+                order.status === 'confirmed' ? 'bg-green-50 border-green-200' :
+                order.status === 'pending' ? 'bg-amber-50 border-amber-200' :
+                'bg-blue-50 border-blue-200'
+              }`}>
+                <p className={`text-sm font-medium ${
+                  order.status === 'confirmed' ? 'text-green-800' :
+                  order.status === 'pending' ? 'text-amber-800' :
+                  'text-blue-800'
+                }`}>
+                  Status: {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace(/_/g, ' ')}
                 </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  Your order has been received. Payment processing will be available soon.
-                  Your order is currently pending confirmation.
+                <p className={`text-xs mt-1 ${
+                  order.status === 'confirmed' ? 'text-green-600' :
+                  order.status === 'pending' ? 'text-amber-600' :
+                  'text-blue-600'
+                }`}>
+                  {order.status === 'confirmed'
+                    ? 'Your order has been confirmed and payment received.'
+                    : order.status === 'pending'
+                    ? 'Your order has been received and is awaiting confirmation.'
+                    : `Your order is currently ${order.status.replace(/_/g, ' ')}.`}
                 </p>
               </div>
 
@@ -162,13 +177,28 @@ export default async function OrderSuccessPage({ params }: OrderSuccessPageProps
                   <CreditCard size={16} className="text-gray-500" />
                   <h2 className="text-sm font-semibold text-gray-900">Payment</h2>
                 </div>
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm font-medium text-amber-800">Payment: Pending</p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    Payment processing will be available soon. Your order will be confirmed once
-                    payment is processed.
-                  </p>
-                </div>
+                {order.payment?.status === 'paid' ? (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Payment Confirmed</p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Your payment of {formatPrice(order.payment.amount)} via {order.payment.method} has been confirmed.
+                    </p>
+                  </div>
+                ) : order.payment?.status === 'processing' ? (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800">Payment Processing</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Your payment is being processed. You will receive confirmation shortly.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm font-medium text-amber-800">Payment: {order.payment?.status ? order.payment.status.charAt(0).toUpperCase() + order.payment.status.slice(1) : 'Pending'}</p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      {!order.payment ? 'Payment method not set. You can pay from the order details page.' : 'Your order is being processed.'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Delivery Method */}

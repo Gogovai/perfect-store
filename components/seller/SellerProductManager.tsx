@@ -31,8 +31,8 @@ export function SellerProductManager({ categories, products }: { categories: { i
   }
 
   async function remove(productId: string) {
-    if (!window.confirm('Delete this product?')) return;
-    setBusy(true); const result = await deleteProduct(productId); setMessage(result.success ? 'Product deleted.' : result.error || 'Unable to delete product.');
+    if (!window.confirm('Remove this product from sale? Its record is kept and it can be reactivated later.')) return;
+    setBusy(true); const result = await deleteProduct(productId); setMessage(result.success ? 'Product deactivated and removed from sale.' : result.error || 'Unable to update product.');
     if (result.success) window.location.reload(); setBusy(false);
   }
 
