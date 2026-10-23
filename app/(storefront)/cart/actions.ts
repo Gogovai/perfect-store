@@ -14,8 +14,6 @@ export type DatabaseCartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
-  sellerName: string;
-  sellerId: string;
   maxQuantity: number;
   isValid: boolean;
   validationError?: string;
@@ -89,8 +87,6 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
       price,
       quantity: item.quantity,
       imageUrl: primaryImage?.url ?? '',
-      sellerName: seller?.store_name ?? '',
-      sellerId: seller?.id ?? product?.seller_id ?? '',
       maxQuantity: 99,
       isValid,
       validationError: validationError || undefined,
