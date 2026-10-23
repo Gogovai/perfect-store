@@ -107,10 +107,22 @@ BEGIN
             sr.price ASC
    LIMIT 1;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'No delivery rate configured for selected address and method';
+    -- Preserve the currently deployed checkout behavior until the owner configures
+    -- real delivery zones/rates. Once any rates are configured, an unmatched
+    -- address/method is rejected instead of silently using a guessed rate.
+    IF EXISTS (SELECT 1 FROM public.shipping_rates WHERE is_active = true) THEN
+      RAISE EXCEPTION 'No delivery rate configured for selected address and method';
+    END IF;
+    v_shipping_fee := CASE WHEN lower(btrim(p_delivery_method)) = 'express' THEN 35.00 ELSE 15.00 END;
+    v_method_name := initcap(replace(replace(p_delivery_method, '_', ' '), '-', ' ')) || ' Delivery';
+  ELSE
+    v_shipping_fee := v_shipping_rate.price;
+    v_method_name := initcap(replace(replace(v_shipping_rate.method, '_', ' '), '-', ' ')) || ' Delivery';
   END IF;
-  v_shipping_fee := v_shipping_rate.price;
-  v_method_name := initcap(replace(replace(v_shipping_rate.method, '_', ' '), '-', ' ')) || ' Delivery';
+
+  -- Keep the existing GHS 200 free-delivery threshold until an explicit store
+  -- policy replaces it; configured rates still control all other deliveries.
+  IF v_subtotal >= 200 THEN v_shipping_fee := 0; END IF;
   v_total := v_subtotal + v_shipping_fee;
   v_order_number := 'PS-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
 
