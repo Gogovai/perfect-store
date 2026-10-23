@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { adminCreateProduct } from './actions';
+import { isClothingCategory } from '@/lib/utils/clothing';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 
 type Category = { id: string; name: string; slug: string; parent_id: string | null };
@@ -50,7 +51,7 @@ export default function AdminCreateProductPage() {
         .select('id,name,slug,parent_id')
         .eq('is_active', true)
         .order('sort_order');
-      setCategories((data || []) as Category[]);
+      setCategories(((data || []) as Category[]).filter((category) => isClothingCategory(category.name, category.slug)));
       setLoading(false);
     }
     load();
