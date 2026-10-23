@@ -140,7 +140,7 @@ The store is not launch-ready merely because it builds. It must be demonstrably 
 
 - Latest `main` commit: `18a8ea8be8d82349f217b875bf94ea8c864f400f`.
 - GitHub CI passed for the latest feature PRs; CI for the latest merge commit is running: [latest main CI](https://github.com/Gogovai/perfect-store/actions/runs/39953349716).
-- Seven single-store/security migrations were applied successfully to the connected Supabase `ecommerce-marketplace` project.
+- Eight single-store/security migrations were applied successfully to the connected Supabase `ecommerce-marketplace` project.
 - Database checks confirm `products.seller_id` and `order_items.seller_id` are nullable, legacy seller-order triggers ignore null seller IDs, and order delivery methods, Ghana shipping countries, and cart quantities are constrained and validated.
 - Seller application and commission RPCs cannot be executed by anon/authenticated clients; unused marketplace RPCs have been revoked.
 - Supabase security advisor no longer reports anon-executable SECURITY DEFINER RPCs among the checked findings. Six authenticated SECURITY DEFINER RPC warnings remain for order, admin-status, return, review and order-party operations; these should retain their authorization checks.
