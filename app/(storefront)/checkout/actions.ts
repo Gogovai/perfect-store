@@ -126,12 +126,16 @@ export async function validateCheckout(
         const zone = Array.isArray(rate.delivery_zones) ? rate.delivery_zones[0] : rate.delivery_zones;
         const zoneCity = normalize(zone?.city);
         const addressCity = normalize(address.city);
+        const zoneRegion = normalize(zone?.region);
+        const addressRegion = normalize(address.region);
         const cityMatch = Boolean(zoneCity && addressCity && zoneCity === addressCity);
-        const regionMatch = Boolean(normalize(zone?.region) && normalize(zone?.region) === normalize(address.region));
-        const matches = zoneCity ? cityMatch : regionMatch;
-        return { rate, zone, matches, cityMatch };
+        const regionMatch = Boolean(!zoneCity && zoneRegion && zoneRegion === addressRegion);
+        const nationwideMatch = !zoneCity && !zoneRegion;
+        const matches = zoneCity ? cityMatch : regionMatch || nationwideMatch;
+        const matchRank = cityMatch ? 0 : regionMatch ? 1 : nationwideMatch ? 2 : 3;
+        return { rate, zone, matches, cityMatch, matchRank, nationwideMatch };
       }).filter((item) => item.matches && item.zone)
-        .sort((a, b) => Number(b.cityMatch) - Number(a.cityMatch) || Number(a.rate.price) - Number(b.rate.price));
+        .sort((a, b) => a.matchRank - b.matchRank || Number(a.rate.price) - Number(b.rate.price));
 
       const seenMethods = new Set<string>();
       deliveryOptions = matchingRates.flatMap((item) => {
@@ -146,7 +150,7 @@ export async function validateCheckout(
         return [{
           id: method,
           name: method.split(/[_ -]+/).map((part: string) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
-          description: `${eta} · ${item.zone.name}`,
+          description: `${eta} · ${item.zone.name}${item.nationwideMatch ? ' · Ghana-wide' : ''}`,
           price: Number(item.rate.price),
           etaMinDays: min,
           etaMaxDays: max,
