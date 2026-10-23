@@ -11,6 +11,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getDeliveryPrice, FREE_DELIVERY_THRESHOLD } from '@/lib/config/delivery';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 /**
  * A validated, server-authoritative cart item for checkout.
@@ -107,6 +108,7 @@ export async function validateCheckout(
         status,
         seller_id,
         sellers!inner(id, store_name, status),
+        categories!inner(name, slug),
         product_images(url, is_primary),
         product_variants(id, name, price, is_active)
       )
@@ -133,9 +135,9 @@ export async function validateCheckout(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of cartItems as any[]) {
     const product = item.products;
-    const seller = product.sellers;
-    const images = product.product_images as Array<{ url: string; is_primary: boolean }>;
-    const variants = product.product_variants as Array<{
+    const seller = product?.sellers;
+    const images = (product?.product_images ?? []) as Array<{ url: string; is_primary: boolean }>;
+    const variants = (product?.product_variants ?? []) as Array<{
       id: string;
       name: string;
       price: number;
@@ -144,7 +146,7 @@ export async function validateCheckout(
 
     let isValid = true;
     let validationError = '';
-    let unitPrice = product.base_price;
+    let unitPrice = Number(product?.base_price ?? 0);
     let variantName: string | null = null;
     let imageUrl = '';
 
@@ -160,6 +162,9 @@ export async function validateCheckout(
     } else if (product.status !== 'active') {
       isValid = false;
       validationError = 'This product is no longer available';
+    } else if (!isClothingCategory(product.categories?.name, product.categories?.slug)) {
+      isValid = false;
+      validationError = 'This store only sells clothing, footwear, and fashion accessories';
     }
 
     // Validate seller
