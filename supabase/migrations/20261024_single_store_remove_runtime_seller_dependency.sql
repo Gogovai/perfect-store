@@ -146,7 +146,7 @@ BEGIN
     id, order_id, seller_id, product_id, variant_id, product_name, sku, quantity, unit_price, total_price
   )
   SELECT
-    gen_random_uuid(), v_order_id, p.seller_id, ci.product_id, ci.variant_id, p.name,
+    gen_random_uuid(), v_order_id, NULL::uuid, ci.product_id, ci.variant_id, p.name,
     CASE WHEN ci.variant_id IS NOT NULL THEN pv.sku ELSE p.sku END,
     ci.quantity,
     CASE WHEN ci.variant_id IS NOT NULL THEN COALESCE(pv.price, p.base_price) ELSE p.base_price END,
