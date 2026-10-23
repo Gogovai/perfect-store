@@ -165,8 +165,6 @@ export async function validateCheckout(
         slug,
         base_price,
         status,
-        seller_id,
-        sellers!inner(id, store_name, status),
         categories!inner(name, slug),
         product_images(url, is_primary),
         product_variants(id, name, price, is_active)
@@ -195,7 +193,6 @@ export async function validateCheckout(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of cartItems as any[]) {
     const product = item.products;
-    const seller = product?.sellers;
     const images = (product?.product_images ?? []) as Array<{ url: string; is_primary: boolean }>;
     const variants = (product?.product_variants ?? []) as Array<{
       id: string;
@@ -227,11 +224,6 @@ export async function validateCheckout(
       validationError = 'This store only sells clothing, footwear, and fashion accessories';
     }
 
-    // Validate that the legacy store-owner record remains active
-    if (isValid && (!seller || seller.status !== 'active')) {
-      isValid = false;
-      validationError = 'This product is no longer available from the store';
-    }
 
     // Validate variant if applicable
     if (isValid && item.variant_id) {
