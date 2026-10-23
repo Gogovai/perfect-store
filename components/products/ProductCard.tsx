@@ -57,7 +57,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         {/* Badges top-left */}
         <div className="absolute left-2 top-2 flex flex-col gap-1.5">
           <ProductBadge
-            compareAtPrice={hasDiscount ? product.base_price : null}
+            compareAtPrice={hasDiscount ? compareAtPrice : null}
             price={lowestVariantPrice}
           />
         </div>
@@ -75,15 +75,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           />
         </div>
 
-        {/* Free shipping ribbon */}
-        {product.base_price >= 200 && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-500 to-emerald-600 px-3 py-1.5 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            <Truck size={12} className="text-white" />
-            <span className="text-[10px] font-bold uppercase tracking-wide text-white">
-              Free Shipping
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Info */}
@@ -91,11 +82,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         href={`/products/${product.slug}`}
         className="flex flex-1 flex-col p-3 sm:p-4"
       >
-        {seller && (
-          <p className="mb-1 truncate text-[11px] font-medium text-[#0f2b5b]/60">
-            {seller.store_name}
-          </p>
-        )}
         <h3 className="mb-1.5 line-clamp-2 text-[13px] font-medium leading-snug text-gray-800 transition-colors group-hover:text-[#0f2b5b] sm:text-sm">
           {product.name}
         </h3>
