@@ -108,11 +108,7 @@ export default async function OrderSuccessPage({ params }: OrderSuccessPageProps
                         </p>
                         {item.variant_name && (
                           <p className="text-xs text-gray-500">{item.variant_name}</p>
-                        )}
-                        {item.seller_name && (
-                          <p className="text-xs text-gray-500">Seller: {item.seller_name}</p>
-                        )}
-                      </div>
+                        )}</div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-semibold text-gray-900">
                           {formatPrice(item.subtotal)}
