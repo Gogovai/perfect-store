@@ -14,8 +14,6 @@ export type DatabaseCartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
-  sellerName: string;
-  sellerId: string;
   maxQuantity: number;
   isValid: boolean;
   validationError?: string;
@@ -47,8 +45,7 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
   const { data: cartItems } = await supabase
     .from('cart_items')
     .select(`id, quantity, product_id, variant_id, unit_price,
-      products!inner(id, name, base_price, status, seller_id,
-        sellers!inner(id, store_name, status),
+      products!inner(id, name, base_price, status,
         product_images(url, is_primary),
         product_variants(id, name, price, is_active))`)
     .eq('cart_id', cart.id);
@@ -57,16 +54,14 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
 
   return cartItems.map((item) => {
     const product = item.products as unknown as {
-      id: string; name: string; base_price: number; status: string; seller_id: string;
-      sellers: { id: string; store_name: string; status: string };
+      id: string; name: string; base_price: number; status: string;
       product_images: Array<{ url: string; is_primary: boolean }>;
       product_variants: Array<{ id: string; name: string; price: number | null; is_active: boolean }>;
     };
-    const seller = product?.sellers;
     const images = product?.product_images ?? [];
     const variants = product?.product_variants ?? [];
-    let isValid = product?.status === 'active' && seller?.status === 'active';
-    let validationError = isValid ? '' : (product?.status !== 'active' ? 'Product no longer available' : 'Seller is no longer active');
+    let isValid = product?.status === 'active';
+    let validationError = isValid ? '' : 'Product no longer available';
     let price = product?.base_price ?? item.unit_price;
     let variantName: string | null = null;
 
@@ -89,8 +84,6 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
       price,
       quantity: item.quantity,
       imageUrl: primaryImage?.url ?? '',
-      sellerName: seller?.store_name ?? '',
-      sellerId: seller?.id ?? product?.seller_id ?? '',
       maxQuantity: 99,
       isValid,
       validationError: validationError || undefined,
@@ -133,7 +126,7 @@ async function getOrCreateUserCart() {
  * browsing; this mirror makes the exact quantities/prices available to the
  * server-side checkout flow (create_order reads cart_items).
  *
- * Items that no longer exist, are inactive, or belong to inactive sellers are
+ * Items that no longer exist or are inactive are
  * skipped so they cannot be carried into an order.
  */
 export async function syncCartToDatabase(
@@ -152,10 +145,8 @@ export async function syncCartToDatabase(
 
   for (const li of localItems) {
     if (li.quantity < 1 || li.quantity > 99) continue;
-    const { data: product } = await supabase.from('products').select('id, status, base_price, seller_id').eq('id', li.productId).maybeSingle();
+    const { data: product } = await supabase.from('products').select('id, status, base_price').eq('id', li.productId).maybeSingle();
     if (!product || product.status !== 'active') continue;
-    const { data: seller } = await supabase.from('sellers').select('status').eq('id', product.seller_id).maybeSingle();
-    if (!seller || seller.status !== 'active') continue;
 
     let unitPrice = product.base_price;
     if (li.variantId) {
@@ -189,10 +180,8 @@ export async function addToDatabaseCart(productId: string, variantId: string | n
   if (!user) return { success: false, error: 'Not authenticated' };
   if (!cart) return { success: false, error: 'Failed to create cart' };
 
-  const { data: product } = await supabase.from('products').select('id, status, base_price, seller_id').eq('id', productId).maybeSingle();
+  const { data: product } = await supabase.from('products').select('id, status, base_price').eq('id', productId).maybeSingle();
   if (!product || product.status !== 'active') return { success: false, error: 'Product is no longer available' };
-  const { data: seller } = await supabase.from('sellers').select('status').eq('id', product.seller_id).maybeSingle();
-  if (!seller || seller.status !== 'active') return { success: false, error: 'Seller is no longer active' };
 
   let unitPrice = product.base_price;
   if (variantId) {

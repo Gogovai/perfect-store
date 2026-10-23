@@ -9,7 +9,6 @@ export type WishlistItem = {
   price: number;
   imageUrl: string;
   slug: string;
-  sellerName: string;
 };
 
 type WishlistState = {
@@ -51,7 +50,6 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()((set, 
           price: item.price,
           imageUrl: item.imageUrl,
           slug: item.slug,
-          sellerName: item.sellerName,
         },
       ],
     });

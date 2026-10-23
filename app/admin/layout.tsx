@@ -7,16 +7,11 @@ const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/products', label: 'Products' },
-  { href: '/admin/sellers', label: 'Sellers' },
   { href: '/admin/returns', label: 'Returns' },
   { href: '/admin/reviews', label: 'Reviews' },
   { href: '/admin/support', label: 'Support' },
-  { href: '/admin/campaigns', label: 'Campaigns' },
-  { href: '/admin/coupons', label: 'Coupons' },
   { href: '/admin/categories', label: 'Categories' },
-  { href: '/admin/payouts', label: 'Payouts' },
   { href: '/admin/logistics', label: 'Logistics' },
-  { href: '/admin/advertising', label: 'Advertising' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

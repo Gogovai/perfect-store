@@ -13,7 +13,6 @@ type Row = {
   base_price: number;
   created_at: string;
   rejection_reason: string | null;
-  sellers: { store_name: string; status: string } | null;
   categories: { name: string } | null;
   inventory: Array<{ quantity: number; reserved_quantity: number }> | null;
   product_images: Array<{ url: string; is_primary: boolean }> | null;
@@ -54,7 +53,7 @@ export default function AdminProducts() {
     if ((p as { role?: string } | null)?.role !== 'admin') { location.href = '/'; return; }
     const { data } = await client
       .from('products')
-      .select('id,name,slug,sku,status,base_price,created_at,rejection_reason,sellers(store_name,status),categories(name),inventory(quantity,reserved_quantity),product_images(url,is_primary)')
+      .select('id,name,slug,sku,status,base_price,created_at,rejection_reason,categories(name),inventory(quantity,reserved_quantity),product_images(url,is_primary)')
       .in('status', ['pending_review', 'active', 'rejected', 'inactive'])
       .order('created_at', { ascending: false });
     setProducts((data || []) as unknown as Row[]);
@@ -99,7 +98,7 @@ export default function AdminProducts() {
         <header>
           <p className="text-sm font-semibold text-[#0f2b5b]">Catalogue quality</p>
           <h1 className="text-3xl font-bold text-gray-900">Product moderation</h1>
-          <p className="mt-1 text-sm text-gray-500">Review seller submissions before products become visible to customers.</p>
+          <p className="mt-1 text-sm text-gray-500">Manage the clothing catalogue and publish products when they are ready.</p>
         </header>
 
         {toast && (
@@ -139,7 +138,6 @@ export default function AdminProducts() {
                 <div key={p.id} className="flex flex-wrap items-start justify-between gap-4 border-b p-5 last:border-0">
                   <div className="flex min-w-0 flex-1 items-start gap-4">
                     {image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={image.url} alt="" className="h-14 w-14 flex-none rounded-lg object-cover" />
                     ) : (
                       <div className="flex h-14 w-14 flex-none items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">No image</div>
@@ -147,18 +145,13 @@ export default function AdminProducts() {
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900">{p.name}</p>
                       <p className="text-xs text-gray-500">
-                        {p.sellers?.store_name || 'Unknown seller'} · {p.categories?.name || 'No category'} · {p.sku || 'No SKU'} · GHS {Number(p.base_price).toFixed(2)} · Stock {Math.max(0, stock)}
+                        {p.categories?.name || 'No category'} · {p.sku || 'No SKU'} · GHS {Number(p.base_price).toFixed(2)} · Stock {Math.max(0, stock)}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-400">Submitted {new Date(p.created_at).toLocaleDateString()}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[p.status] || 'bg-gray-100'}`}>
                           {p.status.replaceAll('_', ' ')}
                         </span>
-                        {p.sellers && p.sellers.status !== 'active' && (
-                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
-                            Seller {p.sellers.status}
-                          </span>
-                        )}
                       </div>
                       {p.status === 'rejected' && p.rejection_reason && (
                         <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">Rejection reason: {p.rejection_reason}</p>
@@ -203,7 +196,7 @@ export default function AdminProducts() {
                           autoFocus
                           value={reason}
                           onChange={(e) => setReason(e.target.value)}
-                          placeholder="Why is this product rejected? The seller will see this."
+                          placeholder="Why are you rejecting this product?"
                           maxLength={500}
                           className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-xs"
                         />

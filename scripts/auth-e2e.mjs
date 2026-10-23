@@ -116,7 +116,6 @@ const PASSWORD = 'StrongPass!234';
 const c1 = { email: `e2e-c1-${now}@example.com`, password: PASSWORD };
 const termsEmail = `e2e-terms-${now}@example.com`;
 const adminUser = { email: `e2e-admin-${now}@example.com`, password: PASSWORD };
-const sellerUser = { email: `e2e-seller-${now}@example.com`, password: PASSWORD };
 
 async function createUserViaApi(email, password) {
   const { data, error } = await anon.auth.signUp({
@@ -313,7 +312,7 @@ async function main() {
       await ctx.close();
     }
 
-    // ---- 13/14. Unauthorized admin/seller access as customer ----
+    // ---- 13. Unauthorized admin access and legacy seller URL redirect ----
     {
       const ctx = await browser.createBrowserContext();
       const page = await ctx.newPage();
@@ -322,12 +321,9 @@ async function main() {
       await goto(page, '/admin');
       const adminBlocked = await waitHome(page, 10000);
       record('13. Customer blocked from /admin', adminBlocked, adminBlocked ? 'redirected to /' : 'reached /admin!');
-      await goto(page, '/seller');
-      const sellerBlocked = await waitHome(page, 10000);
-      record('14. Customer blocked from /seller', sellerBlocked, sellerBlocked ? 'redirected to /' : 'reached /seller!');
-      await goto(page, '/seller/apply');
-      const applyText = await bodyHas(page, 'Sell on Perfect Store');
-      record('14b. /seller/apply still public', applyText, applyText ? 'application page renders' : 'page did not render');
+      await goto(page, '/sellers');
+      const legacyRedirect = await waitUrl(page, '/products', 10000);
+      record('14. Legacy seller directory redirects to products', legacyRedirect, legacyRedirect ? 'legacy URL safely redirected' : 'redirect did not complete');
       await ctx.close();
     }
 
@@ -343,21 +339,6 @@ async function main() {
       await ctx.close();
     }
 
-    // ---- 16. Seller login redirect ----
-    {
-      const userId = await createUserViaApi(sellerUser.email, sellerUser.password);
-      await svc.from('profiles').update({ role: 'seller', updated_at: new Date().toISOString() }).eq('id', userId);
-      await svc.from('sellers').insert({
-        owner_id: userId, store_name: `E2E Store ${now}`, slug: `e2e-store-${now}`,
-        status: 'active', commission_rate: 10, email: sellerUser.email,
-      }).select('id').single();
-      const ctx = await browser.createBrowserContext();
-      const page = await ctx.newPage();
-      await login(page, sellerUser.email, sellerUser.password);
-      const ok = await waitUrl(page, '/seller/dashboard', 20000);
-      record('16. Seller login redirects to /seller/dashboard', ok, ok ? 'redirect ok' : 'no seller redirect');
-      await ctx.close();
-    }
   } finally {
     if (regCtx) await regCtx.close().catch(() => {});
     await browser.close();
@@ -367,12 +348,11 @@ async function main() {
   for (const u of created) {
     if (u.userId) {
       for (const q of [
-        svc.from('sellers').delete().eq('owner_id', u.userId),
         svc.from('profiles').delete().eq('id', u.userId),
       ]) {
-        try { await q; } catch {}
+        try { await q; } catch { /* Best-effort cleanup for test data. */ }
       }
-      try { await svc.auth.admin.deleteUser(u.userId); } catch {}
+      try { await svc.auth.admin.deleteUser(u.userId); } catch { /* Best-effort cleanup for test users. */ }
     }
   }
 

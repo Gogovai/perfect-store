@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { adminCreateProduct } from './actions';
+import { isClothingCategory } from '@/lib/utils/clothing';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 
 type Category = { id: string; name: string; slug: string; parent_id: string | null };
@@ -50,7 +51,7 @@ export default function AdminCreateProductPage() {
         .select('id,name,slug,parent_id')
         .eq('is_active', true)
         .order('sort_order');
-      setCategories((data || []) as Category[]);
+      setCategories(((data || []) as Category[]).filter((category) => isClothingCategory(category.name, category.slug)));
       setLoading(false);
     }
     load();
@@ -101,9 +102,9 @@ export default function AdminCreateProductPage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <header>
           <p className="text-sm font-semibold text-[#0f2b5b]">Admin product</p>
-          <h1 className="text-3xl font-bold">Create Marketplace Product</h1>
+          <h1 className="text-3xl font-bold">Add Clothing Product</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Admin-created products are published immediately and do not require seller approval.
+            Add products to the store catalogue and manage their inventory from one place.
           </p>
         </header>
 

@@ -7,7 +7,7 @@ import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { DeliveryMethod } from '@/components/checkout/DeliveryMethod';
 import { CheckoutItems } from '@/components/checkout/CheckoutItems';
 import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
-import { PaymentPlaceholder, type PaymentMethod } from '@/components/checkout/PaymentPlaceholder';
+import { PaymentMethodSelector, type PaymentMethod } from '@/components/checkout/PaymentMethodSelector';
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
 import { validateCheckout, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [notes, setNotes] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
+
 
   // Mirror the local (localStorage) cart into the database cart so the
   // server-side checkout reads the exact items/quantities the shopper built.
@@ -56,7 +57,7 @@ export default function CheckoutPage() {
     async function load() {
       try {
         await syncLocalCart();
-        const data = await validateCheckout(selectedDeliveryMethod);
+        const data = await validateCheckout(selectedDeliveryMethod, selectedAddressId);
         if (!cancelled) setCheckoutData(data);
       } catch {
         if (!cancelled) setCheckoutData(null);
@@ -66,7 +67,6 @@ export default function CheckoutPage() {
     }
     load();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function CheckoutPage() {
     async function reload() {
       try {
         await syncLocalCart();
-        const data = await validateCheckout(selectedDeliveryMethod);
+        const data = await validateCheckout(selectedDeliveryMethod, selectedAddressId);
         if (!cancelled) setCheckoutData(data);
       } catch {
         if (!cancelled) setOrderError('Unable to refresh checkout totals. Please try again.');
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
     }
     reload();
     return () => { cancelled = true; };
-  }, [selectedDeliveryMethod, isLoading]);
+  }, [selectedDeliveryMethod, selectedAddressId, isLoading]);
 
   async function handlePlaceOrder() {
     if (!selectedAddressId) {
@@ -124,18 +124,18 @@ export default function CheckoutPage() {
         // Server cart has already been cleared by create_order.
       }
 
-      if (selectedPaymentMethod === 'paystack') {
-        const response = await fetch('/api/payments/paystack/initialize', {
+      if (selectedPaymentMethod === 'hubtel') {
+        const response = await fetch('/api/payments/hubtel/initialize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: result.orderId }),
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.authorization_url) {
+        if (!response.ok || !data.checkout_url) {
           setOrderError(data.error || 'Online payment is currently unavailable. Your order was saved; you can retry payment from the order page.');
           return;
         }
-        window.location.assign(data.authorization_url);
+        window.location.assign(data.checkout_url);
         return;
       }
 
@@ -198,7 +198,7 @@ export default function CheckoutPage() {
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="mb-4 flex items-center gap-2"><div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0f2b5b] text-white"><Truck size={14} /></div><h2 className="text-base font-semibold text-gray-900">Delivery Method</h2></div>
-              <DeliveryMethod selectedMethodId={selectedDeliveryMethod} onSelectMethod={setSelectedDeliveryMethod} subtotal={checkoutData.subtotal} />
+              <DeliveryMethod options={checkoutData.deliveryOptions} selectedMethodId={selectedDeliveryMethod} onSelectMethod={setSelectedDeliveryMethod} addressSelected={Boolean(selectedAddressId)} />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <PaymentPlaceholder value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
+              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
@@ -218,7 +218,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="lg:col-span-1"><div className="sticky top-24">
-            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} isDisabled={!selectedAddressId || checkoutData.invalidItems.length > 0 || isProcessing} />
+            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} deliveryMethodSelected={checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod)} isDisabled={!selectedAddressId || checkoutData.deliveryOptions.length === 0 || !checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod) || checkoutData.invalidItems.length > 0 || isProcessing} />
           </div></div>
         </div>
       </Container>

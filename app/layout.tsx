@@ -5,12 +5,12 @@ import { getCurrentProfile } from '@/lib/supabase/auth';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Perfect Store - Ghana Marketplace',
-  description: 'Shop quality products from trusted sellers on Ghana\'s leading multi-vendor marketplace',
-  keywords: 'marketplace, shopping, ghana, online store, ecommerce',
+  title: 'Perfect Store — Clothing Store',
+  description: 'Shop men’s and women’s clothing with delivery across Ghana.',
+  keywords: 'clothing, fashion, menswear, womenswear, Ghana, online shopping',
   openGraph: {
-    title: 'Perfect Store',
-    description: 'Shop quality products from trusted sellers on Ghana\'s leading multi-vendor marketplace',
+    title: 'Perfect Store — Clothing Store',
+    description: 'Shop men’s and women’s clothing with delivery across Ghana.',
     type: 'website',
   },
 };

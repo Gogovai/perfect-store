@@ -37,17 +37,14 @@ function FilterGroup({ title, children, defaultOpen = true }: FilterGroupProps) 
 
 interface ProductFiltersProps {
   categories?: FilterOption[];
-  sellers?: FilterOption[];
 }
 
 interface FiltersContentProps {
   categories: FilterOption[];
-  sellers: FilterOption[];
   currentSort: string;
   currentMinPrice: string;
   currentMaxPrice: string;
   currentCategory: string;
-  currentSeller: string;
   currentRating: string;
   updateParams: (key: string, value: string) => void;
   clearAllFilters: () => void;
@@ -56,12 +53,10 @@ interface FiltersContentProps {
 
 function FiltersContent({
   categories,
-  sellers,
   currentSort,
   currentMinPrice,
   currentMaxPrice,
   currentCategory,
-  currentSeller,
   currentRating,
   updateParams,
   clearAllFilters,
@@ -73,7 +68,6 @@ function FiltersContent({
     { label: 'Price: High to Low', value: 'price_desc' },
     { label: 'Highest Rated', value: 'rating' },
     { label: 'Most Reviewed', value: 'most_reviewed' },
-    { label: 'Most Popular', value: 'popular' },
   ];
 
   return (
@@ -104,20 +98,6 @@ function FiltersContent({
         </FilterGroup>
       )}
 
-      {sellers.length > 0 && (
-        <FilterGroup title="Seller">
-          <select
-            value={currentSeller}
-            onChange={(e) => updateParams('seller', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="Filter by seller"
-          >
-            <option value="">All Sellers</option>
-            {sellers.map((seller) => <option key={seller.value} value={seller.value}>{seller.label}</option>)}
-          </select>
-        </FilterGroup>
-      )}
-
       <FilterGroup title="Price Range">
         <div className="flex items-center gap-2">
           <input type="number" placeholder="Min" value={currentMinPrice} onChange={(e) => updateParams('minPrice', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" aria-label="Minimum price" />
@@ -143,7 +123,7 @@ function FiltersContent({
   );
 }
 
-export function ProductFilters({ categories = [], sellers = [] }: ProductFiltersProps) {
+export function ProductFilters({ categories = [] }: ProductFiltersProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -151,7 +131,6 @@ export function ProductFilters({ categories = [], sellers = [] }: ProductFilters
   const currentMinPrice = searchParams.get('minPrice') || '';
   const currentMaxPrice = searchParams.get('maxPrice') || '';
   const currentCategory = searchParams.get('category') || '';
-  const currentSeller = searchParams.get('seller') || '';
   const currentRating = searchParams.get('rating') || '';
   const currentSort = searchParams.get('sort') || 'newest';
 
@@ -161,7 +140,6 @@ export function ProductFilters({ categories = [], sellers = [] }: ProductFilters
     { label: 'Price: High to Low', value: 'price_desc' },
     { label: 'Highest Rated', value: 'rating' },
     { label: 'Most Reviewed', value: 'most_reviewed' },
-    { label: 'Most Popular', value: 'popular' },
   ];
 
   function updateParams(key: string, value: string) {
@@ -173,13 +151,13 @@ export function ProductFilters({ categories = [], sellers = [] }: ProductFilters
 
   function clearAllFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    ['minPrice', 'maxPrice', 'category', 'seller', 'rating'].forEach((key) => params.delete(key));
+    ['minPrice', 'maxPrice', 'category', 'rating'].forEach((key) => params.delete(key));
     params.delete('page');
     router.push(`?${params.toString()}`, { scroll: false });
   }
 
-  const hasActiveFilters = !!(currentMinPrice || currentMaxPrice || currentCategory || currentSeller || currentRating);
-  const filterProps = { categories, sellers, currentSort, currentMinPrice, currentMaxPrice, currentCategory, currentSeller, currentRating, updateParams, clearAllFilters, hasActiveFilters };
+  const hasActiveFilters = !!(currentMinPrice || currentMaxPrice || currentCategory || currentRating);
+  const filterProps = { categories, currentSort, currentMinPrice, currentMaxPrice, currentCategory, currentRating, updateParams, clearAllFilters, hasActiveFilters };
 
   return (
     <>

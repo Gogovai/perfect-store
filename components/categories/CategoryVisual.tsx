@@ -3,24 +3,33 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-// One hero image per category — used in "Shop by Category" grids
 const CATEGORY_PHOTOS: Record<string, { image: string; label: string }> = {
-  electronics:              { image: '/product-images/electronics/phones.jpg',      label: 'Electronics' },
-  'phones-tablets':         { image: '/product-images/phones-tablets/phone.jpg',    label: 'Phones & Tablets' },
-  'computers-accessories':  { image: '/product-images/computers-accessories/laptop.jpg', label: 'Computers' },
-  fashion:                  { image: '/product-images/fashion/clothing.jpg',        label: 'Fashion' },
-  'home-kitchen':           { image: '/product-images/home-kitchen/kitchen.jpg',    label: 'Home & Kitchen' },
-  'beauty-personal-care':   { image: '/product-images/beauty-personal-care/skincare.jpg', label: 'Beauty' },
-  health:                   { image: '/product-images/health/wellness.jpg',         label: 'Health' },
-  'sports-fitness':         { image: '/product-images/sports-fitness/fitness.jpg',  label: 'Sports' },
-  automotive:               { image: '/product-images/automotive/car.jpg',          label: 'Automotive' },
-  'baby-products':          { image: '/product-images/baby-products/baby.jpg',      label: 'Baby' },
-  groceries:                { image: '/product-images/groceries/fresh.jpg',         label: 'Groceries' },
-  'office-school':          { image: '/product-images/office-school/office.jpg',    label: 'Office' },
-  appliances:               { image: '/product-images/appliances/washing-machine.jpg', label: 'Appliances' },
+  fashion: { image: '/product-images/fashion/clothing.jpg', label: 'Fashion' },
+  clothing: { image: '/product-images/fashion/clothing.jpg', label: 'Clothing' },
+  apparel: { image: '/product-images/fashion/clothing.jpg', label: 'Apparel' },
+  menswear: { image: '/product-images/fashion/clothing.jpg', label: 'Men’s Clothing' },
+  'mens-clothing': { image: '/product-images/fashion/clothing.jpg', label: 'Men’s Clothing' },
+  'mens-fashion': { image: '/product-images/fashion/clothing.jpg', label: 'Men’s Fashion' },
+  womenswear: { image: '/product-images/fashion/clothing.jpg', label: 'Women’s Clothing' },
+  'womens-clothing': { image: '/product-images/fashion/clothing.jpg', label: 'Women’s Clothing' },
+  'womens-fashion': { image: '/product-images/fashion/clothing.jpg', label: 'Women’s Fashion' },
+  shoes: { image: '/product-images/fashion/shoes.jpg', label: 'Shoes' },
+  footwear: { image: '/product-images/fashion/shoes.jpg', label: 'Footwear' },
+  accessories: { image: '/product-images/fashion/bags.jpg', label: 'Accessories' },
+  bags: { image: '/product-images/fashion/bags.jpg', label: 'Bags' },
+  'traditional-wear': { image: '/product-images/fashion/clothing.jpg', label: 'Traditional Wear' },
+  ankara: { image: '/product-images/fashion/clothing.jpg', label: 'Ankara' },
 };
 
-const fallback = CATEGORY_PHOTOS.electronics;
+const fallback = CATEGORY_PHOTOS.fashion;
+
+function labelFromSlug(slug: string) {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 export function CategoryVisual({
   slug,
@@ -31,13 +40,10 @@ export function CategoryVisual({
   href?: string;
   className?: string;
 }) {
-  const content = CATEGORY_PHOTOS[slug] || fallback;
+  const content = CATEGORY_PHOTOS[slug] ?? { ...fallback, label: labelFromSlug(slug) || fallback.label };
 
   const visual = (
-    <div
-      className={`group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ${className}`}
-    >
-      {/* Single image */}
+    <div className={`group relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ${className}`}>
       <Image
         src={content.image}
         alt={content.label}
@@ -45,11 +51,7 @@ export function CategoryVisual({
         className="object-cover transition-transform duration-500 group-hover:scale-110"
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
       />
-
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
-      {/* Label */}
       <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
         <span className="text-xs font-bold uppercase tracking-wide text-white drop-shadow sm:text-sm">
           {content.label}
@@ -58,13 +60,7 @@ export function CategoryVisual({
     </div>
   );
 
-  return href ? (
-    <Link href={href} className="block">
-      {visual}
-    </Link>
-  ) : (
-    visual
-  );
+  return href ? <Link href={href} className="block">{visual}</Link> : visual;
 }
 
 export const CATEGORY_VISUAL_SLUGS = Object.keys(CATEGORY_PHOTOS);

@@ -122,10 +122,31 @@ Never invent Hubtel environment variable names before confirming the selected AP
 
 The store is not launch-ready merely because it builds. It must be demonstrably single-seller across UI, code and authorization; the owner must manage all products and orders; customer prices/stock/payment state must be server-controlled; Hubtel must be the only online payment provider and be verified server-side; Ghana delivery configuration must work; order privacy and inventory concurrency must be tested; no secrets may be committed; and production smoke tests must pass.
 
+## Current cleanup status (2026-10-23)
+
+Completed on the draft branch `feature/single-store-hubtel`:
+
+- Removed seller navigation and public storefront presentation; legacy seller URLs redirect to the shop.
+- Disabled seller-application RPC access and set commission calculations to zero through new, data-preserving migrations.
+- Restricted public catalogue queries, admin product creation/publication, and order creation to clothing, footwear, and fashion-accessory categories.
+- Removed unused seller metadata from cart, wishlist, checkout, product display, and customer order presentation where it was not needed.
+- Replaced hard-coded checkout shipping prices with configured, address-matched delivery rates.
+- Removed disconnected campaigns/coupons admin screens and a broken image-sync workflow that referenced a missing script.
+- Removed unused admin API routes and stale constants; renamed static homepage content so it is not confused with database campaigns.
+- Rewrote the seed README to stop directing operators to missing demo seed files.
+
+Still incomplete and release-blocking:
+
+- Legacy tables, columns, types, triggers and RLS policies still reference sellers, seller finance, and marketplace concepts. They are retained intentionally until a reviewed migration can preserve existing product/order history and replace those dependencies.
+- Hubtel endpoint, callback payload, transaction verification, currency validation and idempotency still need to be checked against the exact official API enabled for the merchant account and tested with real sandbox transactions.
+- Run the latest CI result for this exact commit; then review build/lint output and fix any remaining failures.
+- Run the read-only live schema audit, confirm all delivery zones/rates are configured, and test the full customer/admin flows against a non-production Supabase project.
+- Do not merge or deploy until the remaining schema, payment and security checks pass.
+
 ## Immediate next actions
 
-1. Audit the existing app and record all seller/multi-vendor and Paystack references before editing.
-2. Map safe code/database changes; preserve customer and order history.
-3. Implement the single-owner storefront and admin experience.
-4. Integrate Hubtel from its current official documentation and the merchant account's enabled methods; remove Paystack rather than keeping it as fallback.
-5. Run the full test/build/security review before deploying to the confirmed Supabase and Vercel projects.
+1. Finish lint and production-build verification for the latest commit on this draft PR.
+2. Review and apply the new migrations only in a confirmed non-production Supabase project first.
+3. Verify Hubtel's exact merchant API flow and callback/transaction verification against official documentation.
+4. Audit RLS, roles, storage policies, order privacy, inventory concurrency, and remaining legacy seller references.
+5. Complete checkout, order, delivery and admin smoke tests before considering merge or production deployment.

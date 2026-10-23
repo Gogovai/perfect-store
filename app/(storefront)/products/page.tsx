@@ -7,11 +7,11 @@ import { ProductFilters } from '@/components/products/ProductFilters';
 import { Pagination } from '@/components/ui/Pagination';
 import { getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
-import { getPublicSellerOptions } from '@/lib/queries/sellers';
 import { APP_NAME } from '@/config/constants';
 import Link from 'next/link';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
-export const metadata: Metadata = { title: `Products - ${APP_NAME}`, description: `Browse all products on ${APP_NAME} marketplace` };
+export const metadata: Metadata = { title: `Products - ${APP_NAME}`, description: `Browse clothing and fashion products at ${APP_NAME}` };
 
 interface ProductsPageProps { searchParams: Promise<Record<string, string | string[] | undefined>>; }
 
@@ -30,51 +30,47 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const pageValue = Number(firstParam(sp.page));
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   const category = firstParam(sp.category);
-  const seller = firstParam(sp.seller);
   const minPrice = positiveNumber(firstParam(sp.minPrice));
   const maxPrice = positiveNumber(firstParam(sp.maxPrice));
   const ratingValue = positiveNumber(firstParam(sp.rating));
   const rating = ratingValue !== undefined && ratingValue <= 5 ? ratingValue : undefined;
   const sort = firstParam(sp.sort) || 'newest';
 
-  const [result, categories, sellers] = await Promise.all([
+  const [result, categories] = await Promise.all([
     getProducts({
       categorySlug: category,
-      sellerId: seller,
       minPrice,
       maxPrice,
       rating,
-      sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'most_reviewed' | 'popular',
+      sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'most_reviewed',
       page,
       pageSize: 20,
     }),
     getCategories(),
-    getPublicSellerOptions(),
   ]);
 
   const { products, total, pageSize } = result;
   const totalPages = Math.ceil(total / pageSize);
-  const filterCategories = categories.map((c) => ({ label: c.name, value: c.slug }));
-  const filterSellers = sellers.map((s) => ({ label: s.store_name, value: s.id }));
+  const filterCategories = categories.filter((category) => isClothingCategory(category.name, category.slug)).map((c) => ({ label: c.name, value: c.slug }));
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50 py-6 sm:py-8">
       <Container size="xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">All Products</h1>
-          <p className="mt-1 text-gray-600">{total > 0 ? `${total.toLocaleString()} products available` : 'Browse our marketplace'}</p>
+          <p className="mt-1 text-gray-600">{total > 0 ? `${total.toLocaleString()} products available` : 'Browse our clothing collection'}</p>
         </div>
 
         <div className="flex gap-8">
           {/* Sidebar filters */}
           <div className="hidden w-64 shrink-0 lg:block">
-            <ProductFilters categories={filterCategories} sellers={filterSellers} />
+            <ProductFilters categories={filterCategories} />
           </div>
 
           <div className="min-w-0 flex-1">
             {/* Mobile filters */}
             <div className="mb-4 lg:hidden">
-              <ProductFilters categories={filterCategories} sellers={filterSellers} />
+              <ProductFilters categories={filterCategories} />
             </div>
 
             {products.length === 0 ? (

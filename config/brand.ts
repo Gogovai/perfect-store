@@ -12,10 +12,10 @@ export const brand = {
   shortName: 'PS',
 
   /** Tagline / slogan */
-  tagline: 'Ghana\'s Leading Marketplace',
+  tagline: 'Your Everyday Clothing Store',
 
   /** Brand description */
-  description: 'Shop quality products from trusted sellers on Perfect Store, Ghana\'s leading multi-vendor marketplace.',
+  description: 'Shop men’s and women’s fashion with convenient delivery across Ghana.',
 
   /** Social links (placeholders until official accounts exist) */
   social: {
@@ -29,9 +29,9 @@ export const brand = {
 
   /** Contact information */
   contact: {
-    email: 'support@perfectstore.com',
-    phone: '+233 XX XXX XXXX',
-    address: 'Accra, Ghana',
+    email: process.env.NEXT_PUBLIC_STORE_SUPPORT_EMAIL || '',
+    phone: process.env.NEXT_PUBLIC_STORE_SUPPORT_PHONE || '',
+    address: process.env.NEXT_PUBLIC_STORE_ADDRESS || '',
   },
 
   /** Color palette */

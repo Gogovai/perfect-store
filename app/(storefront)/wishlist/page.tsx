@@ -54,7 +54,7 @@ export default function WishlistPage() {
     }
   }
 
-  function handleAddToCart(item: { productId: string; name: string; price: number; imageUrl: string; slug: string; sellerName: string }) {
+  function handleAddToCart(item: { productId: string; name: string; price: number; imageUrl: string; slug: string }) {
     addItem({
       productId: item.productId,
       variantId: null,
@@ -62,8 +62,6 @@ export default function WishlistPage() {
       variantName: null,
       price: item.price,
       imageUrl: item.imageUrl,
-      sellerName: item.sellerName || '',
-      sellerId: '',
       maxQuantity: 99,
       quantity: 1,
     });
@@ -127,9 +125,6 @@ export default function WishlistPage() {
                 </Link>
 
                 <div className="p-3 sm:p-4">
-                  {'sellerName' in item && item.sellerName && (
-                    <p className="text-[11px] text-gray-400 mb-1">{item.sellerName}</p>
-                  )}
                   <Link href={`/products/${item.slug || item.productId}`} className="block">
                     <h3 className="text-[13px] sm:text-sm font-medium text-gray-800 line-clamp-2 mb-2 leading-snug">
                       {item.name}

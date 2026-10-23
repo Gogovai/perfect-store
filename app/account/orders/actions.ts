@@ -65,9 +65,7 @@ export type OrderDetailData = {
     quantity: number;
     subtotal: number;
     product_id: string;
-    seller_id: string;
     image_url: string | null;
-    seller_name: string | null;
   }>;
   payment: {
     method: string;
@@ -123,6 +121,8 @@ export async function placeOrder(
     if (message.includes('Insufficient stock')) return { success: false, error: 'There is not enough stock for one or more items. Please update quantities.' };
     if (message.includes('delivery address')) return { success: false, error: 'The selected delivery address is no longer available.' };
     if (message.includes('Invalid delivery method')) return { success: false, error: 'Invalid delivery method selected.' };
+    if (message.includes('No delivery rate configured')) return { success: false, error: 'No delivery rate is configured for your address and delivery method. Please select another address or contact the store.' };
+    if (message.includes('only sells clothing')) return { success: false, error: 'Only clothing, footwear, and fashion accessories can be ordered from this store.' };
     return { success: false, error: 'We couldn\'t create your order. Please try again.' };
   }
 
@@ -208,7 +208,7 @@ export async function getOrderDetail(orderId: string): Promise<{
     .select(`
       id, order_number, status, subtotal, shipping_fee, total_amount, notes,
       delivery_method, delivery_method_name, shipping_address, created_at, updated_at,
-      order_items (id, product_name, sku, unit_price, quantity, total_price, product_id, seller_id, variant_id),
+      order_items (id, product_name, sku, unit_price, quantity, total_price, product_id, variant_id),
       payments (provider, status, amount)
     `)
     .eq('id', validation.data)
@@ -219,9 +219,8 @@ export async function getOrderDetail(orderId: string): Promise<{
 
   const snapshot = (order.shipping_address ?? {}) as ShippingSnapshot;
   const itemsWithDetails = await Promise.all(order.order_items.map(async (item) => {
-    const [{ data: image }, { data: seller }, { data: variant }] = await Promise.all([
+    const [{ data: image }, { data: variant }] = await Promise.all([
       supabase.from('product_images').select('url').eq('product_id', item.product_id).order('is_primary', { ascending: false }).order('sort_order', { ascending: true }).limit(1).maybeSingle(),
-      supabase.from('sellers').select('store_name').eq('id', item.seller_id).maybeSingle(),
       item.variant_id ? supabase.from('product_variants').select('name').eq('id', item.variant_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
 
@@ -233,9 +232,7 @@ export async function getOrderDetail(orderId: string): Promise<{
       quantity: item.quantity,
       subtotal: item.total_price,
       product_id: item.product_id,
-      seller_id: item.seller_id,
       image_url: image?.url ?? null,
-      seller_name: seller?.store_name ?? null,
     };
   }));
 

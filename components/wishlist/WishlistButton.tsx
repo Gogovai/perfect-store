@@ -12,7 +12,6 @@ interface WishlistButtonProps {
   price: number;
   imageUrl: string;
   slug: string;
-  sellerName: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -23,7 +22,6 @@ export function WishlistButton({
   price,
   imageUrl,
   slug,
-  sellerName,
   size = 'md',
   className = '',
 }: WishlistButtonProps) {
@@ -55,7 +53,6 @@ export function WishlistButton({
           price,
           imageUrl,
           slug,
-          sellerName,
         });
       } else if (result.error === 'Not authenticated') {
         router.push(`/login?redirect=/products/${slug}`);
@@ -68,7 +65,6 @@ export function WishlistButton({
         price,
         imageUrl,
         slug,
-        sellerName,
       });
     } finally {
       setIsLoading(false);

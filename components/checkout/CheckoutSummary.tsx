@@ -13,6 +13,7 @@ interface CheckoutSummaryProps {
   onPlaceOrder: () => void;
   isProcessing?: boolean;
   isDisabled?: boolean;
+  deliveryMethodSelected?: boolean;
 }
 
 export function CheckoutSummary({
@@ -23,6 +24,7 @@ export function CheckoutSummary({
   onPlaceOrder,
   isProcessing = false,
   isDisabled = false,
+  deliveryMethodSelected = true,
 }: CheckoutSummaryProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -37,25 +39,18 @@ export function CheckoutSummary({
         <div className="flex justify-between text-gray-600">
           <span>Delivery</span>
           <span className={`font-medium ${shippingCost === 0 ? 'text-green-600' : 'text-gray-900'}`}>
-            {shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}
+            {!deliveryMethodSelected ? 'Select method' : shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}
           </span>
         </div>
 
         <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between">
             <span className="text-base font-semibold text-gray-900">Total</span>
-            <span className="text-lg font-bold text-gray-900">{formatPrice(total)}</span>
+            <span className="text-lg font-bold text-gray-900">{deliveryMethodSelected ? formatPrice(total) : '—'}</span>
           </div>
         </div>
       </div>
-
-      {/* Payment Notice */}
-      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-        <p className="text-xs text-amber-700">
-          Payment integration will be available at the next checkout stage.
-          Possible future methods: Mobile Money, Card, Bank Transfer.
-        </p>
-      </div>
+      {!deliveryMethodSelected && <p className="mt-2 text-xs text-gray-500">Choose a delivery method to calculate your total.</p>}
 
       <Button
         fullWidth

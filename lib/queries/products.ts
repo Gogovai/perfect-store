@@ -1,18 +1,17 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import type { Tables } from '@/types/database';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 export type ProductRow = Tables<'products'>;
 export type ProductImageRow = Tables<'product_images'>;
 export type ProductVariantRow = Tables<'product_variants'>;
-export type SellerRow = Tables<'sellers'>;
 export type CategoryRow = Tables<'categories'>;
 export type ProductWithRelations = ProductRow & {
   product_images: ProductImageRow[];
   product_variants: ProductVariantRow[];
   /** Live stock snapshot for out-of-stock UI. Empty when the product has no inventory row. */
   inventory: Array<{ quantity: number; reserved_quantity: number }>;
-  sellers: (Pick<SellerRow, 'id' | 'store_name' | 'logo_url' | 'slug'> & { rating: number }) | null;
   categories: Pick<CategoryRow, 'id' | 'name' | 'slug' | 'parent_id'> | null;
 };
 export type ProductListResult = {
@@ -32,7 +31,6 @@ export type ProductSortOption =
 export type ProductFilterOptions = {
   categorySlug?: string;
   categoryId?: string;
-  sellerId?: string;
   minPrice?: number;
   maxPrice?: number;
   rating?: number;
@@ -42,15 +40,29 @@ export type ProductFilterOptions = {
   pageSize?: number;
 };
 
-const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), sellers!inner(id, store_name, logo_url, slug), categories(id, name, slug, parent_id)`;
+const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), categories(id, name, slug, parent_id)`;
 
 async function getProductsQuery() {
   const supabase = await createClient();
-  const query = supabase
+  let query = supabase
     .from('products')
     .select(PRODUCT_SELECT, { count: 'exact' })
-    .eq('status', 'active')
-    .eq('sellers.status', 'active');
+    .eq('status', 'active');
+
+  // Public catalogue results are limited to active clothing and fashion products.
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id,name,slug')
+    .eq('is_active', true);
+  const clothingCategoryIds = (categories ?? [])
+    .filter((category) => isClothingCategory(category.name, category.slug))
+    .map((category) => category.id);
+
+  if (clothingCategoryIds.length > 0) {
+    query = query.in('category_id', clothingCategoryIds);
+  } else {
+    query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
 
   // Do not return the query builder directly from an async function: Supabase
   // query builders are thenables, so returning one causes Promise assimilation
@@ -62,7 +74,6 @@ function normalizeProducts(data: unknown): ProductWithRelations[] {
   return (data as ProductWithRelations[]).map((p) => ({
     ...p,
     inventory: Array.isArray(p.inventory) ? p.inventory : p.inventory ? [p.inventory] : [],
-    sellers: p.sellers ? { ...p.sellers, rating: 0 } : null,
   }));
 }
 
@@ -84,7 +95,6 @@ export async function getProducts(
   const {
     categorySlug,
     categoryId,
-    sellerId,
     minPrice,
     maxPrice,
     rating,
@@ -124,7 +134,6 @@ export async function getProducts(
     }
   }
 
-  if (sellerId) query = query.eq('seller_id', sellerId);
   if (minPrice !== undefined) query = query.gte('base_price', minPrice);
   if (maxPrice !== undefined) query = query.lte('base_price', maxPrice);
   if (rating !== undefined) query = query.gte('rating_average', rating);
@@ -149,7 +158,6 @@ export async function getProducts(
       query = query.order('rating_average', { ascending: false });
       break;
     case 'most_reviewed':
-    case 'popular':
       query = query.order('review_count', { ascending: false });
       break;
     default:
@@ -218,23 +226,6 @@ export async function getTopRatedProducts(
     .order('review_count', { ascending: false })
     .limit(limit);
   return error || !data ? [] : normalizeProducts(data);
-}
-
-/**
- * Count active products per seller (for storefront store cards).
- */
-export async function getActiveProductSellerCounts(): Promise<Record<string, number>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select('seller_id')
-    .eq('status', 'active');
-  if (error || !data) return {};
-  const counts: Record<string, number> = {};
-  for (const row of data) {
-    counts[row.seller_id] = (counts[row.seller_id] ?? 0) + 1;
-  }
-  return counts;
 }
 
 export async function getRelatedProducts(

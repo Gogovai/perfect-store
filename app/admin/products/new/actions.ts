@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { brand } from '@/config/brand';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 const adminProductSchema = z.object({
   name: z.string().trim().min(2).max(160),
@@ -44,7 +46,8 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
   const db = getSupabaseAdmin();
   const d = p.data;
 
-  // Get or create admin seller record
+  // The current schema still requires a store-owner row for each product.
+  // Keep one stable owner record until the data-preserving schema migration.
   let { data: adminSeller } = await db
     .from('sellers')
     .select('id')
@@ -57,8 +60,8 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
       .from('sellers')
       .insert({
         owner_id: user.id,
-        store_name: 'Marketplace Admin',
-        slug: `marketplace-admin-${user.id.slice(0, 8)}`,
+        store_name: brand.name,
+        slug: `perfect-store-${user.id.slice(0, 8)}`,
         status: 'active',
         commission_rate: 0,
       })
@@ -67,16 +70,18 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
     adminSeller = newSeller;
   }
 
-  if (!adminSeller) return { success: false, error: 'Unable to create admin seller record' };
+  if (!adminSeller) return { success: false, error: 'Unable to initialize the store catalogue' };
 
   // Validate category
   const { data: category } = await db
     .from('categories')
-    .select('id')
+    .select('id,name,slug')
     .eq('id', d.categoryId)
     .eq('is_active', true)
     .maybeSingle();
-  if (!category) return { success: false, error: 'Invalid or inactive category' };
+  if (!category || !isClothingCategory(category.name, category.slug)) {
+    return { success: false, error: 'Choose an active clothing, footwear, or fashion-accessory category.' };
+  }
 
   // Create product
   const { data: product, error: productError } = await db

@@ -1,87 +1,54 @@
 'use client';
 
-import React from 'react';
 import { Truck, Zap } from 'lucide-react';
 import { formatPrice } from '@/lib/utils/formatting';
-import { DELIVERY_METHODS, FREE_DELIVERY_THRESHOLD } from '@/lib/config/delivery';
+import type { DeliveryOption } from '@/lib/config/delivery';
 
 interface DeliveryMethodProps {
+  options: DeliveryOption[];
   selectedMethodId: string;
   onSelectMethod: (methodId: string) => void;
-  subtotal: number;
+  addressSelected: boolean;
 }
 
-export function DeliveryMethod({
-  selectedMethodId,
-  onSelectMethod,
-  subtotal,
-}: DeliveryMethodProps) {
-  const isFreeDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
+export function DeliveryMethod({ options, selectedMethodId, onSelectMethod, addressSelected }: DeliveryMethodProps) {
+  if (!addressSelected) {
+    return <p className="text-sm text-gray-500">Select a delivery address to see the available delivery methods and prices.</p>;
+  }
+
+  if (options.length === 0) {
+    return <p className="text-sm text-amber-700">No delivery rate is configured for this address yet. Please contact the store before placing your order.</p>;
+  }
 
   return (
-    <div className="space-y-3">
-      {DELIVERY_METHODS.map((method) => {
-        const isSelected = selectedMethodId === method.id;
-        const icon = method.id === 'express' ? Zap : Truck;
-
+    <div className="space-y-3" role="radiogroup" aria-label="Delivery method">
+      {options.map((option) => {
+        const selected = selectedMethodId === option.id;
+        const Icon = option.id.includes('express') ? Zap : Truck;
         return (
-          <div
-            key={method.id}
-            className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-              isSelected
-                ? 'border-[#0f2b5b] bg-blue-50/50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-            onClick={() => onSelectMethod(method.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onSelectMethod(method.id);
-              }
-            }}
+          <button
+            type="button"
+            key={option.id}
+            onClick={() => onSelectMethod(option.id)}
             role="radio"
-            aria-checked={isSelected}
-            tabIndex={0}
+            aria-checked={selected}
+            className={`w-full rounded-xl border-2 p-4 text-left transition-colors ${selected ? 'border-[#0f2b5b] bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'}`}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                    isSelected ? 'bg-[#0f2b5b] text-white' : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {React.createElement(icon, { size: 18 })}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{method.name}</p>
-                  <p className="text-xs text-gray-500">{method.description}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                {isFreeDelivery ? (
-                  <div>
-                    <p className="text-sm font-bold text-green-600">Free</p>
-                    <p className="text-[10px] text-gray-400 line-through">{formatPrice(method.price)}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm font-bold text-gray-900">{formatPrice(method.price)}</p>
-                )}
-              </div>
-            </div>
-          </div>
+            <span className="flex items-center justify-between gap-4">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${selected ? 'bg-[#0f2b5b] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  <Icon size={18} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-gray-900">{option.name}</span>
+                  <span className="mt-1 block text-xs text-gray-500">{option.description}</span>
+                </span>
+              </span>
+              <span className="shrink-0 text-sm font-bold text-gray-900">{formatPrice(option.price)}</span>
+            </span>
+          </button>
         );
       })}
-
-      {isFreeDelivery && (
-        <p className="text-xs text-green-600 flex items-center gap-1">
-          ✓ Your order qualifies for free delivery (over {formatPrice(FREE_DELIVERY_THRESHOLD)})
-        </p>
-      )}
-      {!isFreeDelivery && (
-        <p className="text-xs text-gray-500">
-          Add {formatPrice(FREE_DELIVERY_THRESHOLD - subtotal)} more for free delivery
-        </p>
-      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { getCategoryBySlug, getCategoryBreadcrumbs } from '@/lib/queries/categories';
 import { getProducts } from '@/lib/queries/products';
 import { APP_NAME } from '@/config/constants';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -28,15 +29,15 @@ export default async function CategoryDetailPage({ params, searchParams }: Categ
   const { slug } = await params;
   const sp = await searchParams;
   const category = await getCategoryBySlug(slug);
-  if (!category) notFound();
+  if (!category || !isClothingCategory(category.name, category.slug)) notFound();
   const breadcrumbs = await getCategoryBreadcrumbs(slug);
   const page = Number(sp.page) || 1;
   const { products, total, pageSize } = await getProducts({ categorySlug: slug, page, pageSize: 20 });
   const totalPages = Math.ceil(total / pageSize);
 
   // Fetch sibling categories for "explore more" section
-  const allCategories = await import('@/lib/queries/categories').then(m => m.getCategories());
-  const relatedCategories = allCategories.filter(c => c.slug !== slug).slice(0, 4);
+  const allCategories = await import('@/lib/queries/categories').then((module) => module.getCategories());
+  const relatedCategories = allCategories.filter((item) => item.slug !== slug && isClothingCategory(item.name, item.slug)).slice(0, 4);
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50 py-6 sm:py-8">

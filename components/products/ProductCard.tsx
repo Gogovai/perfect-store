@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, Truck } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { ProductPrice } from './ProductPrice';
 import { ProductRating } from './ProductRating';
 import { ProductBadge } from './ProductBadge';
@@ -21,8 +21,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const lowestVariantPrice = variantPrices.length
     ? Math.min(product.base_price, ...variantPrices)
     : product.base_price;
-  const hasDiscount = lowestVariantPrice < product.base_price;
-  const seller = product.sellers;
+  const compareAtPrice = product.compare_at_price;
+  const hasDiscount = compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice > lowestVariantPrice;
   const primaryImage =
     product.product_images.find((img) => img.is_primary) ||
     product.product_images[0];
@@ -57,9 +57,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         {/* Badges top-left */}
         <div className="absolute left-2 top-2 flex flex-col gap-1.5">
           <ProductBadge
-            compareAtPrice={hasDiscount ? product.base_price : null}
+            compareAtPrice={hasDiscount ? compareAtPrice : null}
             price={lowestVariantPrice}
-            soldCount={product.review_count}
           />
         </div>
 
@@ -71,20 +70,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             price={product.base_price}
             imageUrl={primaryImage?.url || ''}
             slug={product.slug}
-            sellerName={seller?.store_name || ''}
             size="sm"
           />
         </div>
 
-        {/* Free shipping ribbon */}
-        {product.base_price >= 200 && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-500 to-emerald-600 px-3 py-1.5 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            <Truck size={12} className="text-white" />
-            <span className="text-[10px] font-bold uppercase tracking-wide text-white">
-              Free Shipping
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Info */}
@@ -92,11 +81,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         href={`/products/${product.slug}`}
         className="flex flex-1 flex-col p-3 sm:p-4"
       >
-        {seller && (
-          <p className="mb-1 truncate text-[11px] font-medium text-[#0f2b5b]/60">
-            {seller.store_name}
-          </p>
-        )}
         <h3 className="mb-1.5 line-clamp-2 text-[13px] font-medium leading-snug text-gray-800 transition-colors group-hover:text-[#0f2b5b] sm:text-sm">
           {product.name}
         </h3>
@@ -110,7 +94,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <div className="mt-auto">
           <ProductPrice
             price={product.base_price}
-            variantPrice={hasDiscount ? lowestVariantPrice : null}
+            compareAtPrice={hasDiscount ? compareAtPrice : null}
+            variantPrice={variantPrices.length ? lowestVariantPrice : null}
             size="md"
           />
         </div>
