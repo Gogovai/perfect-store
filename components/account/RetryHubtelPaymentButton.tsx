@@ -18,7 +18,11 @@ export function RetryHubtelPaymentButton({ orderId }: { orderId: string }) {
         body: JSON.stringify({ orderId }),
       });
       const result: unknown = await response.json().catch(() => null);
-      const data = result && typeof result === 'object' ? result as { checkout_url?: unknown; error?: unknown } : {};
+      const data = result && typeof result === 'object' ? result as { checkout_url?: unknown; already_paid?: unknown; error?: unknown } : {};
+      if (response.ok && data.already_paid) {
+        window.location.assign(`/account/orders/${orderId}?payment=confirmed`);
+        return;
+      }
       if (!response.ok || typeof data.checkout_url !== 'string' || !data.checkout_url.startsWith('https://')) {
         setError(typeof data.error === 'string' ? data.error : 'We could not restart payment. Please try again.');
         return;

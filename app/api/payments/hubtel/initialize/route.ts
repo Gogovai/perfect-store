@@ -62,6 +62,9 @@ export async function POST(request: Request) {
     if (paymentError) return NextResponse.json({ error: 'Unable to load payment details.' }, { status: 500 });
     if (!payment) return NextResponse.json({ error: 'Payment record not found.' }, { status: 409 });
     if (payment.status === 'paid') return NextResponse.json({ error: 'This order is already paid.' }, { status: 409 });
+    if (payment.provider !== 'hubtel') {
+      return NextResponse.json({ error: 'This order is not configured for Hubtel payment.' }, { status: 409 });
+    }
     if (Number(payment.amount) !== Number(order.total_amount) || payment.currency !== order.currency) {
       return NextResponse.json({ error: 'Payment amount mismatch.' }, { status: 409 });
     }
@@ -121,6 +124,27 @@ export async function POST(request: Request) {
     }
 
     const reference = `PS-${order.order_number}-${crypto.randomUUID().replaceAll('-', '').slice(0, 10)}`;
+
+    // Persist the reference before contacting Hubtel. This closes the callback
+    // race where Hubtel can notify us before the checkout-init response returns.
+    // Compare-and-swap also prevents concurrent requests from opening two checkouts.
+    const { data: reservation, error: reserveError } = await supabase.rpc('reserve_hubtel_payment_attempt', {
+      p_order_id: order.id,
+      p_reference: reference,
+      p_expected_status: payment.status,
+      p_expected_reference: payment.provider_reference,
+    });
+    if (reserveError) {
+      const message = reserveError.message || '';
+      if (message.includes('Payment state changed') || message.includes('not awaiting payment') || message.includes('already paid')) {
+        return NextResponse.json({ error: 'Payment state changed. Refresh the order before retrying.' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Unable to reserve payment initialization.' }, { status: 500 });
+    }
+    if (!reservation || typeof reservation !== 'object' || (reservation as { success?: unknown }).success !== true) {
+      return NextResponse.json({ error: 'Payment state changed. Refresh the order before retrying.' }, { status: 409 });
+    }
+
     const callbackUrl = `${siteUrl}/api/payments/hubtel/callback`;
     const returnUrl = `${siteUrl}/account/orders/${order.id}?payment=processing`;
     const cancellationUrl = `${siteUrl}/account/orders/${order.id}?payment=cancelled`;
@@ -148,24 +172,63 @@ export async function POST(request: Request) {
     const responseCode = result.responseCode ?? result.ResponseCode;
     const checkoutUrl = result.data?.checkoutUrl ?? result.Data?.CheckoutUrl;
 
-    if (!hubtelResponse.ok || !['0000', '00'].includes(String(responseCode)) || !checkoutUrl) {
-      return NextResponse.json({ error: 'Hubtel could not start checkout. Please try again.' }, { status: 502 });
+    if (responseCode && !['0000', '00'].includes(String(responseCode))) {
+      // An explicit Hubtel rejection means no checkout was created. Reset only
+      // this attempt; never overwrite a callback that already marked it paid.
+      const { error: resetError } = await supabase
+        .from('payments')
+        .update({ status: 'pending', provider_reference: null, metadata: {} })
+        .eq('id', payment.id)
+        .eq('order_id', order.id)
+        .eq('provider_reference', reference)
+        .eq('status', 'processing');
+      if (resetError) return NextResponse.json({ error: 'Unable to reset the rejected payment attempt.' }, { status: 500 });
+
+      const { data: latestPayment, error: latestPaymentError } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+      if (latestPayment?.status === 'paid') {
+        return NextResponse.json({ already_paid: true, reference });
+      }
+      return NextResponse.json({ error: 'Hubtel rejected the checkout request. Please try again.' }, { status: 502 });
     }
 
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({
-        provider: 'hubtel',
-        provider_reference: reference,
-        status: 'processing',
-        metadata: {
-          hubtel_checkout_id: result.data?.checkoutId ?? result.Data?.CheckoutId ?? null,
-        },
-      })
-      .eq('id', payment.id)
-      .eq('order_id', order.id);
+    let secureCheckoutUrl = false;
+    try {
+      secureCheckoutUrl = typeof checkoutUrl === 'string' && new URL(checkoutUrl).protocol === 'https:';
+    } catch {
+      secureCheckoutUrl = false;
+    }
 
-    if (updateError) return NextResponse.json({ error: 'Unable to save payment initialization.' }, { status: 500 });
+    if (!hubtelResponse.ok || typeof checkoutUrl !== 'string' || !secureCheckoutUrl || !['0000', '00'].includes(String(responseCode))) {
+      // Keep the reference in processing state for ambiguous responses. The
+      // retry flow checks Hubtel status before it can create another attempt.
+      const { data: latestPayment, error: latestPaymentError } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+      if (latestPayment?.status === 'paid') {
+        return NextResponse.json({ already_paid: true, reference });
+      }
+      return NextResponse.json({ error: 'Hubtel checkout status is unclear. Please wait briefly and refresh your order.' }, { status: 502 });
+    }
+
+    // Do not rewrite payment state here: the callback may already have marked
+    // the payment paid while the initiate request was returning.
+    const { data: latestPayment, error: latestPaymentError } = await supabase
+      .from('payments')
+      .select('status')
+      .eq('id', payment.id)
+      .maybeSingle();
+    if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+    if (latestPayment?.status === 'paid') {
+      return NextResponse.json({ already_paid: true, reference });
+    }
 
     return NextResponse.json({ checkout_url: checkoutUrl, reference });
   } catch {
