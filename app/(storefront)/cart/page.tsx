@@ -97,8 +97,6 @@ export default function CartPage() {
       price: item.price,
       quantity: item.quantity,
       imageUrl: item.imageUrl,
-      sellerName: item.sellerName,
-      sellerId: item.sellerId,
       maxQuantity: item.maxQuantity,
     };
   }
