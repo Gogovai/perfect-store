@@ -138,7 +138,6 @@ export default function AdminProducts() {
                 <div key={p.id} className="flex flex-wrap items-start justify-between gap-4 border-b p-5 last:border-0">
                   <div className="flex min-w-0 flex-1 items-start gap-4">
                     {image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={image.url} alt="" className="h-14 w-14 flex-none rounded-lg object-cover" />
                     ) : (
                       <div className="flex h-14 w-14 flex-none items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">No image</div>
