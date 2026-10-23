@@ -87,3 +87,31 @@ export const PROMO_BANNERS: PromoBanner[] = [
     bgColor: '#1d4d78',
   },
 ];
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  fashion: PHOTO.fashion,
+  clothing: PHOTO.fashion,
+  apparel: PHOTO.fashion,
+  menswear: PHOTO.fashion,
+  'mens-clothing': PHOTO.fashion,
+  'mens-fashion': PHOTO.fashion,
+  womenswear: PHOTO.fashion,
+  'womens-clothing': PHOTO.fashion,
+  'womens-fashion': PHOTO.fashion,
+  shoes: PHOTO.shoes,
+  footwear: PHOTO.shoes,
+  accessories: PHOTO.bags,
+  bags: PHOTO.bags,
+  'traditional-wear': PHOTO.fashion,
+  ankara: PHOTO.fashion,
+};
+
+export function getCategoryImage(slug: string, icon: string | null) {
+  return icon && /^https?:\/\//i.test(icon) ? icon : CATEGORY_IMAGES[slug] || '';
+}
+
+export function getCategoryColor(slug: string) {
+  if (slug.includes('women')) return '#9a315f';
+  if (slug.includes('shoe') || slug.includes('footwear')) return '#1d4d78';
+  return '#0f2b5b';
+}
