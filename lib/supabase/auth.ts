@@ -92,9 +92,3 @@ export async function requireAdmin(): Promise<Profile> {
   return requireRole('admin');
 }
 
-/**
- * Require seller role. Redirects to homepage if not seller.
- */
-export async function requireSeller(): Promise<Profile> {
-  return requireRole('seller');
-}
