@@ -115,8 +115,11 @@ export async function validateCheckout(
         .eq('delivery_zones.is_active', true)
         .order('price', { ascending: true });
 
+      type DeliveryZoneRecord = { id: string; name: string; city: string | null; region: string | null; is_active: boolean };
+      type ShippingRateRecord = { method: string; price: number; eta_min_days: number | null; eta_max_days: number | null; delivery_zones: DeliveryZoneRecord | DeliveryZoneRecord[] | null };
+      const rateRows = (rates ?? []) as unknown as ShippingRateRecord[];
       const normalize = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase();
-      const matchingRates = (rates ?? []).map((rate: any) => {
+      const matchingRates = rateRows.map((rate) => {
         const zone = Array.isArray(rate.delivery_zones) ? rate.delivery_zones[0] : rate.delivery_zones;
         const zoneCity = normalize(zone?.city);
         const addressCity = normalize(address.city);
@@ -124,13 +127,13 @@ export async function validateCheckout(
         const regionMatch = Boolean(normalize(zone?.region) && normalize(zone?.region) === normalize(address.region));
         const matches = zoneCity ? cityMatch : regionMatch;
         return { rate, zone, matches, cityMatch };
-      }).filter((item: any) => item.matches)
-        .sort((a: any, b: any) => Number(b.cityMatch) - Number(a.cityMatch) || Number(a.rate.price) - Number(b.rate.price));
+      }).filter((item) => item.matches && item.zone)
+        .sort((a, b) => Number(b.cityMatch) - Number(a.cityMatch) || Number(a.rate.price) - Number(b.rate.price));
 
       const seenMethods = new Set<string>();
-      deliveryOptions = matchingRates.flatMap((item: any) => {
+      deliveryOptions = matchingRates.flatMap((item) => {
         const method = String(item.rate.method ?? '').trim().toLowerCase();
-        if (!method || seenMethods.has(method)) return [];
+        if (!method || seenMethods.has(method) || !item.zone) return [];
         seenMethods.add(method);
         const min = item.rate.eta_min_days == null ? null : Number(item.rate.eta_min_days);
         const max = item.rate.eta_max_days == null ? null : Number(item.rate.eta_max_days);
