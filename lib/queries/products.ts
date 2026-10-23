@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import type { Tables } from '@/types/database';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 export type ProductRow = Tables<'products'>;
 export type ProductImageRow = Tables<'product_images'>;
@@ -46,11 +47,27 @@ const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_prim
 
 async function getProductsQuery() {
   const supabase = await createClient();
-  const query = supabase
+  let query = supabase
     .from('products')
     .select(PRODUCT_SELECT, { count: 'exact' })
     .eq('status', 'active')
     .eq('sellers.status', 'active');
+
+  // This is a single-owner clothing store. Keep legacy marketplace schema
+  // compatibility, but never surface non-clothing catalogue records publicly.
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id,name,slug')
+    .eq('is_active', true);
+  const clothingCategoryIds = (categories ?? [])
+    .filter((category) => isClothingCategory(category.name, category.slug))
+    .map((category) => category.id);
+
+  if (clothingCategoryIds.length > 0) {
+    query = query.in('category_id', clothingCategoryIds);
+  } else {
+    query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+  }
 
   // Do not return the query builder directly from an async function: Supabase
   // query builders are thenables, so returning one causes Promise assimilation
@@ -218,23 +235,6 @@ export async function getTopRatedProducts(
     .order('review_count', { ascending: false })
     .limit(limit);
   return error || !data ? [] : normalizeProducts(data);
-}
-
-/**
- * Count active products per seller (for storefront store cards).
- */
-export async function getActiveProductSellerCounts(): Promise<Record<string, number>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select('seller_id')
-    .eq('status', 'active');
-  if (error || !data) return {};
-  const counts: Record<string, number> = {};
-  for (const row of data) {
-    counts[row.seller_id] = (counts[row.seller_id] ?? 0) + 1;
-  }
-  return counts;
 }
 
 export async function getRelatedProducts(
