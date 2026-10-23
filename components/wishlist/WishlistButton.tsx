@@ -65,7 +65,6 @@ export function WishlistButton({
         price,
         imageUrl,
         slug,
-        sellerName,
       });
     } finally {
       setIsLoading(false);
