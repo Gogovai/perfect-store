@@ -4,6 +4,6 @@ export { AddressForm } from './AddressForm';
 export { DeliveryMethod } from './DeliveryMethod';
 export { CheckoutSummary } from './CheckoutSummary';
 export { CheckoutItems } from './CheckoutItems';
-export { PaymentPlaceholder } from './PaymentPlaceholder';
+export { PaymentMethodSelector } from './PaymentMethodSelector';
 export { CheckoutValidationAlert } from './CheckoutValidationAlert';
 export { CheckoutEmptyState } from './CheckoutEmptyState';
