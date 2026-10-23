@@ -68,7 +68,6 @@ function FiltersContent({
     { label: 'Price: High to Low', value: 'price_desc' },
     { label: 'Highest Rated', value: 'rating' },
     { label: 'Most Reviewed', value: 'most_reviewed' },
-    { label: 'Most Popular', value: 'popular' },
   ];
 
   return (
@@ -96,20 +95,6 @@ function FiltersContent({
               </button>
             ))}
           </div>
-        </FilterGroup>
-      )}
-
-      {sellers.length > 0 && (
-        <FilterGroup title="Seller">
-          <select
-            value={currentSeller}
-            onChange={(e) => updateParams('seller', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="Filter by seller"
-          >
-            <option value="">All Sellers</option>
-            {sellers.map((seller) => <option key={seller.value} value={seller.value}>{seller.label}</option>)}
-          </select>
         </FilterGroup>
       )}
 
