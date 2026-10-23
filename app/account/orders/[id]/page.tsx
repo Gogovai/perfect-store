@@ -86,7 +86,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
         <div className={`p-4 rounded-xl mb-6 ${isCancelled ? 'bg-red-50 border border-red-200' : order.status === 'delivered' ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
           <p className={`text-sm font-medium ${isCancelled ? 'text-red-800' : order.status === 'delivered' ? 'text-green-800' : 'text-blue-800'}`}>{getStatusMessage(order.status)}</p>
-          {order.status === 'pending' && <p className="text-xs text-red-600 mt-1">Payment processing will be available soon. Your order is currently pending confirmation.</p>}
+          {order.status === 'pending' && <p className="text-xs text-red-600 mt-1">Payment is awaiting confirmation. We will update your order after Hubtel confirms the transaction.</p>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -141,7 +141,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 line-clamp-1">{item.product_name}</p>
                         {item.variant_name && <p className="text-xs text-gray-500 mt-0.5">{item.variant_name}</p>}
-                        {item.seller_name && <p className="text-xs text-gray-500 mt-0.5">Seller: {item.seller_name}</p>}
                         <div className="flex items-center justify-between mt-1"><span className="text-xs text-gray-500">{formatPrice(item.unit_price)} × {item.quantity}</span><span className="text-sm font-semibold text-gray-900">{formatPrice(item.subtotal)}</span></div>
                       </div>
                     </div>
