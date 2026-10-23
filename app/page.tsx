@@ -8,27 +8,23 @@ import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { FlashSale } from '@/components/home/FlashSale';
 import { CategoryBar } from '@/components/home/CategoryBar';
 import { PromoBanners } from '@/components/home/PromoBanners';
-import { FeaturedStores } from '@/components/home/FeaturedStores';
 import { CategoryVisual } from '@/components/categories/CategoryVisual';
-import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts, getActiveProductSellerCounts } from '@/lib/queries/products';
+import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
-import { getAllSellers } from '@/lib/queries/sellers';
 import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/campaigns';
 import { getFlashSaleWindow } from '@/lib/data/flash-sale';
 import { brand } from '@/config/brand';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
-export const metadata: Metadata = { title: `${brand.name} — Online Marketplace`, description: brand.description };
+export const metadata: Metadata = { title: `${brand.name} — Clothing Store`, description: brand.description };
 
 export default async function Home() {
-  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts, sellers, sellerCounts, flashProducts] = await Promise.all([
+  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts, flashProducts] = await Promise.all([
     getFeaturedProducts(8),
     getNewestProducts(8),
     getTopRatedProducts(8),
     getCategories(),
     getProducts({ sort: 'popular', page: 1, pageSize: 8 }),
-    getAllSellers(),
-    getActiveProductSellerCounts(),
     getProducts({ pageSize: 100 }),
   ]);
 
@@ -43,16 +39,6 @@ export default async function Home() {
       price: p.base_price,
     }))
   );
-
-  const featuredStores = sellers.map((s) => ({
-    id: s.id,
-    name: s.store_name,
-    slug: s.slug,
-    logoUrl: s.logo_url,
-    bannerUrl: s.banner_url,
-    productCount: sellerCounts[s.id] ?? 0,
-    rating: null,
-  }));
 
   const catSections = await Promise.all(
     categories.slice(0, 4).map(async (cat) => {
@@ -75,7 +61,7 @@ export default async function Home() {
       <Container size="xl">
         <div className="grid grid-cols-2 divide-x divide-gray-100 lg:grid-cols-4">
           <TrustItem icon={<CreditCard size={20} />} title="Secure Payment" sub="Protected checkout" />
-          <TrustItem icon={<ShieldCheck size={20} />} title="Quality Products" sub="Verified sellers" />
+          <TrustItem icon={<ShieldCheck size={20} />} title="Quality Fashion" sub="Selected for your style" />
           <TrustItem icon={<Truck size={20} />} title="Fast Delivery" sub="Across Ghana" />
           <TrustItem icon={<Headphones size={20} />} title="24/7 Support" sub="We're here to help" />
         </div>
@@ -102,7 +88,7 @@ export default async function Home() {
     {/* Popular Products */}
     <section className="bg-white py-8 sm:py-10">
       <Container size="xl">
-        <SectionHeader title="Popular Products" subtitle="Best-selling items on our marketplace" href="/products?sort=popular" />
+        <SectionHeader title="Popular Products" subtitle="Popular picks from our collection" href="/products?sort=popular" />
         {featuredProducts.length > 0 ? (
           <ProductGrid products={featuredProducts} />
         ) : popularProducts.products.length > 0 ? (
@@ -130,11 +116,6 @@ export default async function Home() {
         </section>
       ) : null
     )}
-
-    {/* Featured Stores */}
-    <section className="border-y border-gray-100 bg-white py-8 sm:py-10">
-      <FeaturedStores stores={featuredStores} />
-    </section>
 
     {/* New Arrivals */}
     <section className="bg-gray-50/50 py-8 sm:py-10">
@@ -168,9 +149,9 @@ export default async function Home() {
     <section className="relative overflow-hidden" style={{ backgroundColor: brand.colors.primary }}>
       <Container size="lg">
         <div className="py-12 text-center sm:py-16">
-          <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl">Grow Your Business With Us</h2>
-          <p className="mx-auto mb-8 max-w-xl text-sm text-white/70">Join verified sellers reaching customers across Ghana.</p>
-          <Link href="/seller/apply">
+          <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl">Find Your Next Favourite Outfit</h2>
+          <p className="mx-auto mb-8 max-w-xl text-sm text-white/70">Explore men’s and women’s fashion, choose your style, and order for delivery anywhere in Ghana.</p>
+          <Link href="/products">
             <Button size="lg" className="bg-white font-semibold" style={{ color: brand.colors.primary }}>Start Selling <ArrowRight size={18} /></Button>
           </Link>
         </div>
