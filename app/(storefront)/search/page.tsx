@@ -9,6 +9,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
 import { APP_NAME } from '@/config/constants';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 interface SearchPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,7 +25,7 @@ function positiveNumber(value: string | undefined): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-const SORT_VALUES = ['newest', 'price_asc', 'price_desc', 'rating', 'most_reviewed', 'popular'] as const;
+const SORT_VALUES = ['newest', 'price_asc', 'price_desc', 'rating', 'most_reviewed'] as const;
 type SortValue = (typeof SORT_VALUES)[number];
 
 function parseSort(value: string | undefined): SortValue {
@@ -52,7 +53,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const sort = parseSort(firstParam(sp.sort));
 
   const categories = await getCategories();
-  const filterCategories = categories.map((c) => ({ label: c.name, value: c.slug }));
+  const filterCategories = categories.filter((category) => isClothingCategory(category.name, category.slug)).map((c) => ({ label: c.name, value: c.slug }));
 
   let products: Awaited<ReturnType<typeof getProducts>>['products'] = [];
   let total = 0;
