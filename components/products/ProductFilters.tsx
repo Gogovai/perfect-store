@@ -140,7 +140,6 @@ export function ProductFilters({ categories = [] }: ProductFiltersProps) {
     { label: 'Price: High to Low', value: 'price_desc' },
     { label: 'Highest Rated', value: 'rating' },
     { label: 'Most Reviewed', value: 'most_reviewed' },
-    { label: 'Most Popular', value: 'popular' },
   ];
 
   function updateParams(key: string, value: string) {
