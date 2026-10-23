@@ -16,6 +16,15 @@ function field(record: UnknownRecord | null, ...keys: string[]): unknown {
   return undefined;
 }
 
+function textField(record: UnknownRecord | null, ...keys: string[]): string {
+  const value = field(record, ...keys);
+  return value === undefined ? '' : String(value);
+}
+
+function parseAmount(record: UnknownRecord | null): number {
+  return Number(field(record, 'amount', 'Amount', 'totalAmount', 'TotalAmount', 'transactionAmount', 'TransactionAmount'));
+}
+
 async function confirmPendingOrder(supabase: ReturnType<typeof getSupabaseAdmin>, orderId: string) {
   return supabase
     .from('orders')
@@ -43,11 +52,11 @@ export async function POST(request: Request) {
   }
 
   const eventData = firstRecord(field(event, 'data', 'Data')) ?? event;
-  const reference = String(field(eventData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId') ?? '');
-  const transactionId = String(field(eventData, 'transactionId', 'TransactionId') ?? '');
+  const reference = textField(eventData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
+  const transactionId = textField(eventData, 'transactionId', 'TransactionId');
 
-  if (!reference || !transactionId) {
-    return NextResponse.json({ error: 'Missing payment reference or transaction ID.' }, { status: 400 });
+  if (!reference) {
+    return NextResponse.json({ error: 'Missing payment reference.' }, { status: 400 });
   }
 
   try {
@@ -60,52 +69,65 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (paymentError) return NextResponse.json({ error: 'Unable to find payment.' }, { status: 500 });
+    // A callback for an unknown/expired reference must never create or confirm an order.
     if (!payment) return NextResponse.json({ received: true });
 
-    // A previous callback may have marked the payment paid but failed before
-    // updating the order. Repair that partial state on a safe, idempotent retry.
+    if (payment.currency !== 'GHS' || !Number.isFinite(Number(payment.amount)) || Number(payment.amount) <= 0) {
+      return NextResponse.json({ error: 'Stored payment amount or currency is invalid.' }, { status: 409 });
+    }
+
+    // Repair a partial success safely: only a payment previously verified by this
+    // handler can reach "paid", and only a pending order may be confirmed.
     if (payment.status === 'paid') {
       const { error } = await confirmPendingOrder(supabase, payment.order_id);
       if (error) return NextResponse.json({ error: 'Unable to reconcile the paid order.' }, { status: 500 });
       return NextResponse.json({ received: true });
     }
 
-    // Only payments still awaiting verification may transition to paid.
-    // A delayed success callback must not resurrect failed/cancelled payments.
+    // Do not resurrect failed, cancelled, or refunded payment records.
     if (!['pending', 'processing'].includes(payment.status)) {
       return NextResponse.json({ received: true });
     }
 
-    // Do not trust the callback body alone. Ask Hubtel for the transaction status
-    // before marking an order as paid.
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const verificationResponse = await fetch(
-      `https://payproxyapi.hubtel.com/transaction/${encodeURIComponent(transactionId)}`,
-      {
-        method: 'GET',
-        headers: { Authorization: `Basic ${credentials}`, Accept: 'application/json' },
-        cache: 'no-store',
+    const verificationUrl = transactionId
+      ? `https://payproxyapi.hubtel.com/transaction/${encodeURIComponent(transactionId)}`
+      : 'https://payproxyapi.hubtel.com/transaction/status';
+
+    // Some Hubtel checkout callbacks contain only a client reference. Use the
+    // documented status endpoint in that case rather than rejecting a valid event.
+    const verificationResponse = await fetch(verificationUrl, {
+      method: transactionId ? 'GET' : 'POST',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
       },
-    );
+      ...(transactionId ? {} : { body: JSON.stringify({ ClientReference: reference }) }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
+    });
     const verification: unknown = await verificationResponse.json().catch(() => null);
     const verificationRecord = firstRecord(verification);
     const verificationData = firstRecord(field(verificationRecord, 'data', 'Data'));
-    const responseCode = String(field(verificationRecord, 'responseCode', 'ResponseCode') ?? '');
-    const verifiedStatus = String(field(verificationData, 'status', 'Status') ?? '').toLowerCase();
-    const verifiedReference = String(field(verificationData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId') ?? '');
-    const verifiedTransactionId = String(field(verificationData, 'transactionId', 'TransactionId') ?? '');
-    const verifiedAmount = Number(field(verificationData, 'amount', 'Amount', 'transactionAmount', 'TransactionAmount'));
+    const responseCode = textField(verificationRecord, 'responseCode', 'ResponseCode', 'code', 'Code');
+    const verifiedStatus = textField(verificationData, 'status', 'Status').toLowerCase();
+    const verifiedReference = textField(verificationData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
+    const verifiedTransactionId = textField(verificationData, 'transactionId', 'TransactionId');
+    const verifiedAmount = parseAmount(verificationData);
+    const verifiedCurrency = textField(verificationData, 'currency', 'Currency');
 
     if (
       !verificationResponse.ok ||
-      !['00', '0000'].includes(responseCode) ||
-      !['paid', 'completed', 'success'].includes(verifiedStatus) ||
+      !['00', '0000', '200'].includes(responseCode) ||
+      !['paid', 'completed', 'success', 'successful'].includes(verifiedStatus) ||
       verifiedReference !== reference ||
-      verifiedTransactionId !== transactionId ||
+      (transactionId && verifiedTransactionId && verifiedTransactionId !== transactionId) ||
       !Number.isFinite(verifiedAmount) ||
-      Math.abs(verifiedAmount - Number(payment.amount)) > 0.009
+      Math.abs(verifiedAmount - Number(payment.amount)) > 0.009 ||
+      (verifiedCurrency && verifiedCurrency.toUpperCase() !== 'GHS')
     ) {
-      // Ask Hubtel to retry transient verification failures.
+      // Non-2xx asks Hubtel to retry transient verification failures.
       return NextResponse.json({ error: 'Payment has not been verified.' }, { status: 503 });
     }
 
@@ -114,7 +136,10 @@ export async function POST(request: Request) {
       .update({
         status: 'paid',
         paid_at: new Date().toISOString(),
-        metadata: { hubtel_transaction_id: transactionId, hubtel_verification: verificationData },
+        metadata: {
+          hubtel_transaction_id: verifiedTransactionId || transactionId || null,
+          hubtel_verification: verificationData,
+        },
       })
       .eq('id', payment.id)
       .in('status', ['pending', 'processing'])
@@ -124,8 +149,6 @@ export async function POST(request: Request) {
     if (updatePaymentError) return NextResponse.json({ error: 'Unable to update payment.' }, { status: 500 });
 
     if (!updatedPayment) {
-      // Another callback may have won the race. Re-read before deciding whether
-      // the order can be confirmed; never infer success from a zero-row update.
       const { data: latestPayment, error: latestPaymentError } = await supabase
         .from('payments')
         .select('status')

@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { brand } from '@/config/brand';
 import { isClothingCategory } from '@/lib/utils/clothing';
 
 const adminProductSchema = z.object({
@@ -46,31 +45,7 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
   const db = getSupabaseAdmin();
   const d = p.data;
 
-  // The current schema still requires a store-owner row for each product.
-  // Keep one stable owner record until the data-preserving schema migration.
-  let { data: adminSeller } = await db
-    .from('sellers')
-    .select('id')
-    .eq('owner_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (!adminSeller) {
-    const { data: newSeller } = await db
-      .from('sellers')
-      .insert({
-        owner_id: user.id,
-        store_name: brand.name,
-        slug: `perfect-store-${user.id.slice(0, 8)}`,
-        status: 'active',
-        commission_rate: 0,
-      })
-      .select('id')
-      .single();
-    adminSeller = newSeller;
-  }
-
-  if (!adminSeller) return { success: false, error: 'Unable to initialize the store catalogue' };
+  // This is a single-owner catalogue. Legacy seller records are not required.
 
   // Validate category
   const { data: category } = await db
@@ -87,7 +62,7 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
   const { data: product, error: productError } = await db
     .from('products')
     .insert({
-      seller_id: adminSeller.id,
+      seller_id: null,
       category_id: d.categoryId,
       name: d.name,
       slug: d.slug,
