@@ -178,13 +178,24 @@ export async function POST(request: Request) {
     if (responseCode && !['0000', '00'].includes(String(responseCode))) {
       // An explicit Hubtel rejection means no checkout was created. Reset only
       // this attempt; never overwrite a callback that already marked it paid.
-      await supabase
+      const { error: resetError } = await supabase
         .from('payments')
         .update({ status: 'pending', provider_reference: null, metadata: {} })
         .eq('id', payment.id)
         .eq('order_id', order.id)
         .eq('provider_reference', reference)
         .eq('status', 'processing');
+      if (resetError) return NextResponse.json({ error: 'Unable to reset the rejected payment attempt.' }, { status: 500 });
+
+      const { data: latestPayment, error: latestPaymentError } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+      if (latestPayment?.status === 'paid') {
+        return NextResponse.json({ already_paid: true, reference });
+      }
       return NextResponse.json({ error: 'Hubtel rejected the checkout request. Please try again.' }, { status: 502 });
     }
 
@@ -195,14 +206,33 @@ export async function POST(request: Request) {
       secureCheckoutUrl = false;
     }
 
-    if (!hubtelResponse.ok || !secureCheckoutUrl || !['0000', '00'].includes(String(responseCode))) {
+    if (!hubtelResponse.ok || typeof checkoutUrl !== 'string' || !secureCheckoutUrl || !['0000', '00'].includes(String(responseCode))) {
       // Keep the reference in processing state for ambiguous responses. The
       // retry flow checks Hubtel status before it can create another attempt.
+      const { data: latestPayment, error: latestPaymentError } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+      if (latestPayment?.status === 'paid') {
+        return NextResponse.json({ already_paid: true, reference });
+      }
       return NextResponse.json({ error: 'Hubtel checkout status is unclear. Please wait briefly and refresh your order.' }, { status: 502 });
     }
 
     // Do not rewrite payment state here: the callback may already have marked
     // the payment paid while the initiate request was returning.
+    const { data: latestPayment, error: latestPaymentError } = await supabase
+      .from('payments')
+      .select('status')
+      .eq('id', payment.id)
+      .maybeSingle();
+    if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+    if (latestPayment?.status === 'paid') {
+      return NextResponse.json({ already_paid: true, reference });
+    }
+
     return NextResponse.json({ checkout_url: checkoutUrl, reference });
   } catch {
     return NextResponse.json({ error: 'Payment initialization failed.' }, { status: 500 });
