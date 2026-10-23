@@ -294,6 +294,7 @@ export async function cancelOrder(orderId: string): Promise<{ success: boolean; 
   const { data, error } = await supabase.rpc('cancel_order', { p_order_id: validation.data.orderId });
   if (error) {
     if (error.message.includes('not found')) return { success: false, error: 'Order not found' };
+    if (error.message.includes('Payment is processing or already paid')) return { success: false, error: 'A payment is in progress or has completed. Contact support to resolve payment before cancelling.' };
     if (error.message.includes('no longer be cancelled')) return { success: false, error: 'This order can no longer be cancelled.' };
     return { success: false, error: 'We couldn\'t cancel your order. Please try again.' };
   }
