@@ -58,7 +58,7 @@ BEGIN
       SELECT 1 FROM public.categories c
        WHERE c.id = v_product.category_id
          AND c.is_active = true
-         AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~ '(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|footwear|shoes|accessor|bags|traditional|ankara)'
+         AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~ '(fashion|clothing|apparel|menswear|womenswear|men|women|men.?s|women.?s|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)'
     ) THEN
       RAISE EXCEPTION 'This store only sells clothing, footwear, and fashion accessories';
     END IF;
