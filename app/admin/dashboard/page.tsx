@@ -83,10 +83,11 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const { data: categoryRows, error: categoriesError } = await supabase
+      const { data: rawCategoryRows, error: categoriesError } = await supabase
         .from('categories')
         .select('id,name,slug')
         .eq('is_active', true);
+      const categoryRows = (rawCategoryRows ?? []) as unknown as Array<{ id: string; name: string; slug: string }>;
       if (categoriesError) throw new Error('Unable to load clothing categories.');
       const clothingCategoryIds = (categoryRows ?? [])
         .filter((category) => isClothingCategory(category.name, category.slug))
