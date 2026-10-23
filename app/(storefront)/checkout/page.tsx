@@ -20,7 +20,7 @@ import { Truck, MapPin, Package } from 'lucide-react';
 export default function CheckoutPage() {
   const router = useRouter();
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('');
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('standard');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [checkoutData, setCheckoutData] = useState<CheckoutSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,12 +28,6 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const options = checkoutData?.deliveryOptions ?? [];
-    if (options.length > 0 && !options.some((option) => option.id === selectedDeliveryMethod)) {
-      setSelectedDeliveryMethod(options[0].id);
-    }
-  }, [checkoutData?.deliveryOptions, selectedDeliveryMethod]);
 
   // Mirror the local (localStorage) cart into the database cart so the
   // server-side checkout reads the exact items/quantities the shopper built.
