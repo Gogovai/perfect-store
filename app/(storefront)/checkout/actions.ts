@@ -3,7 +3,7 @@
 /**
  * Checkout server actions.
  * Validates cart from database, calculates authoritative prices,
- * and prepares order data. No payment processing yet.
+ * and prepares order data. Payment initialization is handled by the Hubtel API route.
  *
  * SECURITY: Never trust client-submitted prices, quantities, or totals.
  * All calculations are performed server-side against the database.
