@@ -144,6 +144,21 @@ BEGIN
   LEFT JOIN public.product_variants pv ON pv.id = ci.variant_id
   WHERE ci.cart_id = v_cart_id;
 
+  -- Keep the payment row and order notification atomic with order creation.
+  -- Checkout immediately updates the pending provider to the shopper's chosen method.
+  INSERT INTO public.payments (order_id, provider, status, amount, currency, metadata)
+  VALUES (v_order_id, 'hubtel', 'pending', v_total, 'GHS', '{}'::jsonb)
+  ON CONFLICT (order_id) DO NOTHING;
+
+  INSERT INTO public.notifications (user_id, title, message, type, data)
+  VALUES (
+    v_user_id,
+    'Order received',
+    'Your order ' || v_order_number || ' has been received.',
+    'order_status',
+    jsonb_build_object('order_id', v_order_id)
+  );
+
   DELETE FROM public.cart_items WHERE cart_id = v_cart_id;
   RETURN jsonb_build_object('success', true, 'order_id', v_order_id, 'order_number', v_order_number);
 END;
