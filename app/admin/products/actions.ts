@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 const schema = z.object({
   productId: z.string().uuid(),
@@ -40,7 +41,7 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
 
   const { data: product, error: productError } = await session
     .from('products')
-    .select('id,name,slug,status,base_price,description,short_description,category_id,categories(id,name,is_active)')
+    .select('id,name,slug,status,base_price,description,short_description,category_id,categories(id,name,slug,is_active)')
     .eq('id', productId)
     .maybeSingle();
 
@@ -48,7 +49,7 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
   if (!product) return { success: false, error: 'Product not found.' };
 
   const category = (product as unknown as {
-    categories: { id: string; name: string; is_active: boolean } | null;
+    categories: { id: string; name: string; slug: string; is_active: boolean } | null;
   }).categories;
 
   if (status === 'active') {
@@ -60,6 +61,7 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
     }
     if (!category) return { success: false, error: 'Assign this product to a category before publishing.' };
     if (!category.is_active) return { success: false, error: `Category "${category.name}" is inactive.` };
+    if (!isClothingCategory(category.name, category.slug)) return { success: false, error: 'Only clothing, footwear, and fashion accessories can be published.' };
 
     const { data: inventory, error: inventoryError } = await session
       .from('inventory')
