@@ -40,18 +40,16 @@ export type ProductFilterOptions = {
   pageSize?: number;
 };
 
-const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), sellers!inner(id), categories(id, name, slug, parent_id)`;
+const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), categories(id, name, slug, parent_id)`;
 
 async function getProductsQuery() {
   const supabase = await createClient();
   let query = supabase
     .from('products')
     .select(PRODUCT_SELECT, { count: 'exact' })
-    .eq('status', 'active')
-    .eq('sellers.status', 'active');
+    .eq('status', 'active');
 
-  // This is a single-owner clothing store. Keep legacy marketplace schema
-  // compatibility, but never surface non-clothing catalogue records publicly.
+  // Public catalogue results are limited to active clothing and fashion products.
   const { data: categories } = await supabase
     .from('categories')
     .select('id,name,slug')
