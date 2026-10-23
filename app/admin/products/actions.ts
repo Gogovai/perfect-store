@@ -49,14 +49,11 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
 
   const { data: product } = await s
     .from('products')
-    .select('id,seller_id,name,slug,status,base_price,description,short_description,category_id,categories(id,name,is_active),sellers(id,store_name,status,owner_id)')
+    .select('id,name,slug,status,base_price,description,short_description,category_id,categories(id,name,is_active)')
     .eq('id', productId)
     .maybeSingle();
   if (!product) return { success: false, error: 'Product not found' };
 
-  const seller = (product as unknown as {
-    sellers: { id: string; store_name: string; status: string; owner_id: string } | null;
-  }).sellers;
   const category = (product as unknown as {
     categories: { id: string; name: string; is_active: boolean } | null;
   }).categories;
@@ -135,31 +132,6 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
     new_data: { status, reason: status === 'rejected' ? reason : null },
   });
 
-  const sellerOwnerId = seller?.owner_id;
-  if (sellerOwnerId) {
-    const notificationByStatus = {
-      active: {
-        title: 'Product approved',
-        message: `${product.name} is now live in the marketplace.`,
-      },
-      rejected: {
-        title: 'Product rejected',
-        message: `${product.name} was rejected. Reason: ${reason}`,
-      },
-      inactive: {
-        title: 'Product deactivated',
-        message: `${product.name} has been deactivated by the marketplace and is no longer visible to customers.`,
-      },
-    } as const;
-
-    await s.from('notifications').insert({
-      user_id: sellerOwnerId,
-      type: 'product_status',
-      data: { product_id: product.id, status },
-      ...notificationByStatus[status],
-    });
-  }
-
   // Moderation queue + storefront surfaces (listing, detail, category, home).
   revalidatePath('/admin/products');
   revalidatePath('/admin/dashboard');
@@ -170,7 +142,7 @@ export async function moderateProduct(input: unknown): Promise<ModerateProductRe
 
   const messages = {
     active: 'Product approved and published successfully',
-    rejected: 'Product rejected. The seller has been notified with your reason.',
+    rejected: 'Product rejected with the supplied reason.',
     inactive: 'Product deactivated and removed from the storefront.',
   } as const;
 
