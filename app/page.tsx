@@ -12,6 +12,7 @@ import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProduct
 import { getCategories } from '@/lib/queries/categories';
 import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/campaigns';
 import { brand } from '@/config/brand';
+import { isClothingCategory } from '@/lib/utils/clothing';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
 export const metadata: Metadata = { title: `${brand.name} — Clothing Store`, description: brand.description };
@@ -24,7 +25,7 @@ export default async function Home() {
     getCategories(),
   ]);
 
-  const clothingCategories = categories.filter((category) => /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`));
+  const clothingCategories = categories.filter((category) => isClothingCategory(category.name, category.slug));
 
   const catSections = await Promise.all(
     clothingCategories.slice(0, 4).map(async (cat) => {
