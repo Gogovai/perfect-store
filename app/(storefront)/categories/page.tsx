@@ -6,11 +6,12 @@ import { getCategories } from '@/lib/queries/categories';
 
 export const metadata: Metadata = {
   title: 'Categories - Perfect Store',
-  description: 'Browse all product categories on Perfect Store marketplace',
+  description: 'Browse clothing, footwear, and fashion accessories at Perfect Store',
 };
 
 export default async function CategoriesPage() {
-  const categories = await getCategories();
+  const allCategories = await getCategories();
+  const categories = allCategories.filter((category) => /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`));
 
   return (
     <div className="py-8 sm:py-12 bg-gray-50 min-h-[calc(100vh-8rem)]">
@@ -19,7 +20,7 @@ export default async function CategoriesPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">All Categories</h1>
           <p className="mt-2 text-gray-600">
-            Browse our wide selection of product categories
+            Browse clothing, footwear, and accessories for men and women.
           </p>
         </div>
 
