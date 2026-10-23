@@ -82,7 +82,7 @@ export default function CheckoutPage() {
     async function reload() {
       try {
         await syncLocalCart();
-        const data = await validateCheckout(selectedDeliveryMethod);
+        const data = await validateCheckout(selectedDeliveryMethod, selectedAddressId);
         if (!cancelled) setCheckoutData(data);
       } catch {
         if (!cancelled) setOrderError('Unable to refresh checkout totals. Please try again.');
