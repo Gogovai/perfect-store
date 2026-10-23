@@ -1,38 +1,26 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
-import {
-  Apple,
-  Baby,
-  BookOpen,
-  Blender,
-  Car,
-  Dumbbell,
-  HeartPulse,
-  Home,
-  Monitor,
-  ShoppingBag,
-  Shirt,
-  Smartphone,
-  Sparkles,
-} from "lucide-react";
+import { ShoppingBag, Shirt } from "lucide-react";
 import { getCategoryColor, getCategoryImage } from "@/lib/data/campaigns";
 import type { Category } from "@/lib/queries/categories";
 
 const ICONS: Record<string, typeof ShoppingBag> = {
-  electronics: ShoppingBag,
-  "phones-tablets": Smartphone,
-  "computers-accessories": Monitor,
   fashion: Shirt,
-  "home-kitchen": Home,
-  "beauty-personal-care": Sparkles,
-  health: HeartPulse,
-  "sports-fitness": Dumbbell,
-  automotive: Car,
-  "baby-products": Baby,
-  groceries: Apple,
-  "office-school": BookOpen,
-  appliances: Blender,
+  clothing: Shirt,
+  apparel: Shirt,
+  menswear: Shirt,
+  "mens-clothing": Shirt,
+  "mens-fashion": Shirt,
+  womenswear: Shirt,
+  "womens-clothing": Shirt,
+  "womens-fashion": Shirt,
+  shoes: ShoppingBag,
+  footwear: ShoppingBag,
+  accessories: ShoppingBag,
+  bags: ShoppingBag,
+  "traditional-wear": Shirt,
+  ankara: Shirt,
 };
 
 export function CategoryBar({ categories }: { categories: Category[] }) {
