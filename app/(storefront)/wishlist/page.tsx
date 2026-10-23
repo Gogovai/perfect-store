@@ -62,7 +62,6 @@ export default function WishlistPage() {
       variantName: null,
       price: item.price,
       imageUrl: item.imageUrl,
-      sellerName: '',
       sellerId: '',
       maxQuantity: 99,
       quantity: 1,
