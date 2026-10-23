@@ -22,8 +22,6 @@ export type ValidatedCartItem = {
   variantId: string | null;
   productName: string;
   variantName: string | null;
-  sellerId: string;
-  sellerName: string;
   imageUrl: string;
   unitPrice: number;
   quantity: number;
@@ -291,8 +289,6 @@ export async function validateCheckout(
       variantId: item.variant_id,
       productName: isValid ? product.name : product.name,
       variantName,
-      sellerId: seller?.id || '',
-      sellerName: seller?.store_name || '',
       imageUrl,
       unitPrice,
       quantity: item.quantity,
