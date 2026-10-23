@@ -12,8 +12,6 @@ export type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
-  sellerName: string;
-  sellerId: string;
   maxQuantity: number;
 };
 
@@ -76,8 +74,6 @@ export const useCartStore = create<CartState & CartActions>()(
             price: newItem.price,
             quantity: newItem.quantity || 1,
             imageUrl: newItem.imageUrl,
-            sellerName: newItem.sellerName,
-            sellerId: newItem.sellerId,
             maxQuantity: newItem.maxQuantity || 99,
           };
 
