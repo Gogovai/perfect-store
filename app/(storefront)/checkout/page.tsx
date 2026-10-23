@@ -124,18 +124,18 @@ export default function CheckoutPage() {
         // Server cart has already been cleared by create_order.
       }
 
-      if (selectedPaymentMethod === 'paystack') {
-        const response = await fetch('/api/payments/paystack/initialize', {
+      if (selectedPaymentMethod === 'hubtel') {
+        const response = await fetch('/api/payments/hubtel/initialize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: result.orderId }),
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.authorization_url) {
+        if (!response.ok || !data.checkout_url) {
           setOrderError(data.error || 'Online payment is currently unavailable. Your order was saved; you can retry payment from the order page.');
           return;
         }
-        window.location.assign(data.authorization_url);
+        window.location.assign(data.checkout_url);
         return;
       }
 
