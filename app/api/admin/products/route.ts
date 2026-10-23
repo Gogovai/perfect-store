@@ -73,7 +73,6 @@ export async function PATCH(request: Request) {
   revalidatePath('/admin/dashboard');
   revalidatePath('/admin/products');
   revalidatePath('/products');
-  revalidatePath('/seller/dashboard');
 
   return NextResponse.json({ success: true, message: `Product marked ${status}.` });
 }
