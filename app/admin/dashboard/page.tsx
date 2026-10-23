@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
         inventory: Array<{ quantity: number | null; reserved_quantity: number | null }> | null;
       }>;
       const recentOrders = (recentOrdersResult.data ?? []) as Order[];
-      const payments = paymentsResult.data ?? [];
+      const payments = (paymentsResult.data ?? []) as unknown as Array<{ status: string; amount: number | null }>;
       const paidPayments = payments.filter((payment) => payment.status === 'paid');
 
       setData({
