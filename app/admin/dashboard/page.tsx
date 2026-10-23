@@ -85,7 +85,8 @@ export default function AdminDashboardPage() {
       const [
         customersResult,
         productsResult,
-        ordersResult,
+        ordersCountResult,
+        recentOrdersResult,
         paymentsResult,
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
