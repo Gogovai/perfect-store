@@ -350,9 +350,9 @@ async function main() {
       for (const q of [
         svc.from('profiles').delete().eq('id', u.userId),
       ]) {
-        try { await q; } catch {}
+        try { await q; } catch { /* Best-effort cleanup for test data. */ }
       }
-      try { await svc.auth.admin.deleteUser(u.userId); } catch {}
+      try { await svc.auth.admin.deleteUser(u.userId); } catch { /* Best-effort cleanup for test users. */ }
     }
   }
 
