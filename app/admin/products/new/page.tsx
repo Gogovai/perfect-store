@@ -101,9 +101,9 @@ export default function AdminCreateProductPage() {
       <div className="mx-auto max-w-3xl space-y-6">
         <header>
           <p className="text-sm font-semibold text-[#0f2b5b]">Admin product</p>
-          <h1 className="text-3xl font-bold">Create Marketplace Product</h1>
+          <h1 className="text-3xl font-bold">Add Clothing Product</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Admin-created products are published immediately and do not require seller approval.
+            Add products to the store catalogue and manage their inventory from one place.
           </p>
         </header>
 
