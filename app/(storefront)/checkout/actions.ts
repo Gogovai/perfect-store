@@ -10,7 +10,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { getDeliveryPrice, FREE_DELIVERY_THRESHOLD } from '@/lib/config/delivery';
+import type { DeliveryOption } from '@/lib/config/delivery';
 import { isClothingCategory } from '@/lib/utils/clothing';
 
 /**
@@ -45,6 +45,7 @@ export type CheckoutSummary = {
   itemCount: number;
   hasChanges: boolean;
   warnings: string[];
+  deliveryOptions: DeliveryOption[];
 };
 
 /**
@@ -53,7 +54,8 @@ export type CheckoutSummary = {
  * Returns server-calculated totals — never trust client totals.
  */
 export async function validateCheckout(
-  deliveryMethodId: string = 'standard'
+  deliveryMethodId: string = '',
+  addressId?: string | null
 ): Promise<CheckoutSummary> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -69,6 +71,7 @@ export async function validateCheckout(
       itemCount: 0,
       hasChanges: false,
       warnings: ['Please log in to continue checkout.'],
+      deliveryOptions: [],
     };
   }
 
@@ -89,7 +92,62 @@ export async function validateCheckout(
       itemCount: 0,
       hasChanges: false,
       warnings: ['Your cart is empty.'],
+      deliveryOptions: [],
     };
+  }
+
+  let deliveryOptions: DeliveryOption[] = [];
+  if (addressId) {
+    const { data: address } = await supabase
+      .from('addresses')
+      .select('id,city,region')
+      .eq('id', addressId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (address) {
+      // Shipping rates are configured by the store owner in Admin > Logistics.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rates } = await (supabase as any)
+        .from('shipping_rates')
+        .select('id,method,price,eta_min_days,eta_max_days,delivery_zones!inner(id,name,city,region,is_active)')
+        .eq('is_active', true)
+        .eq('delivery_zones.is_active', true)
+        .order('price', { ascending: true });
+
+      const normalize = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase();
+      const matchingRates = (rates ?? []).map((rate: any) => {
+        const zone = Array.isArray(rate.delivery_zones) ? rate.delivery_zones[0] : rate.delivery_zones;
+        const zoneCity = normalize(zone?.city);
+        const addressCity = normalize(address.city);
+        const cityMatch = Boolean(zoneCity && addressCity && zoneCity === addressCity);
+        const regionMatch = Boolean(normalize(zone?.region) && normalize(zone?.region) === normalize(address.region));
+        const matches = zoneCity ? cityMatch : regionMatch;
+        return { rate, zone, matches, cityMatch };
+      }).filter((item: any) => item.matches)
+        .sort((a: any, b: any) => Number(b.cityMatch) - Number(a.cityMatch) || Number(a.rate.price) - Number(b.rate.price));
+
+      const seenMethods = new Set<string>();
+      deliveryOptions = matchingRates.flatMap((item: any) => {
+        const method = String(item.rate.method ?? '').trim().toLowerCase();
+        if (!method || seenMethods.has(method)) return [];
+        seenMethods.add(method);
+        const min = item.rate.eta_min_days == null ? null : Number(item.rate.eta_min_days);
+        const max = item.rate.eta_max_days == null ? null : Number(item.rate.eta_max_days);
+        const eta = min !== null && max !== null
+          ? `Estimated delivery: ${min}–${max} business days`
+          : 'Delivery time confirmed by the store';
+        return [{
+          id: method,
+          name: method.split(/[_ -]+/).map((part: string) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+          description: `${eta} · ${item.zone.name}`,
+          price: Number(item.rate.price),
+          etaMinDays: min,
+          etaMaxDays: max,
+          zoneName: String(item.zone.name ?? ''),
+        }];
+      });
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -250,8 +308,10 @@ export async function validateCheckout(
   const invalidItems = validatedItems.filter((i) => !i.isValid);
 
   const subtotal = Math.round(validItems.reduce((sum, i) => sum + i.lineTotal, 0) * 100) / 100;
-  const deliveryPrice = getDeliveryPrice(deliveryMethodId);
-  const shippingCost = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : deliveryPrice;
+  const selectedDeliveryOption = deliveryOptions.find((option) => option.id === deliveryMethodId);
+  const shippingCost = selectedDeliveryOption?.price ?? 0;
+  if (addressId && deliveryOptions.length === 0) warnings.push('No delivery rate is configured for this address. Please contact the store before placing your order.');
+  if (addressId && deliveryOptions.length > 0 && !selectedDeliveryOption) warnings.push('Select an available delivery method to see the final total.');
   const total = Math.round((subtotal + shippingCost) * 100) / 100;
   const hasChanges = invalidItems.length > 0;
 
@@ -265,6 +325,7 @@ export async function validateCheckout(
     itemCount: validItems.reduce((sum, i) => sum + i.quantity, 0),
     hasChanges,
     warnings,
+    deliveryOptions,
   };
 }
 
