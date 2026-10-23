@@ -5,56 +5,38 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
-import { FlashSale } from '@/components/home/FlashSale';
 import { CategoryBar } from '@/components/home/CategoryBar';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { CategoryVisual } from '@/components/categories/CategoryVisual';
 import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
 import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/campaigns';
-import { getFlashSaleWindow } from '@/lib/data/flash-sale';
 import { brand } from '@/config/brand';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
 export const metadata: Metadata = { title: `${brand.name} — Clothing Store`, description: brand.description };
 
 export default async function Home() {
-  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts, flashProducts] = await Promise.all([
+  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts] = await Promise.all([
     getFeaturedProducts(8),
     getNewestProducts(8),
     getTopRatedProducts(8),
     getCategories(),
     getProducts({ sort: 'popular', page: 1, pageSize: 8 }),
-    getProducts({ pageSize: 100 }),
   ]);
 
-  // Flash sale built from real catalogue products so every card links to a
-  // live product page. Renders nothing when the catalogue is empty.
-  const flashSale = getFlashSaleWindow(
-    flashProducts.products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      imageUrl: p.product_images.find((img) => img.is_primary)?.url ?? p.product_images[0]?.url ?? '',
-      price: p.base_price,
-    }))
-  );
+  const clothingCategories = categories.filter((category) => /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`));
 
   const catSections = await Promise.all(
-    categories.slice(0, 4).map(async (cat) => {
+    clothingCategories.slice(0, 4).map(async (cat) => {
       const result = await getProducts({ categorySlug: cat.slug, pageSize: 4 });
       return { category: cat, products: result.products };
     })
   );
 
   return <>
-    <CategoryBar categories={categories.slice(0, 12)} />
+    <CategoryBar categories={clothingCategories.slice(0, 12)} />
     <HeroCarousel slides={HERO_SLIDES} />
-    <FlashSale
-      items={flashSale.items}
-      endsAt={flashSale.endsAt}
-      initialSecondsLeft={flashSale.secondsLeft}
-    />
 
     {/* Trust badges */}
     <section className="border-b border-gray-100 bg-white">
@@ -95,7 +77,7 @@ export default async function Home() {
           <ProductGrid products={popularProducts.products} />
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {categories.slice(0, 5).map((cat) => (
+            {clothingCategories.slice(0, 5).map((cat) => (
               <Link key={cat.id} href={`/categories/${cat.slug}`}>
                 <CategoryVisual slug={cat.slug} />
               </Link>
