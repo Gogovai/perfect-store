@@ -17,12 +17,11 @@ import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-r
 export const metadata: Metadata = { title: `${brand.name} — Clothing Store`, description: brand.description };
 
 export default async function Home() {
-  const [featuredProducts, newestProducts, topRatedProducts, categories, popularProducts] = await Promise.all([
+  const [featuredProducts, newestProducts, topRatedProducts, categories] = await Promise.all([
     getFeaturedProducts(8),
     getNewestProducts(8),
     getTopRatedProducts(8),
     getCategories(),
-    getProducts({ sort: 'popular', page: 1, pageSize: 8 }),
   ]);
 
   const clothingCategories = categories.filter((category) => /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`));
@@ -45,7 +44,7 @@ export default async function Home() {
           <TrustItem icon={<CreditCard size={20} />} title="Secure Payment" sub="Protected checkout" />
           <TrustItem icon={<ShieldCheck size={20} />} title="Quality Fashion" sub="Selected for your style" />
           <TrustItem icon={<Truck size={20} />} title="Fast Delivery" sub="Across Ghana" />
-          <TrustItem icon={<Headphones size={20} />} title="24/7 Support" sub="We're here to help" />
+          <TrustItem icon={<Headphones size={20} />} title="Customer Support" sub="Help with your order" />
         </div>
       </Container>
     </section>
@@ -73,17 +72,7 @@ export default async function Home() {
         <SectionHeader title="Popular Products" subtitle="Popular picks from our collection" href="/products?sort=popular" />
         {featuredProducts.length > 0 ? (
           <ProductGrid products={featuredProducts} />
-        ) : popularProducts.products.length > 0 ? (
-          <ProductGrid products={popularProducts.products} />
-        ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {clothingCategories.slice(0, 5).map((cat) => (
-              <Link key={cat.id} href={`/categories/${cat.slug}`}>
-                <CategoryVisual slug={cat.slug} />
-              </Link>
-            ))}
-          </div>
-        )}
+        ) : null}
       </Container>
     </section>
 
