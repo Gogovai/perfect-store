@@ -94,11 +94,6 @@ export function Header({ profile }: HeaderProps) {
         <Container>
           <div className="flex h-8 items-center justify-between">
             <div className="flex items-center gap-5">
-              <Link href="/seller/apply" className="flex items-center gap-1 transition-colors hover:text-white">
-                <Store size={12} />
-                <span>Sell on {brand.shortName}</span>
-              </Link>
-              <span className="text-white/30">|</span>
               <Link href="/help" className="flex items-center gap-1 transition-colors hover:text-white">
                 <HelpCircle size={12} />
                 <span>Help Center</span>
@@ -183,11 +178,6 @@ export function Header({ profile }: HeaderProps) {
                           <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
                             <Truck size={16} /> My Orders
                           </Link>
-                          {profile?.role === 'seller' && (
-                            <Link href="/seller/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
-                              <LayoutDashboard size={16} /> Seller Dashboard
-                            </Link>
-                          )}
                           {profile?.role === 'admin' && (
                             <Link href="/admin/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
                               <LayoutDashboard size={16} /> Admin Dashboard
@@ -257,9 +247,6 @@ export function Header({ profile }: HeaderProps) {
               <Link href="/categories" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
                 <Store size={18} className="text-gray-400" /> Categories
               </Link>
-              <Link href="/seller/apply" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
-                <Store size={18} className="text-gray-400" /> Sell on {brand.shortName}
-              </Link>
               <Link href="/account/orders" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
                 <Truck size={18} className="text-gray-400" /> Track Order
               </Link>
@@ -296,11 +283,6 @@ export function Header({ profile }: HeaderProps) {
                   <Link href="/account/orders" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
                     <Truck size={18} className="text-gray-400" /> My Orders
                   </Link>
-                  {profile?.role === 'seller' && (
-                    <Link href="/seller/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
-                      <LayoutDashboard size={18} className="text-gray-400" /> Seller Dashboard
-                    </Link>
-                  )}
                   {profile?.role === 'admin' && (
                     <Link href="/admin/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50" onClick={closeMenus}>
                       <LayoutDashboard size={18} className="text-gray-400" /> Admin Dashboard
