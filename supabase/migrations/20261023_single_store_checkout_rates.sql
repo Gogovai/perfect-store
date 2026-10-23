@@ -29,7 +29,6 @@ DECLARE
   v_order_number text;
   v_method_name text;
   v_shipping_rate record;
-  v_total_weight_grams numeric := 0;
   v_item_count integer := 0;
 BEGIN
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
@@ -64,8 +63,6 @@ BEGIN
       RAISE EXCEPTION 'This store only sells clothing, footwear, and fashion accessories';
     END IF;
 
-    v_total_weight_grams := v_total_weight_grams + COALESCE(v_product.weight_grams, 0) * v_cart_item.quantity;
-
     IF v_cart_item.variant_id IS NOT NULL THEN
       SELECT pv.* INTO v_variant FROM public.product_variants pv
       WHERE pv.id = v_cart_item.variant_id AND pv.product_id = v_cart_item.product_id AND pv.is_active = true;
@@ -96,8 +93,6 @@ BEGIN
    WHERE sr.is_active = true
      AND dz.is_active = true
      AND lower(btrim(sr.method)) = lower(btrim(p_delivery_method))
-     AND COALESCE(sr.min_weight_grams, 0) <= v_total_weight_grams
-     AND COALESCE(sr.max_weight_grams, 100000000) >= v_total_weight_grams
      AND (
        (NULLIF(btrim(COALESCE(dz.city, '')), '') IS NOT NULL
          AND lower(btrim(dz.city)) = lower(btrim(COALESCE(v_address.city, ''))))
