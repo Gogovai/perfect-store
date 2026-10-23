@@ -36,4 +36,27 @@ BEGIN
   DROP TRIGGER IF EXISTS trg_seller_order_groups_sync ON public.order_items;
   CREATE TRIGGER trg_seller_order_groups_sync AFTER INSERT ON public.order_items
     FOR EACH ROW EXECUTE FUNCTION public.sync_seller_order_group_on_item();
+
+  -- A second legacy trigger existed in the original database. It must also
+  -- ignore null seller IDs or it will reject new single-store order items.
+  CREATE OR REPLACE FUNCTION public.seed_seller_order_group()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public, pg_temp
+  AS $seed$
+  BEGIN
+    IF NEW.seller_id IS NULL OR to_regclass('public.seller_order_groups') IS NULL THEN
+      RETURN NEW;
+    END IF;
+    INSERT INTO public.seller_order_groups (order_id, seller_id, status, subtotal)
+    VALUES (NEW.order_id, NEW.seller_id, 'pending', NEW.total_price)
+    ON CONFLICT (order_id, seller_id)
+    DO UPDATE SET subtotal = public.seller_order_groups.subtotal + EXCLUDED.subtotal,
+                  updated_at = now();
+    RETURN NEW;
+  END $seed$;
+
+  REVOKE ALL ON FUNCTION public.sync_seller_order_group_on_item() FROM PUBLIC, anon, authenticated;
+  REVOKE ALL ON FUNCTION public.seed_seller_order_group() FROM PUBLIC, anon, authenticated;
 END $do$;
