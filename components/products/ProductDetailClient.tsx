@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { ProductGallery } from '@/components/products/ProductGallery';
@@ -24,7 +23,6 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   const addItem = useCartStore((s) => s.addItem);
   const activeVariants = product.product_variants.filter((v) => v.is_active && v.price !== null);
   const hasVariants = activeVariants.length > 0;
-  const seller = product.sellers;
   const category = product.categories;
   const selectedVariantData = selectedVariant ? activeVariants.find((v) => v.id === selectedVariant) : null;
   const currentPrice = selectedVariantData?.price ?? product.base_price;
@@ -36,7 +34,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
   function handleAddToCart() {
     const primaryImage = product.product_images.find((img) => img.is_primary) || product.product_images[0];
-    addItem({ productId: product.id, variantId: selectedVariant, name: product.name, variantName: selectedVariantData?.name || null, price: currentPrice, imageUrl: primaryImage?.url || '', sellerName: seller?.store_name || '', sellerId: seller?.id || '', maxQuantity: 99, quantity });
+    addItem({ productId: product.id, variantId: selectedVariant, name: product.name, variantName: selectedVariantData?.name || null, price: currentPrice, imageUrl: primaryImage?.url || '', sellerName: '', sellerId: product.seller_id, maxQuantity: 99, quantity });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }
@@ -52,11 +50,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
         <ProductGallery images={product.product_images.slice().sort((a, b) => a.sort_order - b.sort_order)} productName={product.name} />
         <div className="space-y-5">
           <div className="flex items-start justify-between">
-            {seller && <Link href={`/sellers/${seller.slug}`} className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
-              {seller.logo_url && <Image src={seller.logo_url} alt={seller.store_name} width={20} height={20} className="rounded-full" unoptimized />}
-              <span>{seller.store_name}</span>{seller.rating > 0 && <span className="text-xs text-gray-400">({seller.rating.toFixed(1)}★)</span>}
-            </Link>}
-            <WishlistButton productId={product.id} productName={product.name} price={product.base_price} imageUrl={product.product_images[0]?.url || ''} slug={product.slug} sellerName={seller?.store_name || ''} size="md" />
+            <WishlistButton productId={product.id} productName={product.name} price={product.base_price} imageUrl={product.product_images[0]?.url || ''} slug={product.slug} size="md" />
           </div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{product.name}</h1>
           <ProductRating rating={product.rating_average} reviewCount={product.review_count} size="md" />
