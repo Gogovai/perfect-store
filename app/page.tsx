@@ -54,7 +54,7 @@ export default async function Home() {
       <Container size="xl">
         <SectionHeader title="Shop by Category" href="/categories" />
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          {categories.slice(0, 12).map((cat) => (
+          {clothingCategories.slice(0, 12).map((cat) => (
             <Link key={cat.id} href={`/categories/${cat.slug}`}>
               <CategoryVisual slug={cat.slug} />
             </Link>
@@ -66,15 +66,14 @@ export default async function Home() {
     {/* Promo Banners */}
     <PromoBanners banners={PROMO_BANNERS} />
 
-    {/* Popular Products */}
-    <section className="bg-white py-8 sm:py-10">
-      <Container size="xl">
-        <SectionHeader title="Popular Products" subtitle="Popular picks from our collection" href="/products?sort=popular" />
-        {featuredProducts.length > 0 ? (
+    {featuredProducts.length > 0 && (
+      <section className="bg-white py-8 sm:py-10">
+        <Container size="xl">
+          <SectionHeader title="Featured Products" subtitle="Selected pieces from our collection" href="/products" />
           <ProductGrid products={featuredProducts} />
-        ) : null}
-      </Container>
-    </section>
+        </Container>
+      </section>
+    )}
 
     {/* Category product rows */}
     {catSections.map(({ category, products }) =>
@@ -96,7 +95,7 @@ export default async function Home() {
           <ProductGrid products={newestProducts} />
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {categories.slice(0, 5).map((cat) => (
+            {clothingCategories.slice(0, 5).map((cat) => (
               <Link key={cat.id} href={`/categories/${cat.slug}`}>
                 <CategoryVisual slug={cat.slug} />
               </Link>
