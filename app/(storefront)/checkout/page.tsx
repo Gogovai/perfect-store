@@ -7,7 +7,7 @@ import { AddressSelector } from '@/components/checkout/AddressSelector';
 import { DeliveryMethod } from '@/components/checkout/DeliveryMethod';
 import { CheckoutItems } from '@/components/checkout/CheckoutItems';
 import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
-import { PaymentPlaceholder, type PaymentMethod } from '@/components/checkout/PaymentPlaceholder';
+import { PaymentMethodSelector, type PaymentMethod } from '@/components/checkout/PaymentMethodSelector';
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
 import { validateCheckout, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <PaymentPlaceholder value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
+              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
