@@ -2,7 +2,7 @@
 
 import { CreditCard, Banknote } from 'lucide-react';
 
-export type PaymentMethod = 'cash_on_delivery' | 'paystack';
+export type PaymentMethod = 'cash_on_delivery' | 'hubtel';
 
 export function PaymentPlaceholder({
   value,
@@ -13,7 +13,7 @@ export function PaymentPlaceholder({
 }) {
   const methods = [
     ['cash_on_delivery', 'Cash on Delivery', 'Pay when your order arrives.', Banknote],
-    ['paystack', 'Card / Mobile Money', 'Secure online payment powered by Paystack.', CreditCard],
+    ['hubtel', 'Mobile Money / Card', 'Pay securely with Hubtel using mobile money or a bank card.', CreditCard],
   ] as const;
 
   return (
