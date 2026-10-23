@@ -2,7 +2,7 @@
 
 A single-owner online clothing shop for men's and women's fashion, built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Customers can browse products, select size/colour variants, add items to a unified cart, place orders and track their purchases. The owner manages the catalogue, stock, promotions, delivery settings and all orders.
 
-This is **not a multi-vendor marketplace**. Seller onboarding, seller storefronts, seller commissions and seller payouts are being removed/refactored as part of the single-store migration.
+This is **not a multi-vendor marketplace**. Seller storefront routes redirect to the shop, seller applications are disabled, and commission calculations are set to zero by new migrations. Legacy seller-related schema and historical records are retained temporarily because products and orders still reference them; do not drop those tables until a reviewed data migration replaces those relationships.
 
 ## Product requirements
 
@@ -32,7 +32,7 @@ SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
 NEXT_PUBLIC_SITE_URL=https://your-domain.example
 ```
 
-Hubtel configuration is being finalized against the exact payment API enabled for the merchant account. Example server-side variable placeholders are documented in `.env.example`; confirm names and required account identifiers before production configuration. Never expose Hubtel secrets or the Supabase service-role key to browser code or commit real credentials.
+Hubtel configuration and callback verification still require validation against the exact payment API enabled for the merchant account. Do not treat the current integration as production-verified. Example server-side variable placeholders are documented in `.env.example`; confirm names and required account identifiers before production configuration. Never expose Hubtel secrets or the Supabase service-role key to browser code or commit real credentials.
 
 ## Development
 
