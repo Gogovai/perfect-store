@@ -74,14 +74,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Sell */}
+          {/* Customer support */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Sell on {brand.shortName}</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Customer Care</h3>
             <ul className="space-y-2.5">
-              <li><Link href="/seller/apply" className="text-sm text-white/60 hover:text-white transition-colors">Start Selling</Link></li>
-              <li><Link href="/contact" className="text-sm text-white/60 hover:text-white transition-colors">Seller Support</Link></li>
-              <li title="Coming soon"><span className="text-sm text-white/40">Seller Guidelines <span className="text-[10px] uppercase tracking-wide">· Soon</span></span></li>
-              <li title="Coming soon"><span className="text-sm text-white/40">Seller FAQ <span className="text-[10px] uppercase tracking-wide">· Soon</span></span></li>
+              <li><Link href="/account/orders" className="text-sm text-white/60 hover:text-white transition-colors">Track an Order</Link></li>
+              <li><Link href="/contact" className="text-sm text-white/60 hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link href="/help" className="text-sm text-white/60 hover:text-white transition-colors">Help Center</Link></li>
+              <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">About the Store</Link></li>
             </ul>
           </div>
         </div>
