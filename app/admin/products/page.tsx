@@ -153,11 +153,6 @@ export default function AdminProducts() {
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[p.status] || 'bg-gray-100'}`}>
                           {p.status.replaceAll('_', ' ')}
                         </span>
-                        {p.sellers && p.sellers.status !== 'active' && (
-                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">
-                            Seller {p.sellers.status}
-                          </span>
-                        )}
                       </div>
                       {p.status === 'rejected' && p.rejection_reason && (
                         <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">Rejection reason: {p.rejection_reason}</p>
