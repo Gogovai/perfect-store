@@ -28,6 +28,13 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const options = checkoutData?.deliveryOptions ?? [];
+    if (options.length > 0 && !options.some((option) => option.id === selectedDeliveryMethod)) {
+      setSelectedDeliveryMethod(options[0].id);
+    }
+  }, [checkoutData?.deliveryOptions, selectedDeliveryMethod]);
+
   // Mirror the local (localStorage) cart into the database cart so the
   // server-side checkout reads the exact items/quantities the shopper built.
   // No-op when the local cart is empty (so a DB cart from another device
