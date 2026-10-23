@@ -91,9 +91,6 @@ export async function loginAction(
     if (role === 'admin') {
       redirect('/admin/dashboard');
     }
-    if (role === 'seller') {
-      redirect('/seller/dashboard');
-    }
   }
 
   revalidatePath('/', 'layout');
