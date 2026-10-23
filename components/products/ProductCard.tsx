@@ -70,7 +70,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             price={product.base_price}
             imageUrl={primaryImage?.url || ''}
             slug={product.slug}
-            sellerName=""
             size="sm"
           />
         </div>
