@@ -141,7 +141,11 @@ export default function CheckoutPage() {
           body: JSON.stringify({ orderId: result.orderId }),
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.checkout_url) {
+        if (response.ok && data.already_paid) {
+          router.push(`/account/orders/${result.orderId}?payment=confirmed`);
+          return;
+        }
+        if (!response.ok || typeof data.checkout_url !== 'string' || !data.checkout_url.startsWith('https://')) {
           setOrderError(data.error || 'Online payment is currently unavailable. Your order was saved; you can retry payment from the order page.');
           return;
         }
