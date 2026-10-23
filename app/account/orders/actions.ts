@@ -8,6 +8,7 @@ const placeOrderSchema = z.object({
   addressId: z.string().uuid('Invalid address'),
   deliveryMethod: z.enum(['standard', 'express']),
   notes: z.string().max(500, 'Notes must be 500 characters or less').optional(),
+  paymentMethod: z.enum(['cash_on_delivery', 'hubtel']).optional(),
 });
 
 const cancelOrderSchema = z.object({ orderId: z.string().uuid('Invalid order ID') });
@@ -88,11 +89,19 @@ type ShippingSnapshot = {
 export async function placeOrder(
   addressId: string,
   deliveryMethod: string,
-  notes?: string
+  notes?: string,
+  paymentMethod: 'cash_on_delivery' | 'hubtel' = 'cash_on_delivery'
 ): Promise<PlaceOrderResult> {
-  const validation = placeOrderSchema.safeParse({ addressId, deliveryMethod, notes });
+  const validation = placeOrderSchema.safeParse({ addressId, deliveryMethod, notes, paymentMethod });
   if (!validation.success) {
     return { success: false, error: validation.error.issues[0]?.message || 'Invalid input' };
+  }
+
+  if (
+    validation.data.paymentMethod === 'hubtel' &&
+    !(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID)
+  ) {
+    return { success: false, error: 'Hubtel online payments are not configured yet. Please choose Cash on Delivery.' };
   }
 
   const supabase = await createClient();

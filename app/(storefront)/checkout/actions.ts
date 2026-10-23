@@ -33,6 +33,10 @@ export type ValidatedCartItem = {
 /**
  * Checkout summary calculated server-side.
  */
+export async function getHubtelPaymentAvailability(): Promise<boolean> {
+  return Boolean(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID);
+}
+
 export type CheckoutSummary = {
   items: ValidatedCartItem[];
   validItems: ValidatedCartItem[];
@@ -95,6 +99,7 @@ export async function validateCheckout(
   }
 
   let deliveryOptions: DeliveryOption[] = [];
+  let usingFallbackDeliveryRates = false;
   if (addressId) {
     const { data: address } = await supabase
       .from('addresses')
@@ -148,6 +153,33 @@ export async function validateCheckout(
           zoneName: String(item.zone.name ?? ''),
         }];
       });
+
+      // Until the owner configures delivery zones/rates, preserve the existing
+      // checkout fees rather than blocking all Ghana orders. Once any rates
+      // exist, an unmatched address stays blocked instead of using a fallback.
+      if (deliveryOptions.length === 0 && rateRows.length === 0) {
+        usingFallbackDeliveryRates = true;
+        deliveryOptions = [
+          {
+            id: 'standard',
+            name: 'Standard',
+            description: 'Nationwide delivery · temporary default rate',
+            price: 15,
+            etaMinDays: null,
+            etaMaxDays: null,
+            zoneName: 'Ghana-wide temporary default',
+          },
+          {
+            id: 'express',
+            name: 'Express',
+            description: 'Nationwide delivery · temporary default rate',
+            price: 35,
+            etaMinDays: null,
+            etaMaxDays: null,
+            zoneName: 'Ghana-wide temporary default',
+          },
+        ];
+      }
     }
   }
 
@@ -189,6 +221,7 @@ export async function validateCheckout(
 
   const validatedItems: ValidatedCartItem[] = [];
   const warnings: string[] = [];
+  if (usingFallbackDeliveryRates) warnings.push('Temporary default delivery fees are being used until the store owner configures delivery zones and rates.');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of cartItems as any[]) {
@@ -300,7 +333,12 @@ export async function validateCheckout(
   const invalidItems = validatedItems.filter((i) => !i.isValid);
 
   const subtotal = Math.round(validItems.reduce((sum, i) => sum + i.lineTotal, 0) * 100) / 100;
-  const selectedDeliveryOption = deliveryOptions.find((option) => option.id === deliveryMethodId);
+  // Keep the displayed checkout total aligned with the database order RPC's
+  // GHS 200 free-delivery threshold.
+  const displayedDeliveryOptions = subtotal >= 200
+    ? deliveryOptions.map((option) => ({ ...option, price: 0, description: `${option.description} · Free delivery on orders of GHS 200+` }))
+    : deliveryOptions;
+  const selectedDeliveryOption = displayedDeliveryOptions.find((option) => option.id === deliveryMethodId);
   const shippingCost = selectedDeliveryOption?.price ?? 0;
   if (addressId && deliveryOptions.length === 0) warnings.push('No delivery rate is configured for this address. Please contact the store before placing your order.');
   if (addressId && deliveryOptions.length > 0 && !selectedDeliveryOption) warnings.push('Select an available delivery method to see the final total.');
@@ -317,7 +355,7 @@ export async function validateCheckout(
     itemCount: validItems.reduce((sum, i) => sum + i.quantity, 0),
     hasChanges,
     warnings,
-    deliveryOptions,
+    deliveryOptions: displayedDeliveryOptions,
   };
 }
 

@@ -10,7 +10,7 @@ import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { PaymentMethodSelector, type PaymentMethod } from '@/components/checkout/PaymentMethodSelector';
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
-import { validateCheckout, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
+import { validateCheckout, getHubtelPaymentAvailability, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
 import { syncCartToDatabase } from '@/app/(storefront)/cart/actions';
 import { placeOrder } from '@/app/account/orders/actions';
 import { setPaymentMethod } from '@/app/account/orders/payment-actions';
@@ -22,12 +22,29 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('standard');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
+  const [hubtelAvailable, setHubtelAvailable] = useState(false);
   const [checkoutData, setCheckoutData] = useState<CheckoutSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notes, setNotes] = useState('');
   const [orderError, setOrderError] = useState<string | null>(null);
 
+
+  useEffect(() => {
+    let cancelled = false;
+    getHubtelPaymentAvailability()
+      .then((available) => {
+        if (cancelled) return;
+        setHubtelAvailable(available);
+        if (!available) setSelectedPaymentMethod('cash_on_delivery');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHubtelAvailable(false);
+        setSelectedPaymentMethod('cash_on_delivery');
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   // Mirror the local (localStorage) cart into the database cart so the
   // server-side checkout reads the exact items/quantities the shopper built.
@@ -94,13 +111,17 @@ export default function CheckoutPage() {
       setOrderError('Please review your cart before placing the order.');
       return;
     }
+    if (selectedPaymentMethod === 'hubtel' && !hubtelAvailable) {
+      setOrderError('Hubtel online payments are not configured yet. Please choose Cash on Delivery.');
+      return;
+    }
     if (isProcessing) return;
 
     setIsProcessing(true);
     setOrderError(null);
 
     try {
-      const result = await placeOrder(selectedAddressId, selectedDeliveryMethod, notes || undefined);
+      const result = await placeOrder(selectedAddressId, selectedDeliveryMethod, notes || undefined, selectedPaymentMethod);
 
       if (!result.success || !result.orderId) {
         setOrderError(result.error || "We couldn't create your order. Please try again.");
@@ -207,7 +228,7 @@ export default function CheckoutPage() {
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} />
+              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} hubtelAvailable={hubtelAvailable} />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
