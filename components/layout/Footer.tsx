@@ -24,18 +24,9 @@ export function Footer() {
             </p>
             {/* Contact */}
             <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-white/50">
-                <Mail size={14} />
-                <span>{brand.contact.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white/50">
-                <Phone size={14} />
-                <span>{brand.contact.phone}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white/50">
-                <MapPin size={14} />
-                <span>{brand.contact.address}</span>
-              </div>
+              {brand.contact.email && <div className="flex items-center gap-2 text-sm text-white/50"><Mail size={14} /><a href={`mailto:${brand.contact.email}`} className="hover:text-white">{brand.contact.email}</a></div>}
+              {brand.contact.phone && <div className="flex items-center gap-2 text-sm text-white/50"><Phone size={14} /><a href={`tel:${brand.contact.phone}`} className="hover:text-white">{brand.contact.phone}</a></div>}
+              {brand.contact.address && <div className="flex items-center gap-2 text-sm text-white/50"><MapPin size={14} /><span>{brand.contact.address}</span></div>}
             </div>
           </div>
 
@@ -57,9 +48,6 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">About {brand.shortName}</h3>
             <ul className="space-y-2.5">
               <li><Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">About Us</Link></li>
-              <li title="Coming soon"><span className="text-sm text-white/40">Careers <span className="text-[10px] uppercase tracking-wide">· Soon</span></span></li>
-              <li title="Coming soon"><span className="text-sm text-white/40">Blog <span className="text-[10px] uppercase tracking-wide">· Soon</span></span></li>
-              <li title="Coming soon"><span className="text-sm text-white/40">Press <span className="text-[10px] uppercase tracking-wide">· Soon</span></span></li>
             </ul>
           </div>
 
