@@ -79,7 +79,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="flex gap-8">
             <div className="w-64 shrink-0"><ProductFilters categories={filterCategories} /></div>
             <div className="min-w-0 flex-1">
-              <ProductFilters categories={filterCategories} sellers={filterSellers} />
+              <ProductFilters categories={filterCategories} />
               <SearchResults products={products} query={query} total={total} />
               {totalPages > 1 && <div className="mt-8"><Pagination currentPage={page} totalPages={totalPages} /></div>}
             </div>
