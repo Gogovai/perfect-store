@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { Container } from '@/components/ui/Container';
 import { CategoryGrid } from '@/components/categories/CategoryGrid';
 import { getCategories } from '@/lib/queries/categories';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 export const metadata: Metadata = {
   title: 'Categories - Perfect Store',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function CategoriesPage() {
   const allCategories = await getCategories();
-  const categories = allCategories.filter((category) => /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`));
+  const categories = allCategories.filter((category) => isClothingCategory(category.name, category.slug));
 
   return (
     <div className="py-8 sm:py-12 bg-gray-50 min-h-[calc(100vh-8rem)]">
