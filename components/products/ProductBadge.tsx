@@ -7,7 +7,6 @@ interface ProductBadgeProps {
   price: number;
   isNew?: boolean;
   isFeatured?: boolean;
-  soldCount?: number;
 }
 
 export function ProductBadge({
@@ -15,10 +14,8 @@ export function ProductBadge({
   price,
   isNew = false,
   isFeatured = false,
-  soldCount = 0,
 }: ProductBadgeProps) {
   const hasDiscount = compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice > price;
-  const isPopular = soldCount >= 50;
 
   const badges: React.ReactNode[] = [];
 
@@ -46,14 +43,6 @@ export function ProductBadge({
       <Badge key="featured" variant="primary" className="text-xs">
         <Star size={12} />
         Featured
-      </Badge>
-    );
-  }
-
-  if (isPopular && !hasDiscount) {
-    badges.push(
-      <Badge key="popular" variant="secondary" className="text-xs">
-        Popular
       </Badge>
     );
   }
