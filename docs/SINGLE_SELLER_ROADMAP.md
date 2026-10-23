@@ -122,31 +122,44 @@ Never invent Hubtel environment variable names before confirming the selected AP
 
 The store is not launch-ready merely because it builds. It must be demonstrably single-seller across UI, code and authorization; the owner must manage all products and orders; customer prices/stock/payment state must be server-controlled; Hubtel must be the only online payment provider and be verified server-side; Ghana delivery configuration must work; order privacy and inventory concurrency must be tested; no secrets may be committed; and production smoke tests must pass.
 
-## Current cleanup status (2026-10-23)
+## Current implementation and verification status (2026-10-23)
 
-Completed on the draft branch `feature/single-store-hubtel`:
+### Merged into `main`
 
-- Removed seller navigation and public storefront presentation; legacy seller URLs redirect to the shop.
-- Disabled seller-application RPC access and set commission calculations to zero through new, data-preserving migrations.
-- Restricted public catalogue queries, admin product creation/publication, and order creation to clothing, footwear, and fashion-accessory categories.
-- Removed unused seller metadata from cart, wishlist, checkout, product display, and customer order presentation where it was not needed.
-- Replaced hard-coded checkout shipping prices with configured, address-matched delivery rates.
-- Removed disconnected campaigns/coupons admin screens and a broken image-sync workflow that referenced a missing script.
-- Removed unused admin API routes and stale constants; renamed static homepage content so it is not confused with database campaigns.
-- Rewrote the seed README to stop directing operators to missing demo seed files.
+- PR #5 removed public seller/storefront presentation and cleaned the single-owner clothing storefront.
+- PR #6 added CI gates for dependency audit, TypeScript, unit tests, lint and production build.
+- PR #7 hardened Hubtel callback retries and payment/order reconciliation.
+- PR #8 removed seller attribution requirements for new products/orders, made seller attribution nullable while preserving historical rows, added storefront RLS policies, guarded legacy seller-order triggers, improved payment retry safety, and restricted sensitive RPC privileges.
+- PR #9 revoked execution for unused marketplace-era RPCs.
+- PR #10 enforced clothing-only validation in cart sync, add-to-cart and existing-cart display.
 
-Still incomplete and release-blocking:
+### Verified
 
-- Legacy tables, columns, types, triggers and RLS policies still reference sellers, seller finance, and marketplace concepts. They are retained intentionally until a reviewed migration can preserve existing product/order history and replace those dependencies.
-- Hubtel endpoint, callback payload, transaction verification, currency validation and idempotency still need to be checked against the exact official API enabled for the merchant account and tested with real sandbox transactions.
-- Run the latest CI result for this exact commit; then review build/lint output and fix any remaining failures.
-- Run the read-only live schema audit, confirm all delivery zones/rates are configured, and test the full customer/admin flows against a non-production Supabase project.
-- Do not merge or deploy until the remaining schema, payment and security checks pass.
+- Latest `main` commit: `9dcb880c2188644c42db814e3c44ed31514dba31`.
+- GitHub CI passed for the latest code changes, including dependency audit, type-check, unit tests, lint and production build.
+- Six new single-store/security migrations were applied successfully to the connected Supabase `ecommerce-marketplace` project; the follow-up unused-RPC migration was also applied.
+- Database checks confirm `products.seller_id` and `order_items.seller_id` are nullable, legacy seller-order triggers ignore null seller IDs, and the seller-application and commission RPCs cannot be executed by anon/authenticated users.
+- Supabase security advisor no longer reports anon-executable SECURITY DEFINER RPCs among the checked findings. Six authenticated SECURITY DEFINER RPC warnings remain for order, admin-status, return, review and order-party operations; these require authorization-code review, not blind revocation.
+- Public product queries and server cart actions filter/reject unrelated categories. Historical product, seller, order and finance rows have not been deleted.
 
-## Immediate next actions
+### Still release-blocking
 
-1. Finish lint and production-build verification for the latest commit on this draft PR.
-2. Review and apply the new migrations only in a confirmed non-production Supabase project first.
-3. Verify Hubtel's exact merchant API flow and callback/transaction verification against official documentation.
-4. Audit RLS, roles, storage policies, order privacy, inventory concurrency, and remaining legacy seller references.
-5. Complete checkout, order, delivery and admin smoke tests before considering merge or production deployment.
+1. **Vercel production deployment is stale.** The newest verified production deployment is still on an older commit. Vercel reports the build rate limit is active and says to retry in 24 hours. GitHub CI passing does not mean the latest code is live.
+2. **Hubtel credentials are absent from the Vercel environment list.** Production currently has no `HUBTEL_CLIENT_ID`, `HUBTEL_CLIENT_SECRET`, or `HUBTEL_MERCHANT_ACCOUNT_ID` variables. Do not enable online payment until the owner configures the actual merchant credentials in Vercel.
+3. **Hubtel sandbox has not been exercised.** The request/response contract and transaction status lookup must be confirmed against the exact API enabled for the merchant account. Test success, failure, cancellation, duplicate callbacks, delayed callbacks, amount/currency mismatch, and retries before enabling live payments.
+4. **Delivery rates are not configured in Supabase.** The `delivery_zones` and `shipping_rates` tables currently contain no rows. Checkout temporarily preserves the existing fee behavior (GHS 15 standard, GHS 35 express, free at GHS 200 subtotal) until rates are configured. Add and test the actual owner-approved Ghana delivery rates in Admin → Logistics before launch; do not assume these fallback fees are the final policy.
+5. **Supabase leaked-password protection is disabled.** Enable it in Supabase Auth settings and verify allowed redirect URLs before public launch.
+6. **Real catalogue readiness remains unverified.** The database has legacy products across unrelated categories; storefront queries filter the catalogue and checkout rejects non-fashion categories, but the owner must review the displayed clothing inventory, photos, prices, stock and product descriptions before launch.
+7. **Live customer/admin smoke tests remain outstanding.** Test sign-in, address management, cart, checkout, COD, Hubtel, order history, cancellation, inventory reservation, admin product CRUD, image upload, order fulfillment, delivery configuration and authorization boundaries on the latest deployed build.
+
+### Next actions
+
+1. Configure the real Hubtel merchant credentials in Vercel production and confirm the merchant API version.
+2. Configure owner-approved delivery zones/rates in Admin → Logistics and verify Ghana-wide address matching.
+3. Enable Supabase leaked-password protection.
+4. After Vercel's rate limit clears, deploy the current `main` commit and verify the exact deployment SHA.
+5. Run the end-to-end customer/admin and Hubtel sandbox test matrix against that deployment.
+6. Review remaining authenticated SECURITY DEFINER functions and resolve the six advisor warnings where possible without breaking legitimate order, return, review or admin flows.
+7. Replace any demo/legacy product content with real owner-approved inventory and complete a final accessibility/mobile QA pass.
+
+**Launch status: not yet confirmed production-ready.** Build checks and database migration application are verified, but the current production deployment is stale, Hubtel is not configured in Vercel, delivery rates need owner configuration, and live transaction/customer-flow testing remains outstanding.
