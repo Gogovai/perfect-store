@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { brand } from '@/config/brand';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 const adminProductSchema = z.object({
   name: z.string().trim().min(2).max(160),
@@ -74,11 +75,13 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
   // Validate category
   const { data: category } = await db
     .from('categories')
-    .select('id')
+    .select('id,name,slug')
     .eq('id', d.categoryId)
     .eq('is_active', true)
     .maybeSingle();
-  if (!category) return { success: false, error: 'Invalid or inactive category' };
+  if (!category || !isClothingCategory(category.name, category.slug)) {
+    return { success: false, error: 'Choose an active clothing, footwear, or fashion-accessory category.' };
+  }
 
   // Create product
   const { data: product, error: productError } = await db
