@@ -6,14 +6,12 @@ import { isClothingCategory } from '@/lib/utils/clothing';
 export type ProductRow = Tables<'products'>;
 export type ProductImageRow = Tables<'product_images'>;
 export type ProductVariantRow = Tables<'product_variants'>;
-export type SellerRow = Tables<'sellers'>;
 export type CategoryRow = Tables<'categories'>;
 export type ProductWithRelations = ProductRow & {
   product_images: ProductImageRow[];
   product_variants: ProductVariantRow[];
   /** Live stock snapshot for out-of-stock UI. Empty when the product has no inventory row. */
   inventory: Array<{ quantity: number; reserved_quantity: number }>;
-  sellers: (Pick<SellerRow, 'id' | 'store_name' | 'logo_url' | 'slug'> & { rating: number }) | null;
   categories: Pick<CategoryRow, 'id' | 'name' | 'slug' | 'parent_id'> | null;
 };
 export type ProductListResult = {
@@ -33,7 +31,6 @@ export type ProductSortOption =
 export type ProductFilterOptions = {
   categorySlug?: string;
   categoryId?: string;
-  sellerId?: string;
   minPrice?: number;
   maxPrice?: number;
   rating?: number;
@@ -43,7 +40,7 @@ export type ProductFilterOptions = {
   pageSize?: number;
 };
 
-const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), sellers!inner(id, store_name, logo_url, slug), categories(id, name, slug, parent_id)`;
+const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_primary), product_variants(id, name, sku, price, compare_at_price, attributes, image_url, is_active), inventory(quantity, reserved_quantity), sellers!inner(id), categories(id, name, slug, parent_id)`;
 
 async function getProductsQuery() {
   const supabase = await createClient();
@@ -79,7 +76,6 @@ function normalizeProducts(data: unknown): ProductWithRelations[] {
   return (data as ProductWithRelations[]).map((p) => ({
     ...p,
     inventory: Array.isArray(p.inventory) ? p.inventory : p.inventory ? [p.inventory] : [],
-    sellers: p.sellers ? { ...p.sellers, rating: 0 } : null,
   }));
 }
 
@@ -101,7 +97,6 @@ export async function getProducts(
   const {
     categorySlug,
     categoryId,
-    sellerId,
     minPrice,
     maxPrice,
     rating,
@@ -141,7 +136,6 @@ export async function getProducts(
     }
   }
 
-  if (sellerId) query = query.eq('seller_id', sellerId);
   if (minPrice !== undefined) query = query.gte('base_price', minPrice);
   if (maxPrice !== undefined) query = query.lte('base_price', maxPrice);
   if (rating !== undefined) query = query.gte('rating_average', rating);
