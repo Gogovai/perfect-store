@@ -132,34 +132,38 @@ The store is not launch-ready merely because it builds. It must be demonstrably 
 - PR #8 removed seller attribution requirements for new products/orders, made seller attribution nullable while preserving historical rows, added storefront RLS policies, guarded legacy seller-order triggers, improved payment retry safety, and restricted sensitive RPC privileges.
 - PR #9 revoked execution for unused marketplace-era RPCs.
 - PR #10 enforced clothing-only validation in cart sync, add-to-cart and existing-cart display.
+- PR #11 documented the verified deployment and security blockers.
+- PR #12 enforced Ghana-only order addresses, supported delivery methods and cart quantity limits at the database boundary.
+- PR #13 hid Hubtel until production credentials exist, prevented unusable online-payment orders, and aligned checkout fallback fees and free-shipping totals.
 
 ### Verified
 
-- Latest `main` commit: `9dcb880c2188644c42db814e3c44ed31514dba31`.
-- GitHub CI passed for the latest code changes, including dependency audit, type-check, unit tests, lint and production build.
-- Six new single-store/security migrations were applied successfully to the connected Supabase `ecommerce-marketplace` project; the follow-up unused-RPC migration was also applied.
-- Database checks confirm `products.seller_id` and `order_items.seller_id` are nullable, legacy seller-order triggers ignore null seller IDs, and the seller-application and commission RPCs cannot be executed by anon/authenticated users.
-- Supabase security advisor no longer reports anon-executable SECURITY DEFINER RPCs among the checked findings. Six authenticated SECURITY DEFINER RPC warnings remain for order, admin-status, return, review and order-party operations; these require authorization-code review, not blind revocation.
+- Latest `main` commit: `18a8ea8be8d82349f217b875bf94ea8c864f400f`.
+- GitHub CI passed for the latest feature PRs; CI for the latest merge commit is running: [latest main CI](https://github.com/Gogovai/perfect-store/actions/runs/39953349716).
+- Seven single-store/security migrations were applied successfully to the connected Supabase `ecommerce-marketplace` project.
+- Database checks confirm `products.seller_id` and `order_items.seller_id` are nullable, legacy seller-order triggers ignore null seller IDs, and order delivery methods, Ghana shipping countries, and cart quantities are constrained and validated.
+- Seller application and commission RPCs cannot be executed by anon/authenticated clients; unused marketplace RPCs have been revoked.
+- Supabase security advisor no longer reports anon-executable SECURITY DEFINER RPCs among the checked findings. Six authenticated SECURITY DEFINER RPC warnings remain for order, admin-status, return, review and order-party operations; these should retain their authorization checks.
 - Public product queries and server cart actions filter/reject unrelated categories. Historical product, seller, order and finance rows have not been deleted.
 
 ### Still release-blocking
 
-1. **Vercel production deployment is stale.** The newest verified production deployment is still on an older commit. Vercel reports the build rate limit is active and says to retry in 24 hours. GitHub CI passing does not mean the latest code is live.
-2. **Hubtel credentials are absent from the Vercel environment list.** Production currently has no `HUBTEL_CLIENT_ID`, `HUBTEL_CLIENT_SECRET`, or `HUBTEL_MERCHANT_ACCOUNT_ID` variables. Do not enable online payment until the owner configures the actual merchant credentials in Vercel.
+1. **Vercel production deployment is stale.** The newest verified production deployment is still on an older commit. Vercel reported the build rate limit is active and to retry after 24 hours. GitHub CI passing does not mean the latest code is live.
+2. **Hubtel credentials are absent from Vercel.** Production currently has no `HUBTEL_CLIENT_ID`, `HUBTEL_CLIENT_SECRET`, or `HUBTEL_MERCHANT_ACCOUNT_ID` variables. The checkout UI now hides Hubtel and server actions reject Hubtel orders until the owner configures real merchant credentials.
 3. **Hubtel sandbox has not been exercised.** The request/response contract and transaction status lookup must be confirmed against the exact API enabled for the merchant account. Test success, failure, cancellation, duplicate callbacks, delayed callbacks, amount/currency mismatch, and retries before enabling live payments.
-4. **Delivery rates are not configured in Supabase.** The `delivery_zones` and `shipping_rates` tables currently contain no rows. Checkout temporarily preserves the existing fee behavior (GHS 15 standard, GHS 35 express, free at GHS 200 subtotal) until rates are configured. Add and test the actual owner-approved Ghana delivery rates in Admin → Logistics before launch; do not assume these fallback fees are the final policy.
+4. **Delivery zones/rates are not configured.** Supabase currently has no active delivery zones or shipping rates. Checkout temporarily preserves the existing behavior (GHS 15 standard, GHS 35 express, free at GHS 200 subtotal) and clearly labels these as temporary defaults. Configure actual owner-approved nationwide rates in Admin → Logistics before launch.
 5. **Supabase leaked-password protection is disabled.** Enable it in Supabase Auth settings and verify allowed redirect URLs before public launch.
-6. **Real catalogue readiness remains unverified.** The database has legacy products across unrelated categories; storefront queries filter the catalogue and checkout rejects non-fashion categories, but the owner must review the displayed clothing inventory, photos, prices, stock and product descriptions before launch.
+6. **Real catalogue readiness remains unverified.** The database has legacy products across unrelated categories; storefront queries filter the catalogue and checkout rejects non-fashion categories, but the owner must review displayed clothing inventory, photos, prices, stock and product descriptions before launch.
 7. **Live customer/admin smoke tests remain outstanding.** Test sign-in, address management, cart, checkout, COD, Hubtel, order history, cancellation, inventory reservation, admin product CRUD, image upload, order fulfillment, delivery configuration and authorization boundaries on the latest deployed build.
 
 ### Next actions
 
 1. Configure the real Hubtel merchant credentials in Vercel production and confirm the merchant API version.
-2. Configure owner-approved delivery zones/rates in Admin → Logistics and verify Ghana-wide address matching.
+2. Configure owner-approved delivery zones/rates in Admin → Logistics.
 3. Enable Supabase leaked-password protection.
 4. After Vercel's rate limit clears, deploy the current `main` commit and verify the exact deployment SHA.
 5. Run the end-to-end customer/admin and Hubtel sandbox test matrix against that deployment.
 6. Review remaining authenticated SECURITY DEFINER functions and resolve the six advisor warnings where possible without breaking legitimate order, return, review or admin flows.
 7. Replace any demo/legacy product content with real owner-approved inventory and complete a final accessibility/mobile QA pass.
 
-**Launch status: not yet confirmed production-ready.** Build checks and database migration application are verified, but the current production deployment is stale, Hubtel is not configured in Vercel, delivery rates need owner configuration, and live transaction/customer-flow testing remains outstanding.
+**Launch status: not yet confirmed production-ready.** Code quality gates pass and the single-store database migrations are applied, but the current production deployment is stale, Hubtel is not configured in Vercel, delivery rates need owner configuration, and live transaction/customer-flow testing remains outstanding.
