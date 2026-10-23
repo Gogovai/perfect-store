@@ -15,6 +15,10 @@ export async function setPaymentMethod(input: unknown) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
+  if (parsed.data.method === 'hubtel' && !(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID)) {
+    return { success: false, error: 'Hubtel online payments are not configured yet. Please choose Cash on Delivery.' };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
