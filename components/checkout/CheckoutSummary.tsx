@@ -49,14 +49,6 @@ export function CheckoutSummary({
         </div>
       </div>
 
-      {/* Payment Notice */}
-      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-        <p className="text-xs text-amber-700">
-          Payment integration will be available at the next checkout stage.
-          Possible future methods: Mobile Money, Card, Bank Transfer.
-        </p>
-      </div>
-
       <Button
         fullWidth
         size="lg"
