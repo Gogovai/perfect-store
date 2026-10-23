@@ -128,23 +128,20 @@ export async function POST(request: Request) {
     // Persist the reference before contacting Hubtel. This closes the callback
     // race where Hubtel can notify us before the checkout-init response returns.
     // Compare-and-swap also prevents concurrent requests from opening two checkouts.
-    let reserveQuery = supabase
-      .from('payments')
-      .update({
-        provider: 'hubtel',
-        provider_reference: reference,
-        status: 'processing',
-        metadata: { hubtel_initialization_started_at: new Date().toISOString() },
-      })
-      .eq('id', payment.id)
-      .eq('order_id', order.id)
-      .eq('status', payment.status);
-    reserveQuery = payment.provider_reference
-      ? reserveQuery.eq('provider_reference', payment.provider_reference)
-      : reserveQuery.is('provider_reference', null);
-    const { data: reservedPayment, error: reserveError } = await reserveQuery.select('id').maybeSingle();
-    if (reserveError) return NextResponse.json({ error: 'Unable to reserve payment initialization.' }, { status: 500 });
-    if (!reservedPayment) {
+    const { data: reservation, error: reserveError } = await supabase.rpc('reserve_hubtel_payment_attempt', {
+      p_order_id: order.id,
+      p_reference: reference,
+      p_expected_status: payment.status,
+      p_expected_reference: payment.provider_reference,
+    });
+    if (reserveError) {
+      const message = reserveError.message || '';
+      if (message.includes('Payment state changed') || message.includes('not awaiting payment') || message.includes('already paid')) {
+        return NextResponse.json({ error: 'Payment state changed. Refresh the order before retrying.' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Unable to reserve payment initialization.' }, { status: 500 });
+    }
+    if (!reservation || typeof reservation !== 'object' || (reservation as { success?: unknown }).success !== true) {
       return NextResponse.json({ error: 'Payment state changed. Refresh the order before retrying.' }, { status: 409 });
     }
 
