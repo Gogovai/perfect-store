@@ -167,10 +167,10 @@ export async function validateCheckout(
       validationError = 'This store only sells clothing, footwear, and fashion accessories';
     }
 
-    // Validate seller
+    // Validate that the legacy store-owner record remains active
     if (isValid && (!seller || seller.status !== 'active')) {
       isValid = false;
-      validationError = 'This seller is no longer active';
+      validationError = 'This product is no longer available from the store';
     }
 
     // Validate variant if applicable
