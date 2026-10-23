@@ -66,7 +66,7 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
     const images = product?.product_images ?? [];
     const variants = product?.product_variants ?? [];
     let isValid = product?.status === 'active' && seller?.status === 'active';
-    let validationError = isValid ? '' : (product?.status !== 'active' ? 'Product no longer available' : 'Seller is no longer active');
+    let validationError = isValid ? '' : (product?.status !== 'active' ? 'Product no longer available' : 'This product is no longer available from the store');
     let price = product?.base_price ?? item.unit_price;
     let variantName: string | null = null;
 
@@ -133,7 +133,7 @@ async function getOrCreateUserCart() {
  * browsing; this mirror makes the exact quantities/prices available to the
  * server-side checkout flow (create_order reads cart_items).
  *
- * Items that no longer exist, are inactive, or belong to inactive sellers are
+ * Items that no longer exist, are inactive, or are no longer available from the store are
  * skipped so they cannot be carried into an order.
  */
 export async function syncCartToDatabase(
@@ -192,7 +192,7 @@ export async function addToDatabaseCart(productId: string, variantId: string | n
   const { data: product } = await supabase.from('products').select('id, status, base_price, seller_id').eq('id', productId).maybeSingle();
   if (!product || product.status !== 'active') return { success: false, error: 'Product is no longer available' };
   const { data: seller } = await supabase.from('sellers').select('status').eq('id', product.seller_id).maybeSingle();
-  if (!seller || seller.status !== 'active') return { success: false, error: 'Seller is no longer active' };
+  if (!seller || seller.status !== 'active') return { success: false, error: 'This product is no longer available from the store' };
 
   let unitPrice = product.base_price;
   if (variantId) {
