@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, Truck } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { ProductPrice } from './ProductPrice';
 import { ProductRating } from './ProductRating';
 import { ProductBadge } from './ProductBadge';
@@ -21,8 +21,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const lowestVariantPrice = variantPrices.length
     ? Math.min(product.base_price, ...variantPrices)
     : product.base_price;
-  const hasDiscount = lowestVariantPrice < product.base_price;
-  const seller = product.sellers;
+  const compareAtPrice = product.compare_at_price;
+  const hasDiscount = compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice > lowestVariantPrice;
   const primaryImage =
     product.product_images.find((img) => img.is_primary) ||
     product.product_images[0];
@@ -59,7 +59,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           <ProductBadge
             compareAtPrice={hasDiscount ? product.base_price : null}
             price={lowestVariantPrice}
-            soldCount={product.review_count}
           />
         </div>
 
@@ -71,7 +70,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             price={product.base_price}
             imageUrl={primaryImage?.url || ''}
             slug={product.slug}
-            sellerName={seller?.store_name || ''}
+            sellerName=""
             size="sm"
           />
         </div>
@@ -110,7 +109,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <div className="mt-auto">
           <ProductPrice
             price={product.base_price}
-            variantPrice={hasDiscount ? lowestVariantPrice : null}
+            compareAtPrice={hasDiscount ? compareAtPrice : null}
+            variantPrice={variantPrices.length ? lowestVariantPrice : null}
             size="md"
           />
         </div>
