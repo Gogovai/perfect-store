@@ -132,21 +132,22 @@ The store is not launch-ready merely because it builds. It must be demonstrably 
 - PR #8 removed seller attribution requirements for new products/orders, made seller attribution nullable while preserving historical rows, added storefront RLS policies, guarded legacy seller-order triggers, improved payment retry safety, and restricted sensitive RPC privileges.
 - PR #9 revoked execution for unused marketplace-era RPCs.
 - PR #10 enforced clothing-only validation in cart sync, add-to-cart and existing-cart display.
-- PR #11 documented verified launch blockers.
+- PR #11 and #14 documented verified launch blockers.
 - PR #12 enforced Ghana-only order addresses, supported delivery methods and cart quantity limits.
 - PR #13 hid Hubtel until production credentials exist and aligned checkout fallback fees with the database free-shipping threshold.
-- PR #14 refreshed launch status.
 - PR #15 added Hubtel to the payment enum and constrained new payment providers.
 - PR #16 made order and payment-method creation atomic.
 - PR #17 added city, region and Ghana-wide delivery-zone matching.
 - PR #18 serialized Hubtel payment initialization with order cancellation and fixed callback/reference races.
+- PR #19 recorded current deployment and payment blockers.
+- PR #20 removed seller attribution from all newly created order items.
 
 ### Verified
 
-- Latest `main` commit: `014cb15572b2e108a5465821f37ced0169dd1baa`.
-- CI passed for the feature PRs; the CI run for the latest merge commit is in progress: [latest main CI](https://github.com/Gogovai/perfect-store/actions/runs/39954987765).
-- Thirteen single-store/security migrations have been applied to the connected Supabase `ecommerce-marketplace` project.
+- Latest code commit with a passing full CI run: `77fe7bb49f239144bd7c51174eb91130f18615b6`; [CI passed](https://github.com/Gogovai/perfect-store/actions/runs/39955384176). The latest change after that is documentation-only.
+- Fourteen single-store/security migrations have been applied to the connected Supabase `ecommerce-marketplace` project.
 - Database checks confirm seller attribution is optional for new products/order items, legacy seller triggers ignore null seller IDs, the Hubtel enum value exists, the new order/payment RPC is authenticated-only, and Ghana/delivery-method/quantity/payment-provider constraints are validated.
+- A rollback-only Supabase integration smoke test passed: it created a temporary order and payment using an existing empty cart and in-stock clothing product, confirmed the new order item had no seller attribution, reserved a Hubtel reference before initiation, and verified cancellation is rejected while payment is processing. The transaction was rolled back; order/cart/payment counts remained unchanged.
 - Checkout and order creation support city-specific, region-specific and Ghana-wide zones. If no active rates exist at all, the existing temporary fees remain available (GHS 15 standard, GHS 35 express, free delivery at GHS 200 subtotal). The admin UI explains how to configure a Ghana-wide zone.
 - Hubtel checkout is hidden until all three production variables are configured. Initialization references are saved before contacting Hubtel, and order cancellation is blocked while payment is processing or paid.
 - Seller, order, product and finance history has been preserved; no customer or product records were deleted.
@@ -172,4 +173,4 @@ The store is not launch-ready merely because it builds. It must be demonstrably 
 6. Review remaining authenticated SECURITY DEFINER warnings and complete mobile/accessibility QA.
 7. Replace any demo/legacy product content with real owner-approved inventory.
 
-**Launch status: not yet confirmed production-ready.** The code and database safeguards have advanced and CI has passed on recent PRs, but the production deployment is stale, Hubtel is not configured, delivery rates need owner input, and real payment/customer-flow testing is still outstanding.
+**Launch status: not yet confirmed production-ready.** The code and database safeguards have advanced, and a rollback-only order/payment smoke test passed, but the production deployment is stale, Hubtel is not configured, delivery rates need owner input, and real payment/customer-flow testing is still outstanding.
