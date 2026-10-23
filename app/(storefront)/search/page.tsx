@@ -8,7 +8,6 @@ import { ProductFilters } from '@/components/products/ProductFilters';
 import { Pagination } from '@/components/ui/Pagination';
 import { getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
-import { getPublicSellerOptions } from '@/lib/queries/sellers';
 import { APP_NAME } from '@/config/constants';
 
 interface SearchPageProps {
@@ -46,23 +45,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const pageValue = Number(firstParam(sp.page));
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   const category = firstParam(sp.category);
-  const seller = firstParam(sp.seller);
   const minPrice = positiveNumber(firstParam(sp.minPrice));
   const maxPrice = positiveNumber(firstParam(sp.maxPrice));
   const ratingValue = positiveNumber(firstParam(sp.rating));
   const rating = ratingValue !== undefined && ratingValue <= 5 ? ratingValue : undefined;
   const sort = parseSort(firstParam(sp.sort));
 
-  const [categories, sellers] = await Promise.all([getCategories(), getPublicSellerOptions()]);
+  const categories = await getCategories();
   const filterCategories = categories.map((c) => ({ label: c.name, value: c.slug }));
-  const filterSellers = sellers.map((s) => ({ label: s.store_name, value: s.id }));
 
   let products: Awaited<ReturnType<typeof getProducts>>['products'] = [];
   let total = 0;
   let pageSize = 20;
 
   if (query.trim()) {
-    const result = await getProducts({ search: query, categorySlug: category, sellerId: seller, minPrice, maxPrice, rating, sort, page, pageSize: 20 });
+    const result = await getProducts({ search: query, categorySlug: category, minPrice, maxPrice, rating, sort, page, pageSize: 20 });
     products = result.products;
     total = result.total;
     pageSize = result.pageSize;
@@ -80,7 +77,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
         {!query ? <SearchEmptyState /> : (
           <div className="flex gap-8">
-            <div className="w-64 shrink-0"><ProductFilters categories={filterCategories} sellers={filterSellers} /></div>
+            <div className="w-64 shrink-0"><ProductFilters categories={filterCategories} /></div>
             <div className="min-w-0 flex-1">
               <ProductFilters categories={filterCategories} sellers={filterSellers} />
               <SearchResults products={products} query={query} total={total} />
