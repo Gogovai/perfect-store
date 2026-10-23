@@ -37,17 +37,14 @@ function FilterGroup({ title, children, defaultOpen = true }: FilterGroupProps) 
 
 interface ProductFiltersProps {
   categories?: FilterOption[];
-  sellers?: FilterOption[];
 }
 
 interface FiltersContentProps {
   categories: FilterOption[];
-  sellers: FilterOption[];
   currentSort: string;
   currentMinPrice: string;
   currentMaxPrice: string;
   currentCategory: string;
-  currentSeller: string;
   currentRating: string;
   updateParams: (key: string, value: string) => void;
   clearAllFilters: () => void;
@@ -56,12 +53,10 @@ interface FiltersContentProps {
 
 function FiltersContent({
   categories,
-  sellers,
   currentSort,
   currentMinPrice,
   currentMaxPrice,
   currentCategory,
-  currentSeller,
   currentRating,
   updateParams,
   clearAllFilters,
@@ -143,7 +138,7 @@ function FiltersContent({
   );
 }
 
-export function ProductFilters({ categories = [], sellers = [] }: ProductFiltersProps) {
+export function ProductFilters({ categories = [] }: ProductFiltersProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -151,7 +146,6 @@ export function ProductFilters({ categories = [], sellers = [] }: ProductFilters
   const currentMinPrice = searchParams.get('minPrice') || '';
   const currentMaxPrice = searchParams.get('maxPrice') || '';
   const currentCategory = searchParams.get('category') || '';
-  const currentSeller = searchParams.get('seller') || '';
   const currentRating = searchParams.get('rating') || '';
   const currentSort = searchParams.get('sort') || 'newest';
 
@@ -173,13 +167,13 @@ export function ProductFilters({ categories = [], sellers = [] }: ProductFilters
 
   function clearAllFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    ['minPrice', 'maxPrice', 'category', 'seller', 'rating'].forEach((key) => params.delete(key));
+    ['minPrice', 'maxPrice', 'category', 'rating'].forEach((key) => params.delete(key));
     params.delete('page');
     router.push(`?${params.toString()}`, { scroll: false });
   }
 
-  const hasActiveFilters = !!(currentMinPrice || currentMaxPrice || currentCategory || currentSeller || currentRating);
-  const filterProps = { categories, sellers, currentSort, currentMinPrice, currentMaxPrice, currentCategory, currentSeller, currentRating, updateParams, clearAllFilters, hasActiveFilters };
+  const hasActiveFilters = !!(currentMinPrice || currentMaxPrice || currentCategory || currentRating);
+  const filterProps = { categories, currentSort, currentMinPrice, currentMaxPrice, currentCategory, currentRating, updateParams, clearAllFilters, hasActiveFilters };
 
   return (
     <>
