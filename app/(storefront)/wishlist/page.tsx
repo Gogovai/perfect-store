@@ -54,7 +54,7 @@ export default function WishlistPage() {
     }
   }
 
-  function handleAddToCart(item: { productId: string; name: string; price: number; imageUrl: string; slug: string; sellerName: string }) {
+  function handleAddToCart(item: { productId: string; name: string; price: number; imageUrl: string; slug: string }) {
     addItem({
       productId: item.productId,
       variantId: null,
