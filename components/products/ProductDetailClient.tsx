@@ -34,7 +34,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
 
   function handleAddToCart() {
     const primaryImage = product.product_images.find((img) => img.is_primary) || product.product_images[0];
-    addItem({ productId: product.id, variantId: selectedVariant, name: product.name, variantName: selectedVariantData?.name || null, price: currentPrice, imageUrl: primaryImage?.url || '', sellerName: '', sellerId: product.seller_id, maxQuantity: 99, quantity });
+    addItem({ productId: product.id, variantId: selectedVariant, name: product.name, variantName: selectedVariantData?.name || null, price: currentPrice, imageUrl: primaryImage?.url || '', maxQuantity: 99, quantity });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }
