@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 type Order = {
   id: string;
@@ -82,6 +83,15 @@ export default function AdminDashboardPage() {
         return;
       }
 
+      const { data: categoryRows, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id,name,slug')
+        .eq('is_active', true);
+      if (categoriesError) throw new Error('Unable to load clothing categories.');
+      const clothingCategoryIds = (categoryRows ?? [])
+        .filter((category) => isClothingCategory(category.name, category.slug))
+        .map((category) => category.id);
+
       const [
         customersResult,
         productsResult,
@@ -90,7 +100,9 @@ export default function AdminDashboardPage() {
         paymentsResult,
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
-        supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)'),
+        clothingCategoryIds.length > 0
+          ? supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)').in('category_id', clothingCategoryIds)
+          : supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)').eq('id', '00000000-0000-0000-0000-000000000000'),
         supabase.from('orders').select('id', { count: 'exact', head: true }),
         supabase.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(10),
         supabase.from('payments').select('id,status,amount'),
