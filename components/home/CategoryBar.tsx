@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { ShoppingBag, Shirt } from "lucide-react";
-import { getCategoryColor, getCategoryImage } from "@/lib/data/campaigns";
+import { getCategoryColor, getCategoryImage } from "@/lib/data/storefront-content";
 import type { Category } from "@/lib/queries/categories";
 
 const ICONS: Record<string, typeof ShoppingBag> = {
