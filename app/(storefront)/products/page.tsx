@@ -41,7 +41,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       minPrice,
       maxPrice,
       rating,
-      sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'most_reviewed' | 'popular',
+      sort: sort as 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'most_reviewed',
       page,
       pageSize: 20,
     }),
@@ -50,7 +50,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   const { products, total, pageSize } = result;
   const totalPages = Math.ceil(total / pageSize);
-  const filterCategories = categories.map((c) => ({ label: c.name, value: c.slug }));
+  const filterCategories = categories.filter((category) => isClothingCategory(category.name, category.slug)).map((c) => ({ label: c.name, value: c.slug }));
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50 py-6 sm:py-8">
