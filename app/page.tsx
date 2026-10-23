@@ -152,7 +152,7 @@ export default async function Home() {
           <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl">Find Your Next Favourite Outfit</h2>
           <p className="mx-auto mb-8 max-w-xl text-sm text-white/70">Explore men’s and women’s fashion, choose your style, and order for delivery anywhere in Ghana.</p>
           <Link href="/products">
-            <Button size="lg" className="bg-white font-semibold" style={{ color: brand.colors.primary }}>Start Selling <ArrowRight size={18} /></Button>
+            <Button size="lg" className="bg-white font-semibold" style={{ color: brand.colors.primary }}>Shop Clothing <ArrowRight size={18} /></Button>
           </Link>
         </div>
       </Container>
