@@ -12,8 +12,6 @@ export const URLS = {
   CATEGORIES: '/categories',
   CART: '/cart',
   CHECKOUT: '/checkout',
-  SELLER: '/seller',
-  SELLER_DASHBOARD: '/seller/dashboard',
   ADMIN: '/admin',
   ADMIN_DASHBOARD: '/admin/dashboard',
   LOGIN: '/login',
@@ -32,7 +30,6 @@ export const API_ENDPOINTS = {
   CATEGORIES: '/api/categories',
   ORDERS: '/api/orders',
   USERS: '/api/users',
-  SELLERS: '/api/sellers',
   CART: '/api/cart',
   CHECKOUT: '/api/checkout',
 } as const;
@@ -115,14 +112,12 @@ export const ORDER_STATUS = {
 /** User role constants */
 export const USER_ROLE = {
   CUSTOMER: 'customer',
-  SELLER: 'seller',
   ADMIN: 'admin',
 } as const;
 
 /** Protected route patterns */
 export const PROTECTED_ROUTES = {
   CUSTOMER: ['/account', '/orders', '/checkout', '/wishlist', '/addresses'],
-  SELLER: ['/seller'],
   ADMIN: ['/admin'],
 } as const;
 
@@ -136,5 +131,4 @@ export const PUBLIC_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/auth',
-  '/seller/apply',
 ] as const;
