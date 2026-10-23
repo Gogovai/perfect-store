@@ -29,9 +29,9 @@ export const brand = {
 
   /** Contact information */
   contact: {
-    email: 'support@perfectstore.com',
-    phone: '+233 XX XXX XXXX',
-    address: 'Accra, Ghana',
+    email: process.env.NEXT_PUBLIC_STORE_SUPPORT_EMAIL || '',
+    phone: process.env.NEXT_PUBLIC_STORE_SUPPORT_PHONE || '',
+    address: process.env.NEXT_PUBLIC_STORE_ADDRESS || '',
   },
 
   /** Color palette */
