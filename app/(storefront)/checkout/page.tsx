@@ -13,7 +13,6 @@ import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
 import { validateCheckout, getHubtelPaymentAvailability, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
 import { syncCartToDatabase } from '@/app/(storefront)/cart/actions';
 import { placeOrder } from '@/app/account/orders/actions';
-import { setPaymentMethod } from '@/app/account/orders/payment-actions';
 import { useCartStore } from '@/stores/cart';
 import { Truck, MapPin, Package } from 'lucide-react';
 
@@ -125,16 +124,6 @@ export default function CheckoutPage() {
 
       if (!result.success || !result.orderId) {
         setOrderError(result.error || "We couldn't create your order. Please try again.");
-        return;
-      }
-
-      const paymentResult = await setPaymentMethod({
-        orderId: result.orderId,
-        method: selectedPaymentMethod,
-      });
-
-      if (!paymentResult.success) {
-        setOrderError(paymentResult.error || 'Your order was created, but we could not save the payment method. Please open the order and try again.');
         return;
       }
 
