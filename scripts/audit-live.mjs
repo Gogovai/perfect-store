@@ -64,7 +64,7 @@ if (categoryError) {
   report('active categories query', false, categoryError.message);
 } else {
   const clothing = (categories ?? []).filter((category) =>
-    /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${category.name} ${category.slug}`)
+    /\\b(?:fashion|clothing|apparel|menswear|womenswear|men|women|men[' -]?s|women[' -]?s|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t[ -]?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\b/i.test(`${category.name} ${category.slug}`)
   );
   report('active clothing categories', clothing.length > 0, `${clothing.length} matching category/categories`);
   const ids = clothing.map((category) => category.id);
