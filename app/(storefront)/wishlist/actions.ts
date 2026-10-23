@@ -24,7 +24,6 @@ export type WishlistItemWithProduct = {
   price: number;
   imageUrl: string;
   slug: string;
-  sellerName: string;
   averageRating: number;
   reviewCount: number;
 };
@@ -60,7 +59,7 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
         rating_average,
         review_count,
         product_images(url, is_primary),
-        sellers!inner(store_name)
+        categories!inner(name, slug)
       )
     `)
     .eq('wishlist_id', wl.id);
@@ -71,7 +70,7 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((item: any) => {
       const product = item.products;
-      return product.status === 'active';
+      return product.status === 'active' && /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${product.categories?.name ?? ''} ${product.categories?.slug ?? ''}`);
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((item: any) => {
@@ -86,7 +85,6 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
         price: product.base_price,
         imageUrl: primaryImage?.url || '',
         slug: product.slug,
-        sellerName: product.sellers?.store_name || '',
         averageRating: product.rating_average || 0,
         reviewCount: product.review_count || 0,
       };
