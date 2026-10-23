@@ -121,6 +121,8 @@ export async function placeOrder(
     if (message.includes('Insufficient stock')) return { success: false, error: 'There is not enough stock for one or more items. Please update quantities.' };
     if (message.includes('delivery address')) return { success: false, error: 'The selected delivery address is no longer available.' };
     if (message.includes('Invalid delivery method')) return { success: false, error: 'Invalid delivery method selected.' };
+    if (message.includes('No delivery rate configured')) return { success: false, error: 'No delivery rate is configured for your address and delivery method. Please select another address or contact the store.' };
+    if (message.includes('only sells clothing')) return { success: false, error: 'Only clothing, footwear, and fashion accessories can be ordered from this store.' };
     return { success: false, error: 'We couldn\'t create your order. Please try again.' };
   }
 
