@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { TablesInsert, TablesUpdate } from '@/types/database';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 export type CartActionResult = { success: boolean; error?: string; itemCount?: number };
 
@@ -45,7 +46,7 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
   const { data: cartItems } = await supabase
     .from('cart_items')
     .select(`id, quantity, product_id, variant_id, unit_price,
-      products!inner(id, name, base_price, status,
+      products!inner(id, name, base_price, status, categories(name, slug),
         product_images(url, is_primary),
         product_variants(id, name, price, is_active))`)
     .eq('cart_id', cart.id);
@@ -55,6 +56,7 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
   return cartItems.map((item) => {
     const product = item.products as unknown as {
       id: string; name: string; base_price: number; status: string;
+      categories: { name: string; slug: string } | null;
       product_images: Array<{ url: string; is_primary: boolean }>;
       product_variants: Array<{ id: string; name: string; price: number | null; is_active: boolean }>;
     };
@@ -62,6 +64,10 @@ export async function getUserCartWithItems(): Promise<DatabaseCartItem[]> {
     const variants = product?.product_variants ?? [];
     let isValid = product?.status === 'active';
     let validationError = isValid ? '' : 'Product no longer available';
+    if (isValid && !isClothingCategory(product.categories?.name, product.categories?.slug)) {
+      isValid = false;
+      validationError = 'This store only sells clothing, footwear, and fashion accessories';
+    }
     let price = product?.base_price ?? item.unit_price;
     let variantName: string | null = null;
 
@@ -145,8 +151,13 @@ export async function syncCartToDatabase(
 
   for (const li of localItems) {
     if (li.quantity < 1 || li.quantity > 99) continue;
-    const { data: product } = await supabase.from('products').select('id, status, base_price').eq('id', li.productId).maybeSingle();
-    if (!product || product.status !== 'active') continue;
+    const { data: product } = await supabase
+      .from('products')
+      .select('id, status, base_price, categories(name, slug)')
+      .eq('id', li.productId)
+      .maybeSingle();
+    const category = product?.categories as unknown as { name?: string; slug?: string } | null;
+    if (!product || product.status !== 'active' || !isClothingCategory(category?.name, category?.slug)) continue;
 
     let unitPrice = product.base_price;
     if (li.variantId) {
@@ -180,8 +191,16 @@ export async function addToDatabaseCart(productId: string, variantId: string | n
   if (!user) return { success: false, error: 'Not authenticated' };
   if (!cart) return { success: false, error: 'Failed to create cart' };
 
-  const { data: product } = await supabase.from('products').select('id, status, base_price').eq('id', productId).maybeSingle();
+  const { data: product } = await supabase
+    .from('products')
+    .select('id, status, base_price, categories(name, slug)')
+    .eq('id', productId)
+    .maybeSingle();
+  const category = product?.categories as unknown as { name?: string; slug?: string } | null;
   if (!product || product.status !== 'active') return { success: false, error: 'Product is no longer available' };
+  if (!isClothingCategory(category?.name, category?.slug)) {
+    return { success: false, error: 'This store only sells clothing, footwear, and fashion accessories' };
+  }
 
   let unitPrice = product.base_price;
   if (variantId) {
