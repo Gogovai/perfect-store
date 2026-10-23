@@ -29,6 +29,7 @@ DECLARE
   v_order_number text;
   v_method_name text;
   v_shipping_rate record;
+  v_total_weight_grams numeric := 0;
   v_item_count integer := 0;
 BEGIN
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
@@ -40,28 +41,6 @@ BEGIN
 
   SELECT a.* INTO v_address FROM public.addresses a WHERE a.id = p_address_id AND a.user_id = v_user_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'The selected delivery address is no longer available'; END IF;
-  SELECT sr.price, sr.method, dz.name, dz.city
-    INTO v_shipping_rate
-    FROM public.shipping_rates sr
-    JOIN public.delivery_zones dz ON dz.id = sr.zone_id
-   WHERE sr.is_active = true
-     AND dz.is_active = true
-     AND lower(btrim(sr.method)) = lower(btrim(p_delivery_method))
-     AND (
-       (NULLIF(btrim(COALESCE(dz.city, '')), '') IS NOT NULL
-         AND lower(btrim(dz.city)) = lower(btrim(COALESCE(v_address.city, ''))))
-       OR
-       (NULLIF(btrim(COALESCE(dz.city, '')), '') IS NULL
-         AND lower(btrim(COALESCE(dz.region, ''))) = lower(btrim(COALESCE(v_address.region, ''))))
-     )
-   ORDER BY CASE WHEN NULLIF(btrim(COALESCE(dz.city, '')), '') IS NOT NULL THEN 0 ELSE 1 END,
-            sr.price ASC
-   LIMIT 1;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'No delivery rate configured for selected address and method';
-  END IF;
-  v_shipping_fee := v_shipping_rate.price;
-  v_method_name := initcap(replace(replace(v_shipping_rate.method, '_', ' '), '-', ' ')) || ' Delivery';
   IF NOT EXISTS (SELECT 1 FROM public.cart_items WHERE cart_id = v_cart_id) THEN RAISE EXCEPTION 'Your cart is empty'; END IF;
 
   FOR v_cart_item IN
@@ -84,6 +63,8 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'This store only sells clothing, footwear, and fashion accessories';
     END IF;
+
+    v_total_weight_grams := v_total_weight_grams + COALESCE(v_product.weight_grams, 0) * v_cart_item.quantity;
 
     IF v_cart_item.variant_id IS NOT NULL THEN
       SELECT pv.* INTO v_variant FROM public.product_variants pv
@@ -108,6 +89,30 @@ BEGIN
   END LOOP;
 
   IF v_item_count = 0 THEN RAISE EXCEPTION 'Your cart is empty'; END IF;
+  SELECT sr.price, sr.method, dz.name, dz.city
+    INTO v_shipping_rate
+    FROM public.shipping_rates sr
+    JOIN public.delivery_zones dz ON dz.id = sr.zone_id
+   WHERE sr.is_active = true
+     AND dz.is_active = true
+     AND lower(btrim(sr.method)) = lower(btrim(p_delivery_method))
+     AND COALESCE(sr.min_weight_grams, 0) <= v_total_weight_grams
+     AND COALESCE(sr.max_weight_grams, 100000000) >= v_total_weight_grams
+     AND (
+       (NULLIF(btrim(COALESCE(dz.city, '')), '') IS NOT NULL
+         AND lower(btrim(dz.city)) = lower(btrim(COALESCE(v_address.city, ''))))
+       OR
+       (NULLIF(btrim(COALESCE(dz.city, '')), '') IS NULL
+         AND lower(btrim(COALESCE(dz.region, ''))) = lower(btrim(COALESCE(v_address.region, ''))))
+     )
+   ORDER BY CASE WHEN NULLIF(btrim(COALESCE(dz.city, '')), '') IS NOT NULL THEN 0 ELSE 1 END,
+            sr.price ASC
+   LIMIT 1;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No delivery rate configured for selected address and method';
+  END IF;
+  v_shipping_fee := v_shipping_rate.price;
+  v_method_name := initcap(replace(replace(v_shipping_rate.method, '_', ' '), '-', ' ')) || ' Delivery';
   v_total := v_subtotal + v_shipping_fee;
   v_order_number := 'PS-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
 
