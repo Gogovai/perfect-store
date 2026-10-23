@@ -10,7 +10,7 @@ import { PromoBanners } from '@/components/home/PromoBanners';
 import { CategoryVisual } from '@/components/categories/CategoryVisual';
 import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
-import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/campaigns';
+import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/storefront-content';
 import { brand } from '@/config/brand';
 import { isClothingCategory } from '@/lib/utils/clothing';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
