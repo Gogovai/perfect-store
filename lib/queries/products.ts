@@ -166,7 +166,6 @@ export async function getProducts(
       query = query.order('rating_average', { ascending: false });
       break;
     case 'most_reviewed':
-    case 'popular':
       query = query.order('review_count', { ascending: false });
       break;
     default:
