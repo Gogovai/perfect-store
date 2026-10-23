@@ -12,10 +12,10 @@ export const brand = {
   shortName: 'PS',
 
   /** Tagline / slogan */
-  tagline: 'Ghana\'s Leading Marketplace',
+  tagline: 'Your Everyday Clothing Store',
 
   /** Brand description */
-  description: 'Shop quality products from trusted sellers on Perfect Store, Ghana\'s leading multi-vendor marketplace.',
+  description: 'Shop men’s and women’s fashion with convenient delivery across Ghana.',
 
   /** Social links (placeholders until official accounts exist) */
   social: {
