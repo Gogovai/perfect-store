@@ -171,8 +171,7 @@ BEGIN
   DELETE FROM public.cart_items WHERE cart_id = v_cart_id;
   RETURN jsonb_build_object('success', true, 'order_id', v_order_id, 'order_number', v_order_number);
 END;
-$function$
-
+$function$;
 
 REVOKE ALL ON FUNCTION public.create_order(uuid, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_order(uuid, text, text) TO authenticated;
