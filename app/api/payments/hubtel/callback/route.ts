@@ -4,8 +4,9 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 type UnknownRecord = Record<string, unknown>;
 
 function firstRecord(value: unknown): UnknownRecord | null {
-  if (Array.isArray(value)) return value[0] && typeof value[0] === 'object' ? value[0] as UnknownRecord : null;
-  return value && typeof value === 'object' ? value as UnknownRecord : null;
+  return Array.isArray(value)
+    ? value[0] && typeof value[0] === 'object' ? value[0] as UnknownRecord : null
+    : value && typeof value === 'object' ? value as UnknownRecord : null;
 }
 
 function field(record: UnknownRecord | null, ...keys: string[]): unknown {
@@ -13,6 +14,14 @@ function field(record: UnknownRecord | null, ...keys: string[]): unknown {
     if (record?.[key] !== undefined && record[key] !== null) return record[key];
   }
   return undefined;
+}
+
+async function confirmPendingOrder(supabase: ReturnType<typeof getSupabaseAdmin>, orderId: string) {
+  return supabase
+    .from('orders')
+    .update({ status: 'confirmed' })
+    .eq('id', orderId)
+    .eq('status', 'pending');
 }
 
 export async function POST(request: Request) {
@@ -52,7 +61,20 @@ export async function POST(request: Request) {
 
     if (paymentError) return NextResponse.json({ error: 'Unable to find payment.' }, { status: 500 });
     if (!payment) return NextResponse.json({ received: true });
-    if (payment.status === 'paid') return NextResponse.json({ received: true });
+
+    // A previous callback may have marked the payment paid but failed before
+    // updating the order. Repair that partial state on a safe, idempotent retry.
+    if (payment.status === 'paid') {
+      const { error } = await confirmPendingOrder(supabase, payment.order_id);
+      if (error) return NextResponse.json({ error: 'Unable to reconcile the paid order.' }, { status: 500 });
+      return NextResponse.json({ received: true });
+    }
+
+    // Only payments still awaiting verification may transition to paid.
+    // A delayed success callback must not resurrect failed/cancelled payments.
+    if (!['pending', 'processing'].includes(payment.status)) {
+      return NextResponse.json({ received: true });
+    }
 
     // Do not trust the callback body alone. Ask Hubtel for the transaction status
     // before marking an order as paid.
@@ -87,7 +109,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payment has not been verified.' }, { status: 503 });
     }
 
-    const { error: updatePaymentError } = await supabase
+    const { data: updatedPayment, error: updatePaymentError } = await supabase
       .from('payments')
       .update({
         status: 'paid',
@@ -95,16 +117,25 @@ export async function POST(request: Request) {
         metadata: { hubtel_transaction_id: transactionId, hubtel_verification: verificationData },
       })
       .eq('id', payment.id)
-      .in('status', ['pending', 'processing']);
+      .in('status', ['pending', 'processing'])
+      .select('id')
+      .maybeSingle();
 
     if (updatePaymentError) return NextResponse.json({ error: 'Unable to update payment.' }, { status: 500 });
 
-    const { error: updateOrderError } = await supabase
-      .from('orders')
-      .update({ status: 'confirmed' })
-      .eq('id', payment.order_id)
-      .eq('status', 'pending');
+    if (!updatedPayment) {
+      // Another callback may have won the race. Re-read before deciding whether
+      // the order can be confirmed; never infer success from a zero-row update.
+      const { data: latestPayment, error: latestPaymentError } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestPaymentError) return NextResponse.json({ error: 'Unable to reconcile payment state.' }, { status: 500 });
+      if (latestPayment?.status !== 'paid') return NextResponse.json({ received: true });
+    }
 
+    const { error: updateOrderError } = await confirmPendingOrder(supabase, payment.order_id);
     if (updateOrderError) return NextResponse.json({ error: 'Payment verified but order update failed.' }, { status: 500 });
 
     return NextResponse.json({ success: true, message: 'Payment verified and recorded.' });
