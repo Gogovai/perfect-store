@@ -90,11 +90,12 @@ export default function AdminDashboardPage() {
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
         supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)'),
-        supabase.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('orders').select('id', { count: 'exact', head: true }),
+        supabase.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(10),
         supabase.from('payments').select('id,status,amount'),
       ]);
 
-      const queryError = customersResult.error || productsResult.error || ordersResult.error || paymentsResult.error;
+      const queryError = customersResult.error || productsResult.error || ordersCountResult.error || recentOrdersResult.error || paymentsResult.error;
       if (queryError) throw new Error('Some store statistics could not be loaded. Check the database schema and permissions.');
 
       const products = (productsResult.data ?? []) as Array<{
@@ -102,7 +103,7 @@ export default function AdminDashboardPage() {
         status: string;
         inventory: Array<{ quantity: number | null; reserved_quantity: number | null }> | null;
       }>;
-      const orders = (ordersResult.data ?? []) as Order[];
+      const recentOrders = (recentOrdersResult.data ?? []) as Order[];
       const payments = paymentsResult.data ?? [];
       const paidPayments = payments.filter((payment) => payment.status === 'paid');
 
@@ -114,11 +115,11 @@ export default function AdminDashboardPage() {
           const inventory = product.inventory?.[0];
           return (Number(inventory?.quantity ?? 0) - Number(inventory?.reserved_quantity ?? 0)) <= 0;
         }).length,
-        orders: orders.length,
+        orders: ordersCountResult.count ?? 0,
         pendingPayments: payments.filter((payment) => payment.status === 'pending' || payment.status === 'processing').length,
         paidPayments: paidPayments.length,
         sales: paidPayments.reduce((total, payment) => total + Number(payment.amount ?? 0), 0),
-        recentOrders: orders.slice(0, 10),
+        recentOrders,
       });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to load the store dashboard.');
