@@ -9,6 +9,7 @@ import { getProducts } from '@/lib/queries/products';
 import { getCategories } from '@/lib/queries/categories';
 import { APP_NAME } from '@/config/constants';
 import Link from 'next/link';
+import { isClothingCategory } from '@/lib/utils/clothing';
 
 export const metadata: Metadata = { title: `Products - ${APP_NAME}`, description: `Browse clothing and fashion products at ${APP_NAME}` };
 
