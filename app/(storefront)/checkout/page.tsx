@@ -225,7 +225,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="lg:col-span-1"><div className="sticky top-24">
-            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} isDisabled={!selectedAddressId || checkoutData.deliveryOptions.length === 0 || !checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod) || checkoutData.invalidItems.length > 0 || isProcessing} />
+            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} deliveryMethodSelected={checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod)} isDisabled={!selectedAddressId || checkoutData.deliveryOptions.length === 0 || !checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod) || checkoutData.invalidItems.length > 0 || isProcessing} />
           </div></div>
         </div>
       </Container>
