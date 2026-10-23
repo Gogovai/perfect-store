@@ -95,13 +95,8 @@ export async function POST(request: Request) {
       } catch {
         return NextResponse.json({ error: 'Unable to verify the previous payment attempt. Please try again shortly.' }, { status: 503 });
       }
-      const previousResult = await statusResponse.json().catch(() => null) as {
-        ResponseCode?: string;
-        responseCode?: string;
-        Data?: { Status?: string; Amount?: number; ClientReference?: string };
-        data?: { status?: string; amount?: number; clientReference?: string };
-      } | null;
-      const previousData = previousResult?.Data ?? previousResult?.data;
+      const previousResult = await statusResponse.json().catch(() => null) as Record<string, unknown> | null;
+      const previousData = (previousResult?.Data ?? previousResult?.data) as Record<string, unknown> | undefined;
       const previousCode = String(previousResult?.ResponseCode ?? previousResult?.responseCode ?? '');
       const previousStatus = String(previousData?.Status ?? previousData?.status ?? '').toLowerCase();
       const previousReference = String(previousData?.ClientReference ?? previousData?.clientReference ?? '');
