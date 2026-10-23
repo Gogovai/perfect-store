@@ -32,6 +32,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
+    "globals": "^16.4.0",
     "puppeteer-core": "^25.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
