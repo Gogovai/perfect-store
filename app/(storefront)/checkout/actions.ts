@@ -184,6 +184,7 @@ export async function validateCheckout(
       itemCount: 0,
       hasChanges: false,
       warnings: ['Your cart is empty.'],
+      deliveryOptions: [],
     };
   }
 
