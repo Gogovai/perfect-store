@@ -69,7 +69,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <div className="min-w-0 flex-1">
             {/* Mobile filters */}
             <div className="mb-4 lg:hidden">
-              <ProductFilters categories={filterCategories} sellers={filterSellers} />
+              <ProductFilters categories={filterCategories} />
             </div>
 
             {products.length === 0 ? (
