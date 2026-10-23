@@ -5,130 +5,84 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
-import { CategoryBar } from '@/components/home/CategoryBar';
 import { PromoBanners } from '@/components/home/PromoBanners';
-import { CategoryVisual } from '@/components/categories/CategoryVisual';
-import { getFeaturedProducts, getNewestProducts, getTopRatedProducts, getProducts } from '@/lib/queries/products';
-import { getCategories } from '@/lib/queries/categories';
+import { getFeaturedProducts, getNewestProducts, getTopRatedProducts } from '@/lib/queries/products';
 import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/storefront-content';
 import { brand } from '@/config/brand';
-import { isClothingCategory } from '@/lib/utils/clothing';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
 export const metadata: Metadata = { title: `${brand.name} — Clothing Store`, description: brand.description };
 
 export default async function Home() {
-  const [featuredProducts, newestProducts, topRatedProducts, categories] = await Promise.all([
+  const [featuredProducts, newestProducts, topRatedProducts] = await Promise.all([
     getFeaturedProducts(8),
     getNewestProducts(8),
     getTopRatedProducts(8),
-    getCategories(),
   ]);
 
-  const clothingCategories = categories.filter((category) => isClothingCategory(category.name, category.slug));
+  return (
+    <>
+      <HeroCarousel slides={HERO_SLIDES} />
 
-  const catSections = await Promise.all(
-    clothingCategories.slice(0, 4).map(async (cat) => {
-      const result = await getProducts({ categorySlug: cat.slug, pageSize: 4 });
-      return { category: cat, products: result.products };
-    })
-  );
-
-  return <>
-    <CategoryBar categories={clothingCategories.slice(0, 12)} />
-    <HeroCarousel slides={HERO_SLIDES} />
-
-    {/* Trust badges */}
-    <section className="border-b border-gray-100 bg-white">
-      <Container size="xl">
-        <div className="grid grid-cols-2 divide-x divide-gray-100 lg:grid-cols-4">
-          <TrustItem icon={<CreditCard size={20} />} title="Secure Payment" sub="Protected checkout" />
-          <TrustItem icon={<ShieldCheck size={20} />} title="Quality Fashion" sub="Selected for your style" />
-          <TrustItem icon={<Truck size={20} />} title="Fast Delivery" sub="Across Ghana" />
-          <TrustItem icon={<Headphones size={20} />} title="Customer Support" sub="Help with your order" />
-        </div>
-      </Container>
-    </section>
-
-    {/* Shop by Category — single image per card, no text below */}
-    <section className="bg-white py-8 sm:py-10">
-      <Container size="xl">
-        <SectionHeader title="Shop by Category" href="/categories" />
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          {clothingCategories.slice(0, 12).map((cat) => (
-            <Link key={cat.id} href={`/categories/${cat.slug}`}>
-              <CategoryVisual slug={cat.slug} />
-            </Link>
-          ))}
-        </div>
-      </Container>
-    </section>
-
-    {/* Promo Banners */}
-    <PromoBanners banners={PROMO_BANNERS} />
-
-    {featuredProducts.length > 0 && (
-      <section className="bg-white py-8 sm:py-10">
+      {/* Trust badges */}
+      <section className="border-b border-gray-100 bg-white">
         <Container size="xl">
-          <SectionHeader title="Featured Products" subtitle="Selected pieces from our collection" href="/products" />
-          <ProductGrid products={featuredProducts} />
+          <div className="grid grid-cols-2 divide-x divide-gray-100 lg:grid-cols-4">
+            <TrustItem icon={<CreditCard size={20} />} title="Secure Payment" sub="Protected checkout" />
+            <TrustItem icon={<ShieldCheck size={20} />} title="Quality Fashion" sub="Selected for your style" />
+            <TrustItem icon={<Truck size={20} />} title="Fast Delivery" sub="Across Ghana" />
+            <TrustItem icon={<Headphones size={20} />} title="Customer Support" sub="Help with your order" />
+          </div>
         </Container>
       </section>
-    )}
 
-    {/* Category product rows */}
-    {catSections.map(({ category, products }) =>
-      products.length > 0 ? (
-        <section key={category.id} className="border-t border-gray-100 bg-gray-50/50 py-8">
+      {/* Promotional banners */}
+      <PromoBanners banners={PROMO_BANNERS} />
+
+      {/* Product cards stay visible; no category navigation or category-based sections */}
+      {featuredProducts.length > 0 && (
+        <section className="bg-white py-8 sm:py-10">
           <Container size="xl">
-            <SectionHeader title={category.name} subtitle={`Browse ${category.name.toLowerCase()} products`} href={`/categories/${category.slug}`} />
-            <ProductGrid products={products} />
+            <SectionHeader title="Featured Products" subtitle="Selected pieces from our collection" href="/products" />
+            <ProductGrid products={featuredProducts} />
           </Container>
         </section>
-      ) : null
-    )}
+      )}
 
-    {/* New Arrivals */}
-    <section className="bg-gray-50/50 py-8 sm:py-10">
-      <Container size="xl">
-        <SectionHeader title="New Arrivals" subtitle="Recently added products" href="/products?sort=newest" />
-        {newestProducts.length > 0 ? (
-          <ProductGrid products={newestProducts} />
-        ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {clothingCategories.slice(0, 5).map((cat) => (
-              <Link key={cat.id} href={`/categories/${cat.slug}`}>
-                <CategoryVisual slug={cat.slug} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </Container>
-    </section>
-
-    {/* Top Rated */}
-    {topRatedProducts.length > 0 && (
-      <section className="border-t border-gray-100 bg-white py-8 sm:py-10">
+      <section className="bg-gray-50/50 py-8 sm:py-10">
         <Container size="xl">
-          <SectionHeader title="Top Rated" subtitle="Products with the best reviews" href="/products?sort=rating" />
-          <ProductGrid products={topRatedProducts} />
+          <SectionHeader title="New Arrivals" subtitle="Recently added products" href="/products?sort=newest" />
+          {newestProducts.length > 0 ? (
+            <ProductGrid products={newestProducts} />
+          ) : (
+            <p className="py-8 text-center text-sm text-gray-500">New products will appear here soon.</p>
+          )}
         </Container>
       </section>
-    )}
 
-    {/* CTA */}
-    <section className="relative overflow-hidden" style={{ backgroundColor: brand.colors.primary }}>
-      <Container size="lg">
-        <div className="py-12 text-center sm:py-16">
-          <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl">Find Your Next Favourite Outfit</h2>
-          <p className="mx-auto mb-8 max-w-xl text-sm text-white/70">Explore men’s and women’s fashion, choose your style, and order for delivery anywhere in Ghana.</p>
-          <Link href="/products">
-            <Button size="lg" className="bg-white font-semibold" style={{ color: brand.colors.primary }}>Shop Clothing <ArrowRight size={18} /></Button>
-          </Link>
-        </div>
-      </Container>
-    </section>
-  </>;
+      {topRatedProducts.length > 0 && (
+        <section className="border-t border-gray-100 bg-white py-8 sm:py-10">
+          <Container size="xl">
+            <SectionHeader title="Top Rated" subtitle="Products with the best reviews" href="/products?sort=rating" />
+            <ProductGrid products={topRatedProducts} />
+          </Container>
+        </section>
+      )}
+
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ backgroundColor: brand.colors.primary }}>
+        <Container size="lg">
+          <div className="py-12 text-center sm:py-16">
+            <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl">Find Your Next Favourite Outfit</h2>
+            <p className="mx-auto mb-8 max-w-xl text-sm text-white/70">Explore men’s and women’s fashion, choose your style, and order for delivery anywhere in Ghana.</p>
+            <Link href="/products">
+              <Button size="lg" className="bg-white font-semibold" style={{ color: brand.colors.primary }}>Shop Clothing <ArrowRight size={18} /></Button>
+            </Link>
+          </div>
+        </Container>
+      </section>
+    </>
+  );
 }
 
 function TrustItem({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
