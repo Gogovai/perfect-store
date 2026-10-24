@@ -36,7 +36,7 @@ export async function getAddressById(addressId: string): Promise<Address | null>
 
 export async function createAddress(input: AddressInput): Promise<AddressActionResult> {
   const validation = addressSchema.safeParse(input);
-  if (!validation.success) return { success: false, error: validation.error.errors[0]?.message || 'Invalid address data' };
+  if (!validation.success) return { success: false, error: validation.error.issues[0]?.message || 'Invalid address data' };
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -65,7 +65,7 @@ export async function createAddress(input: AddressInput): Promise<AddressActionR
 
 export async function updateAddress(addressId: string, input: AddressInput): Promise<AddressActionResult> {
   const validation = addressSchema.safeParse(input);
-  if (!validation.success) return { success: false, error: validation.error.errors[0]?.message || 'Invalid address data' };
+  if (!validation.success) return { success: false, error: validation.error.issues[0]?.message || 'Invalid address data' };
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
