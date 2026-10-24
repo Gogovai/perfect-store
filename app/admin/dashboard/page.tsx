@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { isClothingCategory } from '@/lib/utils/clothing';
+import { getStoreLaunchReadiness, type StoreLaunchReadiness } from './actions';
 
 type Order = {
   id: string;
@@ -57,6 +58,7 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData>(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [readiness, setReadiness] = useState<StoreLaunchReadiness | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +85,9 @@ export default function AdminDashboardPage() {
         return;
       }
 
+      const readinessResult = await getStoreLaunchReadiness();
+      setReadiness(readinessResult);
+
       const { data: rawCategoryRows, error: categoriesError } = await supabase
         .from('categories')
         .select('id,name,slug')
@@ -102,8 +107,8 @@ export default function AdminDashboardPage() {
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
         clothingCategoryIds.length > 0
-          ? supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)').in('category_id', clothingCategoryIds)
-          : supabase.from('products').select('id,status,inventory(quantity,reserved_quantity)').eq('id', '00000000-0000-0000-0000-000000000000'),
+          ? supabase.from('products').select('id,status,owner_type,inventory(quantity,reserved_quantity)').in('owner_type', ['admin', 'platform']).in('category_id', clothingCategoryIds)
+          : supabase.from('products').select('id,status,owner_type,inventory(quantity,reserved_quantity)').eq('id', '00000000-0000-0000-0000-000000000000'),
         supabase.from('orders').select('id', { count: 'exact', head: true }),
         supabase.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(10),
         supabase.from('payments').select('id,status,amount'),
@@ -115,6 +120,7 @@ export default function AdminDashboardPage() {
       const products = (productsResult.data ?? []) as Array<{
         id: string;
         status: string;
+        owner_type: string;
         inventory: Array<{ quantity: number | null; reserved_quantity: number | null }> | null;
       }>;
       const recentOrders = (recentOrdersResult.data ?? []) as Order[];
@@ -176,6 +182,47 @@ export default function AdminDashboardPage() {
           <div className="rounded-2xl border bg-white p-8 text-sm text-gray-500" role="status">Loading store statistics…</div>
         ) : (
           <>
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="launch-readiness-heading">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="launch-readiness-heading" className="text-lg font-semibold text-gray-900">Launch readiness</h2>
+                  <p className="mt-1 text-sm text-gray-500">Checks that must pass before the store can safely accept public orders.</p>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${readiness && readiness.activeClothingProducts > 0 && readiness.nationwideStandardConfigured && readiness.nationwideExpressConfigured && readiness.hubtelConfigured ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                  {readiness && readiness.activeClothingProducts > 0 && readiness.nationwideStandardConfigured && readiness.nationwideExpressConfigured && readiness.hubtelConfigured ? 'Checks passed' : 'Action required'}
+                </span>
+              </div>
+              {!readiness ? (
+                <p className="mt-4 text-sm text-gray-500">Readiness checks are unavailable. Refresh the dashboard and verify admin permissions.</p>
+              ) : (
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-gray-200 p-4">
+                    <p className="text-sm font-semibold text-gray-900">Public clothing catalogue</p>
+                    <p className={`mt-2 text-sm ${readiness.activeClothingProducts > 0 ? 'text-green-700' : 'text-amber-700'}`}>
+                      {readiness.activeClothingProducts > 0 ? `${readiness.activeClothingProducts} active store products` : 'No active owner-owned clothing products'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">Legacy seller/demo products are not counted as public store inventory.</p>
+                    <Link href="/admin/products/new" className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline">Add clothing products</Link>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 p-4">
+                    <p className="text-sm font-semibold text-gray-900">Ghana-wide delivery</p>
+                    <p className="mt-2 text-sm text-gray-600">{readiness.activeDeliveryZones} active zones · {readiness.activeShippingRates} active rates</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Standard: {readiness.nationwideStandardConfigured ? 'configured' : 'missing'} · Express: {readiness.nationwideExpressConfigured ? 'configured' : 'missing'}
+                    </p>
+                    <Link href="/admin/logistics" className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline">Configure delivery</Link>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 p-4">
+                    <p className="text-sm font-semibold text-gray-900">Hubtel payments</p>
+                    <p className={`mt-2 text-sm ${readiness.hubtelConfigured ? 'text-green-700' : 'text-amber-700'}`}>
+                      {readiness.hubtelConfigured ? 'Server credentials detected' : 'Production credentials missing'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">Configure the three Hubtel secrets in Vercel and verify checkout in the merchant sandbox before enabling live payments.</p>
+                  </div>
+                </div>
+              )}
+            </section>
+
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Store statistics">
               <StatCard label="Customers" value={data.customers} />
               <StatCard label="Active products" value={data.products} />
