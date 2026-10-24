@@ -11,7 +11,7 @@ CREATE POLICY categories_single_store_public_read
   USING (
     is_active = true
     AND lower(COALESCE(name, '') || ' ' || COALESCE(slug, '')) ~*
-      '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+      '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
   );
 
 -- Remove the old permissive product policy: PostgreSQL combines permissive policies
@@ -32,7 +32,7 @@ CREATE POLICY products_single_store_public_read
       WHERE c.id = category_id
         AND c.is_active = true
         AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~*
-          '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+          '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
     )
   );
 CREATE POLICY products_admin_manage
@@ -56,7 +56,7 @@ CREATE POLICY product_images_single_store_public_read
       AND p.status = 'active'
       AND p.owner_type IN ('admin', 'platform')
       AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~*
-        '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+        '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
   ));
 CREATE POLICY product_images_admin_manage
   ON public.product_images
@@ -80,7 +80,7 @@ CREATE POLICY product_variants_single_store_public_read
         AND p.status = 'active'
         AND p.owner_type IN ('admin', 'platform')
         AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~*
-          '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+          '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
     )
   );
 CREATE POLICY product_variants_admin_manage
@@ -104,7 +104,7 @@ CREATE POLICY inventory_single_store_public_read
       AND p.status = 'active'
       AND p.owner_type IN ('admin', 'platform')
       AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~*
-        '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+        '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
   ));
 CREATE POLICY inventory_admin_manage
   ON public.inventory
@@ -127,7 +127,7 @@ CREATE POLICY variant_inventory_single_store_public_read
       AND p.status = 'active'
       AND p.owner_type IN ('admin', 'platform')
       AND lower(COALESCE(c.name, '') || ' ' || COALESCE(c.slug, '')) ~*
-        '\\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\\M'
+        '\m(fashion|clothing|apparel|menswear|womenswear|men.?s|women.?s|men|women|footwear|shoes?|sandals?|boots?|sneakers?|accessor\w*|bags?|traditional|ankara|dresses?|gowns?|shirts?|t.?shirts?|tops?|blouses?|jeans?|denim|trousers?|pants?|shorts?|skirts?|jackets?|coats?|suits?|blazers?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|underwear|lingerie|swimwear|activewear|sportswear|socks?|belts?|hats?|caps?|wallets?)\M'
   ));
 CREATE POLICY variant_inventory_admin_manage
   ON public.variant_inventory
