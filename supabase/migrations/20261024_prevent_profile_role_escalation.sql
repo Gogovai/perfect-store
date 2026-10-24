@@ -2,8 +2,8 @@
 -- Auth/profile creation is handled by trusted auth triggers or server-side service-role code.
 BEGIN;
 
-REVOKE INSERT ON TABLE public.profiles FROM anon, authenticated;
-REVOKE UPDATE ON TABLE public.profiles FROM anon, authenticated;
+REVOKE INSERT ON TABLE public.profiles FROM PUBLIC, anon, authenticated;
+REVOKE UPDATE ON TABLE public.profiles FROM PUBLIC, anon, authenticated;
 
 -- Permit normal self-service profile edits, but never role, is_active, email, id,
 -- or creation timestamp changes from a browser session.
