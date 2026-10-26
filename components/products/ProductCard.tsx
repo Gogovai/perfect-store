@@ -73,7 +73,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             size="sm"
           />
         </div>
-
       </div>
 
       {/* Info */}
@@ -97,6 +96,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             compareAtPrice={hasDiscount ? compareAtPrice : null}
             variantPrice={variantPrices.length ? lowestVariantPrice : null}
             size="md"
+            layout="stacked"
           />
         </div>
       </Link>
