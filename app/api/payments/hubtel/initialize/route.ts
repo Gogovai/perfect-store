@@ -199,9 +199,9 @@ export async function POST(request: Request) {
     const responseCode = result.responseCode ?? result.ResponseCode ?? result.code ?? result.Code;
     const checkoutUrl =
       result.data?.checkoutUrl ??
+      result.data?.paymentUrl ??
       result.Data?.CheckoutUrl ??
-      (result as unknown as { data?: { paymentUrl?: string }; Data?: { PaymentUrl?: string } }).data?.paymentUrl ??
-      (result as unknown as { Data?: { PaymentUrl?: string } }).Data?.PaymentUrl;
+      result.Data?.PaymentUrl;
 
     if (responseCode && !['0000', '00', '200'].includes(String(responseCode))) {
       // An explicit Hubtel rejection means no checkout was created. Reset only
