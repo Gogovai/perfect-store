@@ -1,8 +1,8 @@
 'use client';
 
-import { CreditCard, Banknote } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 
-export type PaymentMethod = 'cash_on_delivery' | 'hubtel';
+export type PaymentMethod = 'hubtel';
 
 export function PaymentMethodSelector({
   value,
@@ -14,17 +14,14 @@ export function PaymentMethodSelector({
   hubtelAvailable: boolean;
 }) {
   const methods = [
-    ['cash_on_delivery', 'Cash on Delivery', 'Pay when your order arrives.', Banknote],
-    ['hubtel', 'Mobile Money / Card', 'Pay securely with Hubtel using mobile money or a bank card.', CreditCard],
+    ['hubtel', 'Mobile Money / Card', 'Pay securely with Hubtel using Mobile Money or a debit/credit card.', CreditCard],
   ] as const;
-
-  const visibleMethods = hubtelAvailable ? methods : methods.filter(([id]) => id !== 'hubtel');
 
   return (
     <div>
       <h3 className="mb-3 text-sm font-semibold text-gray-900">Payment Method</h3>
       <div className="space-y-2">
-        {visibleMethods.map(([id, name, desc, Icon]) => (
+        {methods.map(([id, name, desc, Icon]) => (
           <label
             key={id}
             className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
@@ -45,7 +42,7 @@ export function PaymentMethodSelector({
           </label>
         ))}
       </div>
-      {!hubtelAvailable && <p className="mt-2 text-xs text-gray-500">Online Mobile Money and card payments are being configured. Cash on Delivery is available for now.</p>}
+      {!hubtelAvailable && <p className="mt-2 text-xs text-gray-500">Mobile Money and card payments are temporarily unavailable while secure payment setup is completed. Please try again later.</p>}
     </div>
   );
 }
