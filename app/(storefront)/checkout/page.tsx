@@ -20,7 +20,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('standard');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('hubtel');
   const [hubtelAvailable, setHubtelAvailable] = useState(false);
   const [checkoutData, setCheckoutData] = useState<CheckoutSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,12 +35,12 @@ export default function CheckoutPage() {
       .then((available) => {
         if (cancelled) return;
         setHubtelAvailable(available);
-        if (!available) setSelectedPaymentMethod('cash_on_delivery');
+        // Hubtel is the only supported payment method; keep it selected while configuration is pending.
       })
       .catch(() => {
         if (cancelled) return;
         setHubtelAvailable(false);
-        setSelectedPaymentMethod('cash_on_delivery');
+        // Do not fall back to cash on delivery.
       });
     return () => { cancelled = true; };
   }, []);
@@ -111,7 +111,7 @@ export default function CheckoutPage() {
       return;
     }
     if (selectedPaymentMethod === 'hubtel' && !hubtelAvailable) {
-      setOrderError('Hubtel online payments are not configured yet. Please choose Cash on Delivery.');
+      setOrderError('Mobile Money and card payments are not available yet. Please try again later.');
       return;
     }
     if (isProcessing) return;
