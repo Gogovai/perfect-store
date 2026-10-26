@@ -58,10 +58,13 @@ const STATUS_TIMELINE: { status: OrderStatus; label: string; icon: React.Element
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ payment?: string | string[] }>;
 }
 
-export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
+export default async function OrderDetailPage({ params, searchParams }: OrderDetailPageProps) {
   const { id } = await params;
+  const query = searchParams ? await searchParams : {};
+  const paymentState = Array.isArray(query.payment) ? query.payment[0] : query.payment;
   const result = await getOrderDetail(id);
 
   if (!result.success || !result.order) notFound();
@@ -87,6 +90,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
         <div className={`p-4 rounded-xl mb-6 ${isCancelled ? 'bg-red-50 border border-red-200' : order.status === 'delivered' ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
           <p className={`text-sm font-medium ${isCancelled ? 'text-red-800' : order.status === 'delivered' ? 'text-green-800' : 'text-blue-800'}`}>{getStatusMessage(order.status)}</p>
+          {paymentState === 'init_failed' && order.status === 'pending' && order.payment?.status !== 'paid' && (
+            <div role="alert" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              Your order was saved, but the secure payment page could not be opened. Your order is not confirmed as paid. Use the retry button in the Payment section below to open Hubtel again.
+            </div>
+          )}
           {order.status === 'pending' && <p className="text-xs text-red-600 mt-1">Payment is awaiting confirmation. We will update your order after Hubtel confirms the transaction.</p>}
         </div>
 
