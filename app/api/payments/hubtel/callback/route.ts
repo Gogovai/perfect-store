@@ -51,9 +51,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
+  // Hubtel integrations have sent both flat callback objects and objects with
+  // transaction fields nested under Data/data. Prefer the nested value, but
+  // fall back field-by-field to the root so a partial Data object cannot hide
+  // ClientReference or TransactionId from the actual callback.
   const eventData = firstRecord(field(event, 'data', 'Data')) ?? event;
-  const reference = textField(eventData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
-  const transactionId = textField(eventData, 'transactionId', 'TransactionId');
+  const reference =
+    textField(eventData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId') ||
+    textField(event, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
+  const transactionId =
+    textField(eventData, 'transactionId', 'TransactionId') ||
+    textField(event, 'transactionId', 'TransactionId');
 
   if (!reference) {
     return NextResponse.json({ error: 'Missing payment reference.' }, { status: 400 });
@@ -110,12 +118,26 @@ export async function POST(request: Request) {
     const verification: unknown = await verificationResponse.json().catch(() => null);
     const verificationRecord = firstRecord(verification);
     const verificationData = firstRecord(field(verificationRecord, 'data', 'Data'));
-    const responseCode = textField(verificationRecord, 'responseCode', 'ResponseCode', 'code', 'Code');
-    const verifiedStatus = textField(verificationData, 'status', 'Status').toLowerCase();
-    const verifiedReference = textField(verificationData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
-    const verifiedTransactionId = textField(verificationData, 'transactionId', 'TransactionId');
-    const verifiedAmount = parseAmount(verificationData);
-    const verifiedCurrency = textField(verificationData, 'currency', 'Currency');
+    const responseCode =
+      textField(verificationRecord, 'responseCode', 'ResponseCode', 'code', 'Code') ||
+      textField(verificationData, 'responseCode', 'ResponseCode', 'code', 'Code');
+    const verifiedStatus = (
+      textField(verificationData, 'status', 'Status') ||
+      textField(verificationRecord, 'status', 'Status')
+    ).trim().toLowerCase();
+    const verifiedReference =
+      textField(verificationData, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId') ||
+      textField(verificationRecord, 'clientReference', 'ClientReference', 'invoiceId', 'InvoiceId');
+    const verifiedTransactionId =
+      textField(verificationData, 'transactionId', 'TransactionId') ||
+      textField(verificationRecord, 'transactionId', 'TransactionId');
+    const nestedAmount = parseAmount(verificationData);
+    const verifiedAmount = Number.isFinite(nestedAmount) && nestedAmount > 0
+      ? nestedAmount
+      : parseAmount(verificationRecord);
+    const verifiedCurrency =
+      textField(verificationData, 'currency', 'Currency') ||
+      textField(verificationRecord, 'currency', 'Currency');
 
     if (
       !verificationResponse.ok ||
