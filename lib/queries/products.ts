@@ -1,7 +1,6 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import type { Tables } from '@/types/database';
-import { isClothingCategory } from '@/lib/utils/clothing';
 
 export type ProductRow = Tables<'products'>;
 export type ProductImageRow = Tables<'product_images'>;
@@ -49,20 +48,10 @@ async function getProductsQuery() {
     .select(PRODUCT_SELECT, { count: 'exact' })
     .eq('status', 'active');
 
-  // Public catalogue results are limited to active clothing and fashion products.
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id,name,slug')
-    .eq('is_active', true);
-  const clothingCategoryIds = (categories ?? [])
-    .filter((category) => isClothingCategory(category.name, category.slug))
-    .map((category) => category.id);
-
-  if (clothingCategoryIds.length > 0) {
-    query = query.in('category_id', clothingCategoryIds);
-  } else {
-    query = query.eq('id', '00000000-0000-0000-0000-000000000000');
-  }
+  // Public visibility and clothing-category restrictions are enforced by the
+  // Supabase RLS policies. Re-querying categories here can silently return no
+  // products when category RLS or a temporary category-query failure hides the
+  // list, even though the products themselves are publicly visible.
 
   // Do not return the query builder directly from an async function: Supabase
   // query builders are thenables, so returning one causes Promise assimilation
