@@ -1,279 +1,91 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { isClothingCategory } from '@/lib/utils/clothing';
-import { getStoreLaunchReadiness, type StoreLaunchReadiness } from './actions';
 
-type Order = {
-  id: string;
-  order_number: string;
-  status: string;
-  total_amount: number;
-  created_at: string;
-};
+type Order = { id: string; order_number: string; status: string; total_amount: number; created_at: string };
+type Stats = { products: number; activeProducts: number; lowStock: number; orders: number; customers: number; paidSales: number; recentOrders: Order[] };
+const EMPTY: Stats = { products: 0, activeProducts: 0, lowStock: 0, orders: 0, customers: 0, paidSales: 0, recentOrders: [] };
+const money = (amount: number) => new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(amount);
 
-type DashboardData = {
-  customers: number;
-  products: number;
-  outOfStock: number;
-  orders: number;
-  pendingPayments: number;
-  paidPayments: number;
-  sales: number;
-  recentOrders: Order[];
-};
-
-const EMPTY_DATA: DashboardData = {
-  customers: 0,
-  products: 0,
-  outOfStock: 0,
-  orders: 0,
-  pendingPayments: 0,
-  paidPayments: 0,
-  sales: 0,
-  recentOrders: [],
-};
-
-function StatCard({ label, value, note }: { label: string; value: string | number; note?: string }) {
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
-      {note && <p className="mt-1 text-xs text-gray-500">{note}</p>}
-    </section>
-  );
-}
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat('en-GH', {
-    style: 'currency',
-    currency: 'GHS',
-    minimumFractionDigits: 2,
-  }).format(value);
+function StatCard({ title, value, hint, icon }: { title: string; value: string | number; hint: string; icon: string }) {
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="flex items-center justify-between"><p className="text-sm font-medium text-slate-500">{title}</p><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-900">{icon}</span></div>
+    <p className="mt-4 text-3xl font-bold tracking-tight text-slate-950">{value}</p><p className="mt-1 text-xs text-slate-500">{hint}</p>
+  </section>;
 }
 
 export default function AdminDashboardPage() {
-  const [data, setData] = useState<DashboardData>(EMPTY_DATA);
+  const [stats, setStats] = useState<Stats>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [readiness, setReadiness] = useState<StoreLaunchReadiness | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
+    setLoading(true); setError('');
     try {
-      const supabase = createClient();
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      const user = authData.user;
+      const db = createClient();
+      const { data: { user }, error: authError } = await db.auth.getUser();
+      if (authError || !user) { window.location.assign('/login'); return; }
+      const { data: profile } = await db.from('profiles').select('role').eq('id', user.id).maybeSingle();
+      if ((profile as { role?: string } | null)?.role !== 'admin') { window.location.assign('/'); return; }
 
-      if (authError || !user) {
-        window.location.assign('/login');
-        return;
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profileError || (profile as { role?: string } | null)?.role !== 'admin') {
-        window.location.assign('/');
-        return;
-      }
-
-      const readinessResult = await getStoreLaunchReadiness();
-      setReadiness(readinessResult);
-
-      const { data: rawCategoryRows, error: categoriesError } = await supabase
-        .from('categories')
-        .select('id,name,slug')
-        .eq('is_active', true);
-      const categoryRows = (rawCategoryRows ?? []) as unknown as Array<{ id: string; name: string; slug: string }>;
-      if (categoriesError) throw new Error('Unable to load clothing categories.');
-      const clothingCategoryIds = (categoryRows ?? [])
-        .filter((category) => isClothingCategory(category.name, category.slug))
-        .map((category) => category.id);
-
-      const [
-        customersResult,
-        productsResult,
-        ordersCountResult,
-        recentOrdersResult,
-        paymentsResult,
-      ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
-        clothingCategoryIds.length > 0
-          ? supabase.from('products').select('id,status,owner_type,inventory(quantity,reserved_quantity)').in('owner_type', ['admin', 'platform']).in('category_id', clothingCategoryIds)
-          : supabase.from('products').select('id,status,owner_type,inventory(quantity,reserved_quantity)').eq('id', '00000000-0000-0000-0000-000000000000'),
-        supabase.from('orders').select('id', { count: 'exact', head: true }),
-        supabase.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(10),
-        supabase.from('payments').select('id,status,amount'),
+      const [productsRes, ordersRes, customersRes, recentRes, paymentsRes] = await Promise.all([
+        db.from('products').select('id,status,inventory(quantity,reserved_quantity)').eq('owner_type', 'admin'),
+        db.from('orders').select('id', { count: 'exact', head: true }),
+        db.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
+        db.from('orders').select('id,order_number,status,total_amount,created_at').order('created_at', { ascending: false }).limit(8),
+        db.from('payments').select('amount,status').eq('status', 'paid'),
       ]);
-
-      const queryError = customersResult.error || productsResult.error || ordersCountResult.error || recentOrdersResult.error || paymentsResult.error;
-      if (queryError) throw new Error('Some store statistics could not be loaded. Check the database schema and permissions.');
-
-      const products = (productsResult.data ?? []) as Array<{
-        id: string;
-        status: string;
-        owner_type: string;
-        inventory: Array<{ quantity: number | null; reserved_quantity: number | null }> | null;
-      }>;
-      const recentOrders = (recentOrdersResult.data ?? []) as Order[];
-      const payments = (paymentsResult.data ?? []) as unknown as Array<{ status: string; amount: number | null }>;
-      const paidPayments = payments.filter((payment) => payment.status === 'paid');
-
-      setData({
-        customers: customersResult.count ?? 0,
-        products: products.filter((product) => product.status === 'active').length,
-        outOfStock: products.filter((product) => {
-          if (product.status !== 'active') return false;
-          const inventory = product.inventory?.[0];
-          return (Number(inventory?.quantity ?? 0) - Number(inventory?.reserved_quantity ?? 0)) <= 0;
-        }).length,
-        orders: ordersCountResult.count ?? 0,
-        pendingPayments: payments.filter((payment) => payment.status === 'pending' || payment.status === 'processing').length,
-        paidPayments: paidPayments.length,
-        sales: paidPayments.reduce((total, payment) => total + Number(payment.amount ?? 0), 0),
-        recentOrders,
+      const queryError = productsRes.error || ordersRes.error || customersRes.error || recentRes.error || paymentsRes.error;
+      if (queryError) throw new Error('Could not load dashboard data. Check database permissions and try again.');
+      const products = (productsRes.data ?? []) as Array<{ id: string; status: string; inventory: Array<{ quantity: number | null; reserved_quantity: number | null }> | null }>;
+      const payments = (paymentsRes.data ?? []) as Array<{ amount: number | null; status: string }>;
+      setStats({
+        products: products.length,
+        activeProducts: products.filter(p => p.status === 'active').length,
+        lowStock: products.filter(p => { const i = p.inventory?.[0]; return Number(i?.quantity ?? 0) - Number(i?.reserved_quantity ?? 0) <= 5; }).length,
+        orders: ordersRes.count ?? 0,
+        customers: customersRes.count ?? 0,
+        paidSales: payments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0),
+        recentOrders: (recentRes.data ?? []) as Order[],
       });
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load the store dashboard.');
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load dashboard.'); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
-  return (
-    <main className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-blue-700">Store administration</p>
-            <h1 className="mt-1 text-3xl font-bold text-gray-900">Store dashboard</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage clothing products, customer orders, inventory, and payments.</p>
+  return <main className="min-h-screen bg-slate-50 p-4 sm:p-7 lg:p-9">
+    <div className="mx-auto max-w-7xl space-y-7">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">Perfect Store · Admin</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Overview</h1><p className="mt-2 max-w-2xl text-sm text-slate-500">Manage your product catalogue, inventory, customer orders and store performance from one place.</p></div>
+        <div className="flex flex-wrap gap-3"><Link href="/admin/products/new" className="rounded-xl bg-[#0f2b5b] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-950">＋ Add product</Link><Link href="/admin/orders" className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">View orders</Link></div>
+      </header>
+
+      {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}<button onClick={() => void load()} className="font-semibold underline">Try again</button></div>}
+
+      {loading ? <div role="status" className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500">Loading store overview…</div> : <>
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <StatCard title="Total products" value={stats.products} hint="Products in your catalogue" icon="▦" />
+          <StatCard title="Published products" value={stats.activeProducts} hint="Visible to customers" icon="✓" />
+          <StatCard title="Low stock" value={stats.lowStock} hint="Five units or fewer available" icon="!" />
+          <StatCard title="Customer orders" value={stats.orders} hint="All recorded orders" icon="▤" />
+          <StatCard title="Customers" value={stats.customers} hint="Registered customer accounts" icon="♙" />
+          <StatCard title="Paid sales" value={money(stats.paidSales)} hint="Payments marked as paid" icon="₵" />
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[1.5fr_0.8fr]">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-5"><div><h2 className="text-lg font-bold text-slate-950">Recent orders</h2><p className="mt-1 text-sm text-slate-500">Latest activity from your customers.</p></div><Link href="/admin/orders" className="text-sm font-semibold text-blue-800 hover:underline">All orders →</Link></div>
+            {stats.recentOrders.length === 0 ? <div className="p-10 text-center"><p className="font-semibold text-slate-800">No orders yet</p><p className="mt-1 text-sm text-slate-500">Orders will appear here when customers place them.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Order</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Total</th></tr></thead><tbody className="divide-y divide-slate-100">{stats.recentOrders.map(order => <tr key={order.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-semibold text-slate-900">{order.order_number}</td><td className="px-5 py-4 text-slate-500">{new Date(order.created_at).toLocaleDateString()}</td><td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-700">{order.status.replaceAll('_', ' ')}</span></td><td className="px-5 py-4 text-right font-semibold text-slate-900">{money(Number(order.total_amount))}</td></tr>)}</tbody></table></div>}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/admin/products/new" className="rounded-lg bg-[#0f2b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#173b78]">
-              Add product
-            </Link>
-            <Link href="/admin/orders" className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-              Manage orders
-            </Link>
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-[#0f2b5b] p-6 text-white shadow-sm"><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-200">Quick action</p><h2 className="mt-3 text-2xl font-bold">Add a new product</h2><p className="mt-2 text-sm leading-6 text-blue-100">Upload product images, set pricing and stock, choose a category and control the display rating.</p><Link href="/admin/products/new" className="mt-5 inline-flex rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#0f2b5b] hover:bg-blue-50">Create product →</Link></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-950">Catalogue shortcuts</h2><div className="mt-4 space-y-2"><Link href="/admin/products" className="flex items-center justify-between rounded-xl border border-slate-100 p-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"><span>Manage products</span><span>→</span></Link><Link href="/admin/categories" className="flex items-center justify-between rounded-xl border border-slate-100 p-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"><span>Manage categories</span><span>→</span></Link><Link href="/admin/logistics" className="flex items-center justify-between rounded-xl border border-slate-100 p-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"><span>Delivery settings</span><span>→</span></Link></div></div>
           </div>
-        </header>
-
-        {error && (
-          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-            <span>{error}</span>
-            <button onClick={() => void load()} className="font-semibold underline">Try again</button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="rounded-2xl border bg-white p-8 text-sm text-gray-500" role="status">Loading store statistics…</div>
-        ) : (
-          <>
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6" aria-labelledby="launch-readiness-heading">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="launch-readiness-heading" className="text-lg font-semibold text-gray-900">Launch readiness</h2>
-                  <p className="mt-1 text-sm text-gray-500">Checks that must pass before the store can safely accept public orders.</p>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${readiness && readiness.activeClothingProducts > 0 && readiness.nationwideStandardConfigured && readiness.nationwideExpressConfigured && readiness.hubtelConfigured ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                  {readiness && readiness.activeClothingProducts > 0 && readiness.nationwideStandardConfigured && readiness.nationwideExpressConfigured && readiness.hubtelConfigured ? 'Checks passed' : 'Action required'}
-                </span>
-              </div>
-              {!readiness ? (
-                <p className="mt-4 text-sm text-gray-500">Readiness checks are unavailable. Refresh the dashboard and verify admin permissions.</p>
-              ) : (
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <p className="text-sm font-semibold text-gray-900">Public clothing catalogue</p>
-                    <p className={`mt-2 text-sm ${readiness.activeClothingProducts > 0 ? 'text-green-700' : 'text-amber-700'}`}>
-                      {readiness.activeClothingProducts > 0 ? `${readiness.activeClothingProducts} active store products` : 'No active owner-owned clothing products'}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">Legacy seller/demo products are not counted as public store inventory.</p>
-                    <Link href="/admin/products/new" className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline">Add clothing products</Link>
-                  </div>
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <p className="text-sm font-semibold text-gray-900">Ghana-wide delivery</p>
-                    <p className="mt-2 text-sm text-gray-600">{readiness.activeDeliveryZones} active zones · {readiness.activeShippingRates} active rates</p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Standard: {readiness.nationwideStandardConfigured ? 'configured' : 'missing'} · Express: {readiness.nationwideExpressConfigured ? 'configured' : 'missing'}
-                    </p>
-                    <Link href="/admin/logistics" className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline">Configure delivery</Link>
-                  </div>
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <p className="text-sm font-semibold text-gray-900">Hubtel payments</p>
-                    <p className={`mt-2 text-sm ${readiness.hubtelConfigured ? 'text-green-700' : 'text-amber-700'}`}>
-                      {readiness.hubtelConfigured ? 'Server credentials detected' : 'Production credentials missing'}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">Configure the three Hubtel secrets in Vercel and verify checkout in the merchant sandbox before enabling live payments.</p>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Store statistics">
-              <StatCard label="Customers" value={data.customers} />
-              <StatCard label="Active products" value={data.products} />
-              <StatCard label="Out of stock" value={data.outOfStock} note={data.outOfStock > 0 ? 'Review inventory levels' : 'Inventory looks good'} />
-              <StatCard label="Orders" value={data.orders} />
-              <StatCard label="Payments pending" value={data.pendingPayments} />
-              <StatCard label="Successful payments" value={data.paidPayments} />
-              <StatCard label="Paid sales total" value={formatMoney(data.sales)} note="Based on payment records marked paid" />
-            </section>
-
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Recent orders</h2>
-                  <p className="mt-1 text-sm text-gray-500">The latest customer orders recorded by the store.</p>
-                </div>
-                <Link href="/admin/orders" className="text-sm font-semibold text-blue-700 hover:underline">View all orders</Link>
-              </div>
-
-              {data.recentOrders.length === 0 ? (
-                <p className="p-8 text-center text-sm text-gray-500">No orders have been recorded yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left text-sm">
-                    <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                      <tr>
-                        <th className="px-5 py-3 font-semibold">Order</th>
-                        <th className="px-5 py-3 font-semibold">Date</th>
-                        <th className="px-5 py-3 font-semibold">Status</th>
-                        <th className="px-5 py-3 text-right font-semibold">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {data.recentOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-gray-50">
-                          <td className="px-5 py-4 font-semibold text-gray-900">{order.order_number}</td>
-                          <td className="px-5 py-4 text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
-                          <td className="px-5 py-4">
-                            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium capitalize text-gray-700">{order.status.replaceAll('_', ' ')}</span>
-                          </td>
-                          <td className="px-5 py-4 text-right font-medium text-gray-900">{formatMoney(Number(order.total_amount))}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          </>
-        )}
-      </div>
-    </main>
-  );
+        </section>
+      </>}
+    </div>
+  </main>;
 }
