@@ -56,15 +56,16 @@ export default function CheckoutPage() {
     await new Promise<void>((resolve) => {
       let settled = false;
       let unsubscribe = () => {};
+      let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
       const finish = () => {
         if (settled) return;
         settled = true;
         unsubscribe();
-        window.clearTimeout(timeoutId);
+        if (timeoutId) window.clearTimeout(timeoutId);
         resolve();
       };
       unsubscribe = persistApi.onFinishHydration(finish);
-      const timeoutId = window.setTimeout(finish, 2000);
+      timeoutId = window.setTimeout(finish, 2000);
     });
   }
 
