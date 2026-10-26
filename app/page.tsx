@@ -5,9 +5,8 @@ import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
-import { PromoBanners } from '@/components/home/PromoBanners';
 import { getFeaturedProducts, getNewestProducts, getTopRatedProducts } from '@/lib/queries/products';
-import { HERO_SLIDES, PROMO_BANNERS } from '@/lib/data/storefront-content';
+import { HERO_SLIDES } from '@/lib/data/storefront-content';
 import { brand } from '@/config/brand';
 import { ArrowRight, CreditCard, Truck, Headphones, ShieldCheck } from 'lucide-react';
 
@@ -35,9 +34,6 @@ export default async function Home() {
           </div>
         </Container>
       </section>
-
-      {/* Promotional banners */}
-      <PromoBanners banners={PROMO_BANNERS} />
 
       {/* Product cards stay visible; no category navigation or category-based sections */}
       {featuredProducts.length > 0 && (
