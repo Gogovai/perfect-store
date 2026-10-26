@@ -3,17 +3,21 @@ import { createClient } from '@/lib/supabase/server';
 
 type HubtelCheckoutResponse = {
   responseCode?: string;
+  code?: string;
   status?: string;
   message?: string;
   data?: {
     checkoutUrl?: string;
+    paymentUrl?: string;
     checkoutId?: string;
     clientReference?: string;
   };
   ResponseCode?: string;
+  Code?: string;
   ResponseMessage?: string;
   Data?: {
     CheckoutUrl?: string;
+    PaymentUrl?: string;
     CheckoutId?: string;
     InvoiceId?: string;
   };
