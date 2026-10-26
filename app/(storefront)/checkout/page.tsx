@@ -45,27 +45,49 @@ export default function CheckoutPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Mirror the local (localStorage) cart into the database cart so the
-  // server-side checkout reads the exact items/quantities the shopper built.
-  // No-op when the local cart is empty (so a DB cart from another device
-  // is preserved).
+  // Zustand's persisted cart can still be hydrating from localStorage on
+  // the first client render. Never validate the server cart until hydration has
+  // finished, otherwise checkout can incorrectly show "Your cart is empty"
+  // while the cart badge already contains items.
+  async function waitForCartHydration() {
+    const persistApi = useCartStore.persist;
+    if (persistApi.hasHydrated()) return;
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      let unsubscribe = () => {};
+      let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        unsubscribe();
+        if (timeoutId) window.clearTimeout(timeoutId);
+        resolve();
+      };
+      unsubscribe = persistApi.onFinishHydration(finish);
+      timeoutId = window.setTimeout(finish, 2000);
+    });
+  }
+
+  // Mirror the hydrated local cart into the database cart so server checkout
+  // reads the items the shopper sees. Preserve an existing database cart when
+  // the local cart is genuinely empty.
   async function syncLocalCart() {
-    try {
-      const { items } = useCartStore.getState();
-      if (items.length === 0) return;
-      const result = await syncCartToDatabase(
-        items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId,
-          quantity: i.quantity,
-        }))
-      );
-      if (result.success) {
-        useCartStore.getState().setHasSyncedToDb(true);
-      }
-    } catch {
-      // Fall through; validateCheckout surfaces the failure state.
+    await waitForCartHydration();
+    const { items } = useCartStore.getState();
+    if (items.length === 0) return;
+
+    const result = await syncCartToDatabase(
+      items.map((i) => ({
+        productId: i.productId,
+        variantId: i.variantId,
+        quantity: i.quantity,
+      }))
+    );
+    if (!result.success) {
+      throw new Error(result.error || 'Unable to sync your cart.');
     }
+    useCartStore.getState().setHasSyncedToDb(true);
   }
 
   useEffect(() => {
@@ -76,7 +98,10 @@ export default function CheckoutPage() {
         const data = await validateCheckout(selectedDeliveryMethod, selectedAddressId);
         if (!cancelled) setCheckoutData(data);
       } catch {
-        if (!cancelled) setCheckoutData(null);
+        if (!cancelled) {
+          setCheckoutData(null);
+          setOrderError('We could not load your saved cart. Please refresh the page and try again.');
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
