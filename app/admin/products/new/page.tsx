@@ -34,6 +34,8 @@ export default function AdminCreateProductPage() {
   const [brand, setBrand] = useState('');
   const [price, setPrice] = useState('');
   const [compareAtPrice, setCompareAtPrice] = useState('');
+  const [ratingAverage, setRatingAverage] = useState('0');
+  const [reviewCount, setReviewCount] = useState('0');
   const [quantity, setQuantity] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
@@ -79,7 +81,9 @@ export default function AdminCreateProductPage() {
       sku: sku || undefined,
       brand: brand || undefined,
       price: Number(price),
-      compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+      compareAtPrice: compareAtPrice.trim() ? Number(compareAtPrice) : undefined,
+      ratingAverage: Number(ratingAverage),
+      reviewCount: Number(reviewCount),
       quantity: Number(quantity),
       imageUrl: imageUrl || undefined,
       isFeatured,
@@ -133,7 +137,7 @@ export default function AdminCreateProductPage() {
                 required
                 maxLength={160}
                 className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g. Premium Ghana Cocoa Butter"
+                placeholder="e.g. Classic Ankara Shirt"
               />
             </div>
 
@@ -217,11 +221,28 @@ export default function AdminCreateProductPage() {
           </section>
 
           <section className="rounded-2xl border bg-white p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Rating Display</h2>
+            <p className="text-xs text-gray-500">Optional catalogue rating values for imported products. Verified customer reviews should be collected through the review system.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Average Rating (0–5)</label>
+                <input type="number" value={ratingAverage} onChange={(e) => setRatingAverage(e.target.value)} min="0" max="5" step="0.1" required
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Review Count</label>
+                <input type="number" value={reviewCount} onChange={(e) => setReviewCount(e.target.value)} min="0" step="1" required
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border bg-white p-6 space-y-4">
             <h2 className="text-lg font-semibold">Media</h2>
             <ImageUploader
               value={imageUrl}
               onChange={setImageUrl}
-              folder="admin-products"
+              folder="products"
               label="Product Image"
             />
             <label className="flex items-center gap-2">

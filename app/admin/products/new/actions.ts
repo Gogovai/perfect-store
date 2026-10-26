@@ -15,7 +15,9 @@ const adminProductSchema = z.object({
   sku: z.string().trim().max(80).optional(),
   brand: z.string().trim().max(80).optional(),
   price: z.coerce.number().min(0.01),
-  compareAtPrice: z.coerce.number().min(0).optional(),
+  compareAtPrice: z.coerce.number().positive().optional(),
+  ratingAverage: z.coerce.number().min(0).max(5).default(0),
+  reviewCount: z.coerce.number().int().min(0).default(0),
   quantity: z.coerce.number().int().min(0),
   imageUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
@@ -44,6 +46,9 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
 
   const db = getSupabaseAdmin();
   const d = p.data;
+  if (d.compareAtPrice !== undefined && d.compareAtPrice <= d.price) {
+    return { success: false, error: 'Compare-at price must be higher than the selling price.' };
+  }
 
   // This is a single-owner catalogue. Legacy seller records are not required.
 
@@ -71,7 +76,9 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
       sku: d.sku || null,
       brand: d.brand || null,
       base_price: d.price,
-      compare_at_price: d.compareAtPrice || null,
+      compare_at_price: d.compareAtPrice ?? null,
+      rating_average: d.ratingAverage,
+      review_count: d.reviewCount,
       status: 'active',
       currency: 'GHS',
       is_featured: d.isFeatured || false,
@@ -81,7 +88,10 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
     .select('id')
     .single();
 
-  if (productError || !product) return { success: false, error: productError?.message || 'Unable to create product' };
+  if (productError || !product) {
+    if (productError?.code === '23505') return { success: false, error: 'A product with this slug or SKU already exists. Change the slug or SKU and try again.' };
+    return { success: false, error: productError?.message || 'Unable to create product' };
+  }
 
   // Create inventory
   const { error: invError } = await db
@@ -94,18 +104,23 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
     });
   if (invError) {
     await db.from('products').delete().eq('id', product.id);
-    return { success: false, error: 'Unable to create inventory record' };
+    return { success: false, error: `Unable to create inventory record: ${invError.message}` };
   }
 
   // Create product image
   if (d.imageUrl) {
-    await db.from('product_images').insert({
+    const { error: imageError } = await db.from('product_images').insert({
       product_id: product.id,
       url: d.imageUrl,
       alt_text: d.name,
       sort_order: 0,
       is_primary: true,
     });
+    if (imageError) {
+      await db.from('inventory').delete().eq('product_id', product.id);
+      await db.from('products').delete().eq('id', product.id);
+      return { success: false, error: `The product image could not be saved: ${imageError.message}` };
+    }
   }
 
   // Audit log
@@ -114,7 +129,7 @@ export async function adminCreateProduct(input: unknown): Promise<AdminProductRe
     action: 'admin_product_created',
     entity_type: 'product',
     entity_id: product.id,
-    new_data: { name: d.name, category_id: d.categoryId, price: d.price, quantity: d.quantity },
+    new_data: { name: d.name, category_id: d.categoryId, price: d.price, compare_at_price: d.compareAtPrice ?? null, rating_average: d.ratingAverage, review_count: d.reviewCount, quantity: d.quantity, has_image: Boolean(d.imageUrl) },
   });
 
   revalidatePath('/admin/products');
