@@ -146,7 +146,10 @@ export default function CheckoutPage() {
           return;
         }
         if (!response.ok || typeof data.checkout_url !== 'string' || !data.checkout_url.startsWith('https://')) {
-          setOrderError(data.error || 'Online payment is currently unavailable. Your order was saved; you can retry payment from the order page.');
+          // The order already exists and the server cart has been cleared.
+          // Send the customer to its detail page, where the safe retry action lives,
+          // instead of leaving them on a checkout screen they can no longer submit.
+          router.replace(`/account/orders/${result.orderId}?payment=init_failed`);
           return;
         }
         window.location.assign(data.checkout_url);
