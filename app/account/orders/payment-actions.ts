@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 const schema = z.object({
   orderId: z.string().uuid(),
-  method: z.enum(['cash_on_delivery', 'hubtel']),
+  method: z.literal('hubtel'),
 });
 
 export async function setPaymentMethod(input: unknown) {
@@ -16,7 +16,7 @@ export async function setPaymentMethod(input: unknown) {
   }
 
   if (parsed.data.method === 'hubtel' && !(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID)) {
-    return { success: false, error: 'Hubtel online payments are not configured yet. Please choose Cash on Delivery.' };
+    return { success: false, error: 'Mobile Money and card payments are not configured yet. Please try again later.' };
   }
 
   const supabase = await createClient();
