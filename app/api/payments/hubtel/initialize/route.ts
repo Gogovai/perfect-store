@@ -149,30 +149,57 @@ export async function POST(request: Request) {
     const returnUrl = `${siteUrl}/account/orders/${order.id}?payment=processing`;
     const cancellationUrl = `${siteUrl}/account/orders/${order.id}?payment=cancelled`;
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const customerName = String(
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      user.email ??
+      'Customer'
+    ).trim().slice(0, 120) || 'Customer';
+    const customerPhone = String(
+      user.phone ??
+      user.user_metadata?.phone ??
+      user.user_metadata?.phone_number ??
+      ''
+    ).replace(/[^0-9+]/g, '').slice(0, 20);
+
+    // Hubtel's /items/initiate endpoint uses the PascalCase invoice contract.
+    // Keep the invoice ID equal to our persisted client reference so callbacks
+    // can always be matched to this exact pending payment.
+    const invoicePayload: Record<string, unknown> = {
+      InvoiceId: reference,
+      ClientReference: reference,
+      TotalAmount: Number(order.total_amount),
+      Description: `Clothing order ${order.order_number}`,
+      CustomerName: customerName,
+      CustomerEmail: user.email ?? '',
+      PrimaryCallbackUrl: callbackUrl,
+      ReturnUrl: returnUrl,
+      CancellationUrl: cancellationUrl,
+      MerchantAccountNumber: merchantAccountId,
+    };
+    if (customerPhone) invoicePayload.CustomerMsisdn = customerPhone;
 
     const hubtelResponse = await fetch('https://payproxyapi.hubtel.com/items/initiate', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${credentials}`,
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        totalAmount: Number(order.total_amount),
-        description: `Clothing order ${order.order_number}`,
-        callbackUrl,
-        returnUrl,
-        cancellationUrl,
-        merchantAccountNumber: merchantAccountId,
-        clientReference: reference,
-      }),
+      body: JSON.stringify(invoicePayload),
       cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
     });
 
     const result = await hubtelResponse.json().catch(() => ({})) as HubtelCheckoutResponse;
-    const responseCode = result.responseCode ?? result.ResponseCode;
-    const checkoutUrl = result.data?.checkoutUrl ?? result.Data?.CheckoutUrl;
+    const responseCode = result.responseCode ?? result.ResponseCode ?? result.code ?? result.Code;
+    const checkoutUrl =
+      result.data?.checkoutUrl ??
+      result.Data?.CheckoutUrl ??
+      (result as unknown as { data?: { paymentUrl?: string }; Data?: { PaymentUrl?: string } }).data?.paymentUrl ??
+      (result as unknown as { Data?: { PaymentUrl?: string } }).Data?.PaymentUrl;
 
-    if (responseCode && !['0000', '00'].includes(String(responseCode))) {
+    if (responseCode && !['0000', '00', '200'].includes(String(responseCode))) {
       // An explicit Hubtel rejection means no checkout was created. Reset only
       // this attempt; never overwrite a callback that already marked it paid.
       const { error: resetError } = await supabase
@@ -203,7 +230,7 @@ export async function POST(request: Request) {
       secureCheckoutUrl = false;
     }
 
-    if (!hubtelResponse.ok || typeof checkoutUrl !== 'string' || !secureCheckoutUrl || !['0000', '00'].includes(String(responseCode))) {
+    if (!hubtelResponse.ok || typeof checkoutUrl !== 'string' || !secureCheckoutUrl || !['0000', '00', '200'].includes(String(responseCode))) {
       // Keep the reference in processing state for ambiguous responses. The
       // retry flow checks Hubtel status before it can create another attempt.
       const { data: latestPayment, error: latestPaymentError } = await supabase
