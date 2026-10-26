@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { moderateProduct } from './actions';
 
@@ -11,6 +12,7 @@ type Row = {
   sku: string | null;
   status: string;
   base_price: number;
+  rating_average: number;
   created_at: string;
   rejection_reason: string | null;
   categories: { name: string } | null;
@@ -40,7 +42,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<Row[]>([]);
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<TabKey>('pending_review');
+  const [tab, setTab] = useState<TabKey>('active');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -53,8 +55,9 @@ export default function AdminProducts() {
     if ((p as { role?: string } | null)?.role !== 'admin') { location.href = '/'; return; }
     const { data } = await client
       .from('products')
-      .select('id,name,slug,sku,status,base_price,created_at,rejection_reason,categories(name),inventory(quantity,reserved_quantity),product_images(url,is_primary)')
-      .in('status', ['pending_review', 'active', 'rejected', 'inactive'])
+      .select('id,name,slug,sku,status,base_price,rating_average,created_at,rejection_reason,categories(name),inventory(quantity,reserved_quantity),product_images(url,is_primary)')
+      .eq('owner_type', 'admin')
+      .in('status', ['draft', 'pending_review', 'active', 'rejected', 'inactive'])
       .order('created_at', { ascending: false });
     setProducts((data || []) as unknown as Row[]);
     setLoading(false);
@@ -96,9 +99,10 @@ export default function AdminProducts() {
     <main className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header>
-          <p className="text-sm font-semibold text-[#0f2b5b]">Catalogue quality</p>
-          <h1 className="text-3xl font-bold text-gray-900">Product moderation</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage the clothing catalogue and publish products when they are ready.</p>
+          <p className="text-sm font-semibold text-[#0f2b5b]">Catalogue management</p>
+          <h1 className="text-3xl font-bold text-gray-900">Product catalogue</h1>
+          <p className="mt-1 text-sm text-gray-500">Manage products, pricing, stock and catalogue visibility.</p>
+          <Link href="/admin/products/new" className="mt-4 inline-flex rounded-xl bg-[#0f2b5b] px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950">＋ Add product</Link>
         </header>
 
         {toast && (
@@ -147,7 +151,7 @@ export default function AdminProducts() {
                       <p className="text-xs text-gray-500">
                         {p.categories?.name || 'No category'} · {p.sku || 'No SKU'} · GHS {Number(p.base_price).toFixed(2)} · Stock {Math.max(0, stock)}
                       </p>
-                      <p className="mt-0.5 text-xs text-gray-400">Submitted {new Date(p.created_at).toLocaleDateString()}</p>
+                      <p className="mt-0.5 text-xs text-gray-400">★ {Number(p.rating_average ?? 0).toFixed(1)} / 5 · Added {new Date(p.created_at).toLocaleDateString()}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[p.status] || 'bg-gray-100'}`}>
                           {p.status.replaceAll('_', ' ')}
