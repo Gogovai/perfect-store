@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { moderateProduct } from './actions';
 
@@ -98,9 +99,10 @@ export default function AdminProducts() {
     <main className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header>
-          <p className="text-sm font-semibold text-[#0f2b5b]">Catalogue quality</p>
+          <p className="text-sm font-semibold text-[#0f2b5b]">Catalogue management</p>
           <h1 className="text-3xl font-bold text-gray-900">Product catalogue</h1>
           <p className="mt-1 text-sm text-gray-500">Manage products, pricing, stock and catalogue visibility.</p>
+          <Link href="/admin/products/new" className="mt-4 inline-flex rounded-xl bg-[#0f2b5b] px-5 py-3 text-sm font-semibold text-white hover:bg-blue-950">＋ Add product</Link>
         </header>
 
         {toast && (
