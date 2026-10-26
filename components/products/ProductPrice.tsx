@@ -6,6 +6,7 @@ interface ProductPriceProps {
   compareAtPrice?: number | null;
   variantPrice?: number | null;
   size?: 'sm' | 'md' | 'lg';
+  layout?: 'inline' | 'stacked';
 }
 
 export function ProductPrice({
@@ -13,6 +14,7 @@ export function ProductPrice({
   compareAtPrice,
   variantPrice,
   size = 'md',
+  layout = 'inline',
 }: ProductPriceProps) {
   const currentPrice = variantPrice ?? price;
   const hasDiscount = compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice > currentPrice;
@@ -27,6 +29,26 @@ export function ProductPrice({
   };
 
   const s = sizeClasses[size];
+
+  if (layout === 'stacked') {
+    return (
+      <div className="flex min-w-0 flex-col items-start gap-1">
+        <span className={`font-bold leading-tight text-gray-900 ${s.main}`}>
+          {formatPrice(currentPrice)}
+        </span>
+        {hasDiscount && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className={`text-gray-400 line-through ${s.compare}`}>
+              {formatPrice(compareAtPrice!)}
+            </span>
+            <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-600">
+              -{discountPercent}%
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
