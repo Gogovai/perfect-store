@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id,order_number,total_amount,currency,status')
+      .select('id,order_number,total_amount,currency,status,shipping_address')
       .eq('id', orderId)
       .eq('customer_id', user.id)
       .maybeSingle();
@@ -153,18 +153,26 @@ export async function POST(request: Request) {
     const returnUrl = `${siteUrl}/account/orders/${order.id}?payment=processing`;
     const cancellationUrl = `${siteUrl}/account/orders/${order.id}?payment=cancelled`;
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const shippingAddress = order.shipping_address && typeof order.shipping_address === 'object'
+      ? order.shipping_address as Record<string, unknown>
+      : {};
     const customerName = String(
+      shippingAddress.recipient_name ??
       user.user_metadata?.full_name ??
       user.user_metadata?.name ??
       user.email ??
       'Customer'
     ).trim().slice(0, 120) || 'Customer';
-    const customerPhone = String(
+    const rawPhone = String(
+      shippingAddress.phone ??
       user.phone ??
       user.user_metadata?.phone ??
       user.user_metadata?.phone_number ??
       ''
-    ).replace(/[^0-9+]/g, '').slice(0, 20);
+    ).replace(/[^0-9]/g, '');
+    const customerPhone = rawPhone.startsWith('0') && rawPhone.length === 10
+      ? `233${rawPhone.slice(1)}`
+      : rawPhone;
 
     // Hubtel's /items/initiate endpoint uses the PascalCase invoice contract.
     // Keep the invoice ID equal to our persisted client reference so callbacks
