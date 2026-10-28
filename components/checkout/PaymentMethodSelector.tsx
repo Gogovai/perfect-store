@@ -2,19 +2,19 @@
 
 import { CreditCard } from 'lucide-react';
 
-export type PaymentMethod = 'hubtel';
+export type PaymentMethod = 'paystack';
 
 export function PaymentMethodSelector({
   value,
   onChange,
-  hubtelAvailable,
+  paystackAvailable,
 }: {
   value: PaymentMethod;
   onChange: (value: PaymentMethod) => void;
-  hubtelAvailable: boolean;
+  paystackAvailable: boolean;
 }) {
   const methods = [
-    ['hubtel', 'Mobile Money / Card', 'Pay securely with Hubtel using Mobile Money or a debit/credit card.', CreditCard],
+    ['paystack', 'Mobile Money / Card', 'Pay securely with Paystack using Mobile Money or a debit/credit card.', CreditCard],
   ] as const;
 
   return (
@@ -42,7 +42,7 @@ export function PaymentMethodSelector({
           </label>
         ))}
       </div>
-      {!hubtelAvailable && <p className="mt-2 text-xs text-gray-500">Mobile Money and card payments are temporarily unavailable while secure payment setup is completed. Please try again later.</p>}
+      {!paystackAvailable && <p className="mt-2 text-xs text-gray-500">Mobile Money and card payments are temporarily unavailable while secure payment setup is completed. Please try again later.</p>}
     </div>
   );
 }

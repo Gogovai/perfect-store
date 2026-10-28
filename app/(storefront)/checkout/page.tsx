@@ -10,7 +10,7 @@ import { CheckoutSummary } from '@/components/checkout/CheckoutSummary';
 import { PaymentMethodSelector, type PaymentMethod } from '@/components/checkout/PaymentMethodSelector';
 import { CheckoutValidationAlert } from '@/components/checkout/CheckoutValidationAlert';
 import { CheckoutEmptyState } from '@/components/checkout/CheckoutEmptyState';
-import { validateCheckout, getHubtelPaymentAvailability, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
+import { validateCheckout, getPaystackPaymentAvailability, type CheckoutSummary as CheckoutSummaryType } from '@/app/(storefront)/checkout/actions';
 import { syncCartToDatabase } from '@/app/(storefront)/cart/actions';
 import { placeOrder } from '@/app/account/orders/actions';
 import { useCartStore } from '@/stores/cart';
@@ -20,8 +20,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState('standard');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('hubtel');
-  const [hubtelAvailable, setHubtelAvailable] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('paystack');
+  const [paystackAvailable, setPaystackAvailable] = useState(false);
   const [checkoutData, setCheckoutData] = useState<CheckoutSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -31,15 +31,15 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getHubtelPaymentAvailability()
+    getPaystackPaymentAvailability()
       .then((available) => {
         if (cancelled) return;
-        setHubtelAvailable(available);
-        // Hubtel is the only supported payment method; keep it selected while configuration is pending.
+        setPaystackAvailable(available);
+        // Paystack is the only supported payment method; keep it selected while configuration is pending.
       })
       .catch(() => {
         if (cancelled) return;
-        setHubtelAvailable(false);
+        setPaystackAvailable(false);
         // Do not fall back to cash on delivery.
       });
     return () => { cancelled = true; };
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
       setOrderError('Please review your cart before placing the order.');
       return;
     }
-    if (selectedPaymentMethod === 'hubtel' && !hubtelAvailable) {
+    if (selectedPaymentMethod === 'paystack' && !paystackAvailable) {
       setOrderError('Mobile Money and card payments are not available yet. Please try again later.');
       return;
     }
@@ -159,8 +159,8 @@ export default function CheckoutPage() {
         // Server cart has already been cleared by create_order.
       }
 
-      if (selectedPaymentMethod === 'hubtel') {
-        const response = await fetch('/api/payments/hubtel/initialize', {
+      if (selectedPaymentMethod === 'paystack') {
+        const response = await fetch('/api/payments/paystack/initialize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: result.orderId }),
@@ -249,7 +249,7 @@ export default function CheckoutPage() {
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
-              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} hubtelAvailable={hubtelAvailable} />
+              <PaymentMethodSelector value={selectedPaymentMethod} onChange={setSelectedPaymentMethod} paystackAvailable={paystackAvailable} />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-5">
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="lg:col-span-1"><div className="sticky top-24">
-            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} deliveryMethodSelected={checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod)} isDisabled={!selectedAddressId || checkoutData.deliveryOptions.length === 0 || !checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod) || checkoutData.invalidItems.length > 0 || !hubtelAvailable || isProcessing} />
+            <CheckoutSummary itemCount={checkoutData.itemCount} subtotal={checkoutData.subtotal} shippingCost={checkoutData.shippingCost} total={checkoutData.total} onPlaceOrder={handlePlaceOrder} isProcessing={isProcessing} deliveryMethodSelected={checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod)} isDisabled={!selectedAddressId || checkoutData.deliveryOptions.length === 0 || !checkoutData.deliveryOptions.some((option) => option.id === selectedDeliveryMethod) || checkoutData.invalidItems.length > 0 || !paystackAvailable || isProcessing} />
           </div></div>
         </div>
       </Container>

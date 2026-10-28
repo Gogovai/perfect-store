@@ -16,7 +16,7 @@ import { Container } from '@/components/ui/Container';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CancelOrderButton } from '@/components/account/CancelOrderButton';
-import { RetryHubtelPaymentButton } from '@/components/account/RetryHubtelPaymentButton';
+import { RetryPaystackPaymentButton } from '@/components/account/RetryPaystackPaymentButton';
 import { getOrderDetail } from '@/app/account/orders/actions';
 import { formatPrice, formatDate } from '@/lib/utils/formatting';
 import { getStatusStepIndex, getStatusMessage } from '@/lib/utils/order';
@@ -92,10 +92,10 @@ export default async function OrderDetailPage({ params, searchParams }: OrderDet
           <p className={`text-sm font-medium ${isCancelled ? 'text-red-800' : order.status === 'delivered' ? 'text-green-800' : 'text-blue-800'}`}>{getStatusMessage(order.status)}</p>
           {paymentState === 'init_failed' && order.status === 'pending' && order.payment?.status !== 'paid' && (
             <div role="alert" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              Your order was saved, but the secure payment page could not be opened. Your order is not confirmed as paid. Use the retry button in the Payment section below to open Hubtel again.
+              Your order was saved, but the secure payment page could not be opened. Your order is not confirmed as paid. Use the retry button in the Payment section below to open Paystack again.
             </div>
           )}
-          {order.status === 'pending' && <p className="text-xs text-red-600 mt-1">Payment is awaiting confirmation. We will update your order after Hubtel confirms the transaction.</p>}
+          {order.status === 'pending' && <p className="text-xs text-red-600 mt-1">Payment is awaiting confirmation. We will update your order after Paystack confirms the transaction.</p>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -192,17 +192,17 @@ export default async function OrderDetailPage({ params, searchParams }: OrderDet
                 <div className="flex items-center gap-2 mb-3"><CreditCard size={18} className="text-gray-500" /><h2 className="text-base font-semibold text-gray-900">Payment</h2></div>
                 <div className={`p-3 rounded-lg border ${order.payment?.status === 'paid' ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
                   <p className={`text-sm font-medium ${order.payment?.status === 'paid' ? 'text-green-800' : 'text-amber-800'}`}>
-                    {order.payment?.method === 'hubtel' ? 'Hubtel · Mobile Money / Card' : order.payment?.method === 'cash_on_delivery' ? 'Cash on Delivery' : 'Payment'}
+                    {order.payment?.method === 'paystack' ? 'Paystack · Mobile Money / Card' : order.payment?.method === 'cash_on_delivery' ? 'Cash on Delivery' : 'Payment'}
                   </p>
                   <p className={`mt-1 text-xs ${order.payment?.status === 'paid' ? 'text-green-700' : 'text-amber-700'}`}>
                     Payment status: {(order.payment?.status || 'pending').replaceAll('_', ' ')}
                   </p>
                   {order.payment?.status === 'paid' ? (
                     <p className="mt-1 text-xs text-green-700">Payment confirmed. Your order is being processed.</p>
-                  ) : order.payment?.method === 'hubtel' && order.status === 'pending' ? (
+                  ) : order.payment?.method === 'paystack' && order.status === 'pending' ? (
                     <>
                       <p className="mt-1 text-xs text-amber-700">If you did not finish payment or the confirmation is delayed, you can safely try again.</p>
-                      <RetryHubtelPaymentButton orderId={order.id} />
+                      <RetryPaystackPaymentButton orderId={order.id} />
                     </>
                   ) : order.payment?.method === 'cash_on_delivery' ? (
                     <p className="mt-1 text-xs text-amber-700">Pay the delivery agent when your order arrives.</p>

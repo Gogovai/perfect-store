@@ -3,7 +3,7 @@
 /**
  * Checkout server actions.
  * Validates cart from database, calculates authoritative prices,
- * and prepares order data. Payment initialization is handled by the Hubtel API route.
+ * and prepares order data. Payment initialization is handled by the Paystack API route.
  *
  * SECURITY: Never trust client-submitted prices, quantities, or totals.
  * All calculations are performed server-side against the database.
@@ -33,8 +33,8 @@ export type ValidatedCartItem = {
 /**
  * Checkout summary calculated server-side.
  */
-export async function getHubtelPaymentAvailability(): Promise<boolean> {
-  return Boolean(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID);
+export async function getPaystackPaymentAvailability(): Promise<boolean> {
+  return Boolean(process.env.PAYSTACK_SECRET_KEY);
 }
 
 export type CheckoutSummary = {
