@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     if (!verifyResponse.ok || !verification?.status || verified?.status !== 'success' ||
         verified?.reference !== reference || !Number.isFinite(amount) ||
         Math.abs(amount / 100 - Number(payment.amount)) > 0.009 ||
-        verified?.currency !== 'GHS' || Number(verified?.id) !== Number(data?.id)) {
+        verified?.currency !== 'GHS' || (data?.id !== undefined && Number(verified?.id) !== Number(data.id))) {
       return NextResponse.json({ error: 'Transaction verification failed.' }, { status: 503 });
     }
 
