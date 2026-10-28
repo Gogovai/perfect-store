@@ -95,8 +95,14 @@ export async function POST(request: Request) {
     const result = await initResponse.json().catch(() => null) as PaystackInitResponse | null;
     if (!initResponse.ok || !result?.status || !result.data?.authorization_url ||
         !result.data.authorization_url.startsWith('https://checkout.paystack.com/')) {
-      await supabase.from('payments').update({ status: 'pending', provider_reference: null, metadata: {} })
-        .eq('id', payment.id).eq('provider_reference', reference).eq('status', 'processing');
+      // Only reset when Paystack explicitly rejected initialization. Network
+      // failures and ambiguous responses must retain the reference for verification.
+      if (result?.status === false) {
+        await supabase.rpc('reset_paystack_payment_attempt', {
+          p_order_id: order.id,
+          p_reference: reference,
+        });
+      }
       return NextResponse.json({ error: result?.message || 'Unable to initialize Paystack checkout.' }, { status: 502 });
     }
     return NextResponse.json({ checkout_url: result.data.authorization_url, reference });
