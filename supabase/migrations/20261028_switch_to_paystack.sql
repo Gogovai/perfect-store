@@ -77,3 +77,34 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.reserve_paystack_payment_attempt(uuid,text,text,text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.reserve_paystack_payment_attempt(uuid,text,text,text) TO authenticated;
+
+
+-- Reset only an initialization explicitly rejected by Paystack. Keep payment
+-- writes behind an authenticated, order-scoped function instead of table UPDATE.
+CREATE OR REPLACE FUNCTION public.reset_paystack_payment_attempt(
+  p_order_id uuid,
+  p_reference text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user_id uuid := auth.uid();
+BEGIN
+  IF v_user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
+  PERFORM 1 FROM public.orders
+   WHERE id = p_order_id AND customer_id = v_user_id AND status = 'pending'
+   FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Order not found or no longer pending'; END IF;
+  UPDATE public.payments
+     SET status = 'pending', provider_reference = NULL, metadata = '{}'::jsonb, updated_at = now()
+   WHERE order_id = p_order_id AND provider = 'paystack'
+     AND provider_reference = p_reference AND status = 'processing';
+  IF NOT FOUND THEN RAISE EXCEPTION 'Payment attempt changed and could not be reset'; END IF;
+  RETURN jsonb_build_object('success', true);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.reset_paystack_payment_attempt(uuid,text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reset_paystack_payment_attempt(uuid,text) TO authenticated;
