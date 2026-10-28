@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -26,9 +27,21 @@ export async function GET(request: Request) {
     if (response.ok && result?.status && result.data?.status === 'success' &&
         result.data.reference === reference && result.data.currency === 'GHS' &&
         Math.abs(Number(result.data.amount)/100-Number(payment.amount)) <= 0.009) {
-      // The signed webhook remains the authoritative fulfilment path. This page only
-      // reports status; the webhook will confirm the order.
-      return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=processing`, siteUrl));
+      const verifiedAmount = Number(result.data.amount);
+      const admin = getSupabaseAdmin();
+      const { data: updatedPayment, error: paymentUpdateError } = await admin.from('payments').update({
+        status: 'paid',
+        paid_at: new Date().toISOString(),
+        metadata: { paystack_transaction_id: null },
+      }).eq('provider', 'paystack').eq('provider_reference', reference)
+        .in('status', ['pending', 'processing']).select('id').maybeSingle();
+      if (paymentUpdateError) return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=verification_pending`, siteUrl));
+      if (updatedPayment || payment.status === 'paid') {
+        const { error: orderUpdateError } = await admin.from('orders').update({ status: 'confirmed' })
+          .eq('id', order.id).eq('status', 'pending');
+        if (orderUpdateError) return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=verification_pending`, siteUrl));
+      }
+      return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=confirmed`, siteUrl));
     }
   } catch { /* Show pending state; Paystack will retry the webhook. */ }
   return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=verification_pending`, siteUrl));
