@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 const schema = z.object({
   orderId: z.string().uuid(),
-  method: z.literal('hubtel'),
+  method: z.literal('paystack'),
 });
 
 export async function setPaymentMethod(input: unknown) {
@@ -15,7 +15,7 @@ export async function setPaymentMethod(input: unknown) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  if (parsed.data.method === 'hubtel' && !(process.env.HUBTEL_CLIENT_ID && process.env.HUBTEL_CLIENT_SECRET && process.env.HUBTEL_MERCHANT_ACCOUNT_ID)) {
+  if (parsed.data.method === 'paystack' && !(process.env.PAYSTACK_SECRET_KEY)) {
     return { success: false, error: 'Mobile Money and card payments are not configured yet. Please try again later.' };
   }
 
