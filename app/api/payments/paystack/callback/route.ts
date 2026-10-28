@@ -23,16 +23,15 @@ export async function GET(request: Request) {
     const response = await fetch('https://api.paystack.co/transaction/verify/' + encodeURIComponent(reference), {
       headers: { Authorization: `Bearer ${secretKey}`, Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(10000),
     });
-    const result = await response.json().catch(() => null) as {status?:boolean;data?:{status?:string;reference?:string;amount?:number;currency?:string}} | null;
+    const result = await response.json().catch(() => null) as {status?:boolean;data?:{id?:number;status?:string;reference?:string;amount?:number;currency?:string}} | null;
     if (response.ok && result?.status && result.data?.status === 'success' &&
         result.data.reference === reference && result.data.currency === 'GHS' &&
         Math.abs(Number(result.data.amount)/100-Number(payment.amount)) <= 0.009) {
-      const verifiedAmount = Number(result.data.amount);
       const admin = getSupabaseAdmin();
       const { data: updatedPayment, error: paymentUpdateError } = await admin.from('payments').update({
         status: 'paid',
         paid_at: new Date().toISOString(),
-        metadata: { paystack_transaction_id: null },
+        metadata: { paystack_transaction_id: result.data.id ?? null },
       }).eq('provider', 'paystack').eq('provider_reference', reference)
         .in('status', ['pending', 'processing']).select('id').maybeSingle();
       if (paymentUpdateError) return NextResponse.redirect(new URL(`/account/orders/${order.id}?payment=verification_pending`, siteUrl));
