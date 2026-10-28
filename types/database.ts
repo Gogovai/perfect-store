@@ -2,7 +2,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type UserRole = 'customer' | 'seller' | 'admin';
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
-export type PaymentMethod = 'hubtel' | 'cash_on_delivery';
+export type PaymentMethod = 'paystack' | 'hubtel' | 'cash_on_delivery';
 export type ProductStatus = 'draft' | 'pending_review' | 'active' | 'inactive' | 'rejected';
 export type SellerStatus = 'pending' | 'active' | 'suspended' | 'rejected';
 export type ShipmentStatus = 'pending' | 'packed' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'returned';
@@ -87,6 +87,6 @@ export const ORDER_STATUS_STEPS: OrderStatus[] = ['pending', 'confirmed', 'proce
 export const Constants = { public: { Enums: {
   user_role: ['customer', 'seller', 'admin'], seller_status: ['pending', 'active', 'suspended', 'rejected'],
   product_status: ['draft', 'pending_review', 'active', 'inactive', 'rejected'], order_status: ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'],
-  payment_method: ['hubtel', 'cash_on_delivery'], payment_status: ['pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded'],
+  payment_method: ['paystack', 'hubtel', 'cash_on_delivery'], payment_status: ['pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded'],
   shipment_status: ['pending', 'packed', 'shipped', 'in_transit', 'out_for_delivery', 'delivered', 'returned'],
 } } } as const;
