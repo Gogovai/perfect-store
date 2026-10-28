@@ -56,7 +56,7 @@ export default function CheckoutPage() {
     await new Promise<void>((resolve) => {
       let settled = false;
       let unsubscribe = () => {};
-      let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
+      let timeoutId: number | undefined;
       const finish = () => {
         if (settled) return;
         settled = true;
