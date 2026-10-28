@@ -192,14 +192,14 @@ export default async function OrderDetailPage({ params, searchParams }: OrderDet
                 <div className="flex items-center gap-2 mb-3"><CreditCard size={18} className="text-gray-500" /><h2 className="text-base font-semibold text-gray-900">Payment</h2></div>
                 <div className={`p-3 rounded-lg border ${order.payment?.status === 'paid' ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
                   <p className={`text-sm font-medium ${order.payment?.status === 'paid' ? 'text-green-800' : 'text-amber-800'}`}>
-                    {order.payment?.method === 'hubtel' ? 'Paystack · Mobile Money / Card' : order.payment?.method === 'cash_on_delivery' ? 'Cash on Delivery' : 'Payment'}
+                    {order.payment?.method === 'paystack' ? 'Paystack · Mobile Money / Card' : order.payment?.method === 'cash_on_delivery' ? 'Cash on Delivery' : 'Payment'}
                   </p>
                   <p className={`mt-1 text-xs ${order.payment?.status === 'paid' ? 'text-green-700' : 'text-amber-700'}`}>
                     Payment status: {(order.payment?.status || 'pending').replaceAll('_', ' ')}
                   </p>
                   {order.payment?.status === 'paid' ? (
                     <p className="mt-1 text-xs text-green-700">Payment confirmed. Your order is being processed.</p>
-                  ) : order.payment?.method === 'hubtel' && order.status === 'pending' ? (
+                  ) : order.payment?.method === 'paystack' && order.status === 'pending' ? (
                     <>
                       <p className="mt-1 text-xs text-amber-700">If you did not finish payment or the confirmation is delayed, you can safely try again.</p>
                       <RetryPaystackPaymentButton orderId={order.id} />
