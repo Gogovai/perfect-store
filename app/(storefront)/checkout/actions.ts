@@ -110,7 +110,6 @@ export async function validateCheckout(
 
     if (address) {
       // Shipping rates are configured by the store owner in Admin > Logistics.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: rates } = await (supabase as any)
         .from('shipping_rates')
         .select('id,method,price,eta_min_days,eta_max_days,delivery_zones!inner(id,name,city,region,is_active)')
@@ -187,7 +186,6 @@ export async function validateCheckout(
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: cartItems } = await (supabase as any)
     .from('cart_items')
     .select(`
@@ -227,7 +225,6 @@ export async function validateCheckout(
   const warnings: string[] = [];
   if (usingFallbackDeliveryRates) warnings.push('Temporary default delivery fees are being used until the store owner configures delivery zones and rates.');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const item of cartItems as any[]) {
     const product = item.products;
     const images = (product?.product_images ?? []) as Array<{ url: string; is_primary: boolean }>;
@@ -286,7 +283,6 @@ export async function validateCheckout(
     // Check inventory if available
     if (isValid) {
       if (item.variant_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: varInv } = await (supabase as any)
           .from('variant_inventory')
           .select('quantity, reserved_quantity')
@@ -298,7 +294,6 @@ export async function validateCheckout(
           validationError = 'Insufficient stock for requested quantity';
         }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: prodInv } = await (supabase as any)
           .from('inventory')
           .select('quantity, reserved_quantity')
@@ -316,7 +311,7 @@ export async function validateCheckout(
       id: item.id,
       productId: item.product_id,
       variantId: item.variant_id,
-      productName: isValid ? product.name : product.name,
+      productName: typeof product?.name === 'string' ? product.name : 'Unavailable product',
       variantName,
       imageUrl,
       unitPrice,
@@ -329,7 +324,7 @@ export async function validateCheckout(
     validatedItems.push(validatedItem);
 
     if (!isValid) {
-      warnings.push(`${product.name}: ${validationError}`);
+      warnings.push(`${typeof product?.name === 'string' ? product.name : 'Unavailable product'}: ${validationError}`);
     }
   }
 

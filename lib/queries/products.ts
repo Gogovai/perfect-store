@@ -43,7 +43,7 @@ const PRODUCT_SELECT = `*, product_images(id, url, alt_text, sort_order, is_prim
 
 async function getProductsQuery() {
   const supabase = await createClient();
-  let query = supabase
+  const query = supabase
     .from('products')
     .select(PRODUCT_SELECT, { count: 'exact' })
     .eq('status', 'active');
