@@ -16,7 +16,6 @@ export async function getUserAddresses(): Promise<Address[]> {
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: false });
   if (error || !data) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map((a) => ({ ...a, full_name: a.recipient_name, address_line_1: a.address_line1 })) as Address[];
 }
 
@@ -30,7 +29,6 @@ export async function getAddressById(addressId: string): Promise<Address | null>
     .eq('user_id', user.id)
     .single();
   if (error || !data) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { ...data as any, full_name: (data as any).recipient_name, address_line_1: (data as any).address_line1 } as Address;
 }
 
@@ -59,7 +57,6 @@ export async function createAddress(input: AddressInput): Promise<AddressActionR
 
   const { data: newAddress, error } = await supabase.from('addresses').insert(insertData).select().single();
   if (error) return { success: false, error: 'Failed to create address' };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { success: true, address: { ...newAddress as any, full_name: (newAddress as any).recipient_name, address_line_1: (newAddress as any).address_line1 } as Address };
 }
 
@@ -90,7 +87,6 @@ export async function updateAddress(addressId: string, input: AddressInput): Pro
     .select()
     .single();
   if (error) return { success: false, error: 'Failed to update address' };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { success: true, address: { ...updated as any, full_name: (updated as any).recipient_name, address_line_1: (updated as any).address_line1 } as Address };
 }
 
@@ -121,6 +117,5 @@ export async function setDefaultAddress(addressId: string): Promise<AddressActio
     .select()
     .single();
   if (error) return { success: false, error: 'Failed to set default address' };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { success: true, address: { ...updated as any, full_name: (updated as any).recipient_name, address_line_1: (updated as any).address_line1 } as Address };
 }
