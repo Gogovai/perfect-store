@@ -44,7 +44,6 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
 
   if (!wl) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: items } = await (supabase as any)
     .from('wishlist_items')
     .select(`
@@ -67,12 +66,10 @@ export async function getUserWishlistItems(): Promise<WishlistItemWithProduct[]>
   if (!items) return [];
 
   return items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((item: any) => {
       const product = item.products;
       return product.status === 'active' && /fashion|clothing|apparel|menswear|womenswear|men[' -]?s|women[' -]?s|footwear|shoes|accessor|bags|traditional|ankara/i.test(`${product.categories?.name ?? ''} ${product.categories?.slug ?? ''}`);
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((item: any) => {
       const product = item.products;
       const images = product.product_images as Array<{ url: string; is_primary: boolean }>;
@@ -107,7 +104,6 @@ export async function isInWishlist(productId: string): Promise<boolean> {
 
   if (!wl) return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: item } = await (supabase as any)
     .from('wishlist_items')
     .select('id')
@@ -143,7 +139,6 @@ export async function toggleWishlistItem(productId: string): Promise<WishlistAct
 
   if (!wl) return { success: false, error: 'Failed to create wishlist' };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing } = await (supabase as any)
     .from('wishlist_items')
     .select('id')
