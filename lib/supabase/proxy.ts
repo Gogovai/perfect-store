@@ -83,9 +83,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Role-based route protection: being logged in is not enough to open the
-  // seller/admin consoles. The profile lookup uses the session client, so
-  // RLS restricts it to the caller's own row. On a DB error we fail open and
-  // let the page/server-action-level checks enforce the boundary.
+  // seller/admin consoles. Fail closed when the profile cannot be loaded.
   if (user && (isProtectedAdminRoute || isProtectedSellerRoute)) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -93,7 +91,13 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.sub)
       .maybeSingle();
 
-    if (profile) {
+    if (!profile) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+    {
       const roleOk =
         (isProtectedAdminRoute && profile.role === 'admin') ||
         (isProtectedSellerRoute && profile.role === 'seller');
