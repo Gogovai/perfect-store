@@ -97,16 +97,14 @@ export async function updateSession(request: NextRequest) {
       url.search = '';
       return NextResponse.redirect(url);
     }
-    {
-      const roleOk =
+    const roleOk =
         (isProtectedAdminRoute && profile.role === 'admin') ||
         (isProtectedSellerRoute && profile.role === 'seller');
-      if (!roleOk || profile.is_active === false) {
+    if (!roleOk || profile.is_active === false) {
         const url = request.nextUrl.clone();
         url.pathname = '/';
         url.search = '';
         return NextResponse.redirect(url);
-      }
     }
   }
 
